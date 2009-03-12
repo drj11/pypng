@@ -3,10 +3,8 @@
 # $URL$
 # $Rev$
 
-# Incorporated into Bangai-O Development Tools by drj on 2009-02-11 from
-# http://trac.browsershots.org/browser/trunk/pypng/lib/png.py?rev=2885
-
-# png.py - PNG encoder in pure Python
+# png.py - PNG encoder/decoder in pure Python
+#
 # Copyright (C) 2006 Johann C. Rocholl <johann@browsershots.org>
 # Portions Copyright (C) 2009 David Jones <drj@pobox.com>
 # And probably portions Copyright (C) 2006 Nicko van Someren <nicko@nicko.org>
@@ -47,6 +45,12 @@
 # 2006-06-17 Nicko: Alpha-channel, grey-scale, 16-bit/plane support.
 # 2006-06-15 Johann: Scanline iterator interface for large input files.
 # 2006-06-09 Johann: Very simple prototype PNG encoder.
+
+# Incorporated into Bangai-O Development Tools by drj on 2009-02-11 from
+# http://trac.browsershots.org/browser/trunk/pypng/lib/png.py?rev=2885
+
+# Incorporated into pypng by drj on 2009-03-12 from
+# //depot/prj/bangaio/master/code/png.py#67
 
 
 """
