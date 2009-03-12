@@ -56,19 +56,86 @@
 """
 Pure Python PNG Reader/Writer
 
-This is an implementation of a subset of the PNG specification at
-http://www.w3.org/TR/2003/REC-PNG-20031110 in pure Python. It reads
+This Python module implements support for PNG images (see PNG
+specification at http://www.w3.org/TR/2003/REC-PNG-20031110 ). It reads
 and writes PNG files with all allowable bit depths (1/2/4/8/16/24/32/48/64
-bits per pixel): greyscale, RGB, RGBA, with 8 or 16 bits per layer, and
-also colormapped images with palettes.  A number of options are
-supported.
+bits per pixel) and color combinations: greyscale (1/2/4/8/16 bit); RGB,
+RGBA, KA (greyscale with alpha) with 8/16 bits per channel; colormapped
+images (1/2/4/8 bit).  Adam7 interlacing is supported for reading and
+writing.  A number of optional chunks can be specified (when writing)
+and understood (when reading): tRNS, bKGD, gAMA.
 
 For help, type "import png; help(png)" in your python interpreter.
 
-This file can also be used as a command-line utility to convert PNM
-files to PNG. The interface is similar to that of the pnmtopng program
-from the netpbm package. Type "python png.py --help" at the shell
-prompt for usage and a list of options.
+A good place to start is the Reader and Writer classes.
+
+This file can also be used as a command-line utility to convert
+Netpbm's PNM files to PNG, and the reverse conversion from PNG to
+PNM. The interface is similar to that of the pnmtopng program from
+the netpbm package.  Type "python png.py --help" at the shell prompt
+for usage and a list of options.
+
+A note on spelling
+
+greyscale (British English)
+color (North American English)
+
+A note on formats
+
+When getting pixel data out of this module (reading) and presenting
+data to this module (writing) there are a number of ways the data could
+be represented as a Python value.  Generally this module uses one of
+three formats called "flat row flat pixel", "boxed row flat pixel", and
+"boxed row boxed pixel".  Basically the concern is whether each pixel
+and each row comes in its own little tuple (box), or not.
+
+Consider an image that is 3 pixels wide by 2 pixels high, and each pixel
+has RGB components:
+
+Boxed row flat pixel:
+
+list([R,G,B, R,G,B, R,G,B],
+     [R,G,B, R,G,B, R,G,B])
+
+Each row appears as its own list, but the pixels are flattened so that
+three values for one pixel simply follow the three values for the previous
+pixel.  This is the most common format used, because it provides a good
+compromise between space and convenience.  The module regards itself as
+at liberty to replace any sequence type with any sufficiently compatible
+other sequence type; in practice each row is an array (from the array
+module), and the outer list is sometimes an iterator rather than an
+explicit list (so that streaming is possible).
+
+Flat row flat pixel:
+
+[R,G,B, R,G,B, R,G,B,
+ R,G,B, R,G,B, R,G,B]
+
+The entire image is one single giant sequence of colour values.
+Generally an array will be used (to save space), not a list.
+
+Boxed row boxed pixel:
+
+list([ (R,G,B), (R,G,B), (R,G,B) ],
+     [ (R,G,B), (R,G,B), (R,G,B) ])
+
+Each row appears in its own list, but each pixel also appears in its own
+tuple.  A serious memory burn in Python.
+
+In all cases the top row comes first, and for each row the pixels are
+ordered from left-to-right.  Within a pixel the values appear in the
+order, R-G-B-A (or K-A for greyscale--alpha).
+
+There is a fourth format, mentioned because it is used internally, is
+close to what lies inside a PNG file itself, and may one day have a
+public API exposed for it.  This format is called serialised.  When
+serialised an image is a sequence of bytes (integers from 0 to 255).
+Each row is packed into bytes (if bit depth < 8) or decomposed into
+bytes (big-endian, if bit depth is 16).  This isn't a particularly
+convenient format, but it is produced (in part) as a necessary step for
+decoding and encoding PNG files.  There are some sorts of PNG to PNG
+recoding where this might be the most efficient format to use.
+
 """
 
 __version__ = "$URL$ $Rev$"
@@ -82,6 +149,12 @@ import zlib
 # http://www.python.org/doc/2.4.4/lib/module-warnings.html
 import warnings
 
+__all__ = ['Reader', 'Writer']
+
+
+# The PNG signature.
+# http://www.w3.org/TR/PNG/#5PNG-file-signature
+_signature = struct.pack('8B', 137, 80, 78, 71, 13, 10, 26, 10)
 
 _adam7 = ((0, 0, 8, 8),
           (4, 0, 8, 8),
@@ -103,7 +176,7 @@ def interleave_planes(ipixels, apixels, ipsize, apsize):
     Return an array of pixels consisting of the ipsize elements of data
     from each pixel in ipixels followed by the apsize elements of data
     from each pixel in apixels.  Conventionally ipixels and apixels are
-    byte arrays so thet sizes are bytes, but it actually works with any
+    byte arrays so the sizes are bytes, but it actually works with any
     arrays of the same type.  The output array is the same type as the
     input arrays which should be the same type as each other.
     """
@@ -142,7 +215,7 @@ def check_palette(palette):
             raise ValueError(
               "palette entry %d: entries must be 3- or 4-tuples." % i)
         if len(t) == 3:
-            seen_triple = 3
+            seen_triple = True
         if seen_triple and len(t) == 4:
             raise ValueError(
               "palette entry %d: all 4-tuples must precede all 3-tuples" % i)
@@ -162,37 +235,41 @@ class Writer:
     """
 
     def __init__(self, width, height,
+                 greyscale=False,
+                 alpha=False,
+                 bitdepth=8,
+                 palette=None,
                  transparent=None,
                  background=None,
                  gamma=None,
-                 greyscale=False,
-                 alpha=False,
-                 palette=None,
-                 bitdepth=8,
-                 bytes_per_sample=None, # deprecated
                  compression=None,
                  interlace=False,
+                 bytes_per_sample=None, # deprecated
                  chunk_limit=2**20):
         """
         Create a PNG encoder object.
 
         Arguments:
         width, height - size of the image in pixels
+        greyscale - input data is greyscale, not RGB
+        alpha - input data has alpha channel (RGBA or KA)
+        bitdepth - 1, 2, 4, 8, or 16
+        palette - create a palettized image (color type 3)
         transparent - create a tRNS chunk
         background - create a bKGD chunk
         gamma - create a gAMA chunk
-        greyscale - input data is greyscale, not RGB
-        alpha - input data has alpha channel (RGBA)
-        palette - create a palettized image (color type 3)
-        bitdepth - 1, 2, 4, 8, or 16
         compression - zlib compression level (1-9)
+        interlace - create an interlaced image
         chunk_limit - write multiple IDAT chunks to save memory
 
-        If specified, the transparent and background parameters must
-        be a tuple with three integer values for red, green, blue, or
-        a simple integer (or singleton tuple) for a greyscale image.
+	`greyscale` and `alpha` are booleans that specify whether
+	an image is greyscale (or color), and whether it has an
+	alpha channel (or not).
 
-        If specified, the gamma parameter must be a float value.
+        `bitdepth` specifies the bit depth of the PNG image.  This is the
+        number of bits used to specify the value of each color channel
+        (or index, in the case of a palette).  PNG allows this to be
+        1,2,4,8, or 16, but there are some restrictions on some values.
 
         For greyscale and palette images the PNG specification allows
         the bit depth to be less than 8.  For other types, bit depths
@@ -214,23 +291,59 @@ class Writer:
 	all the 4-tuples, in the same sequence.  Palette entries
 	are always 8-bit.
 
+        If specified, the `transparent` and `background` parameters must
+        be a tuple with three integer values for red, green, blue, or
+        a simple integer (or singleton tuple) for a greyscale image.
+
+        If specified, the gamma parameter must be a positive number
+        (generally, a float).  A gAMA chunk will be created.  Note that
+        this will not change the values of the pixels as they appear in
+        the PNG file, they are assumed to have already been converted
+        appropriately for the gamma specified.
+
         The default for the compression argument is None; this does not
         mean no compression, rather it means that the default from the zlib
-        module is used.
+        module is used (which is generally acceptable).
+
+        If `interlace` is true then an interlaced image is created
+        (using PNG's so far only interace method, Adam7).  This does not
+        affect how the pixels should be presented to the encoder, rather
+        it changes how they are arranged into the PNG file.  On slow
+        connexions interlaced images can be partially decoded by the
+        browser to give a rough view of the image that is successively
+        refined as more image data appears.  Caution: enabling this
+        option requires the entire image to be processed in working
+        memory.
+
+        `chunk_limit` is used to limit the amount of memory used whilst
+        compressing the image.  In order to avoid using large amounts of
+        memory, multiple IDAT chunks may be created.
         """
+
+        def isinteger(x):
+            try:
+                return int(x) == x
+            except:
+                return False
 
         if width <= 0 or height <= 0:
             raise ValueError("width and height must be greater than zero")
+        if not isinteger(width) or not isinteger(height):
+            raise ValueError("width and height must be integers")
+        # http://www.w3.org/TR/PNG/#7Integers-and-byte-order
+        if width > 2**32-1 or height > 2**32-1:
+            raise ValueError("width and height cannot exceed 2**32-1")
 
         if alpha and transparent is not None:
             raise ValueError(
                 "transparent color not allowed with alpha channel")
 
         if bytes_per_sample is not None:
-            warnings.warn('use bitdepth instead of bytes_per_sample',
+            warnings.warn('please use bitdepth instead of bytes_per_sample',
                           DeprecationWarning)
             if bytes_per_sample not in (0.125, 0.25, 0.5, 1, 2):
-                raise ValueError("bytes per sample must be .125, .25, .5, 1, or 2")
+                raise ValueError(
+                    "bytes per sample must be .125, .25, .5, 1, or 2")
             bitdepth = int(8*bytes_per_sample)
         del bytes_per_sample
         if bitdepth not in (1,2,4,8,16):
@@ -239,7 +352,8 @@ class Writer:
         if bitdepth < 8 and not greyscale and not palette:
             raise ValueError("color images must use bitdepth 8 or 16")
         if bitdepth > 8 and palette:
-            raise ValueError("bit depth must be 8 or less for images with palette")
+            raise ValueError(
+                "bit depth must be 8 or less for images with palette")
 
         if palette:
             if transparent is not None:
@@ -251,27 +365,27 @@ class Writer:
 
         if transparent is not None:
             if greyscale:
-                if type(transparent) is not int:
+                if not isinteger(transparent):
                     raise ValueError(
                         "transparent color for greyscale must be integer")
             else:
                 if not (len(transparent) == 3 and
-                        type(transparent[0]) is int and
-                        type(transparent[1]) is int and
-                        type(transparent[2]) is int):
+                        isinteger(transparent[0]) and
+                        isinteger(transparent[1]) and
+                        isinteger(transparent[2])):
                     raise ValueError(
                         "transparent color must be a triple of integers")
 
         if background is not None:
             if greyscale:
-                if type(background) is not int:
+                if not isinteger(background):
                     raise ValueError(
                         "background color for greyscale must be integer")
             else:
                 if not (len(background) == 3 and
-                        type(background[0]) is int and
-                        type(background[1]) is int and
-                        type(background[2]) is int):
+                        isinteger(background[0]) and
+                        isinteger(background[1]) and
+                        isinteger(background[2])):
                     raise ValueError(
                         "background color must be a triple of integers")
 
@@ -321,8 +435,10 @@ class Writer:
 
     def write_chunk(self, outfile, tag, data=''):
         """
-        Write a PNG chunk to the output file, including length and checksum.
+	Write a PNG chunk to the output file, including length and
+	checksum.
         """
+
         # http://www.w3.org/TR/PNG/#5Chunk-layout
         outfile.write(struct.pack("!I", len(data)))
         outfile.write(tag)
@@ -336,8 +452,9 @@ class Writer:
         Write a PNG image to the output file.  `rows` should be an
         iterable that yields each row in boxed row flat pixel format.
         """
+
         # http://www.w3.org/TR/PNG/#5PNG-file-signature
-        outfile.write(struct.pack("8B", 137, 80, 78, 71, 13, 10, 26, 10))
+        outfile.write(_signature)
 
         # http://www.w3.org/TR/PNG/#11IHDR
         self.write_chunk(outfile, 'IHDR',
@@ -394,8 +511,6 @@ class Writer:
             extend = data.extend
         elif self.bitdepth == 16:
             # Decompose into bytes
-            # samples per line
-            spl = self.width * self.planes
             def extend(sl):
                 fmt = '!%dH' % len(sl)
                 data.extend(array('B', struct.pack(fmt, *sl)))
@@ -443,6 +558,7 @@ class Writer:
         Write an array in flat row flat pixel format as a PNG file on
         the output file.
         """
+
         if self.interlace:
             self.write(outfile, self.array_scanlines_interlace(pixels))
         else:
@@ -454,6 +570,7 @@ class Writer:
         with the parameters set in the writer object.  Works for PGM and
         PPM formats.
         """
+
         if self.interlace:
             pixels = array('B')
             pixels.fromfile(infile,
@@ -489,13 +606,14 @@ class Writer:
         Generates boxed rows in flat pixel format, from the input file
         `infile`.
         """
-        # Samples per line
-        spl = self.width * self.planes
-        row_bytes = spl
+
+        # Values per row
+        vpr = self.width * self.planes
+        row_bytes = vpr
         if self.bitdepth > 8:
             assert self.bitdepth == 16
             row_bytes *= 2
-            fmt = '>%dH' % spl
+            fmt = '>%dH' % vpr
             def line():
                 return array('H', struct.unpack(fmt, infile.read(row_bytes)))
         else:
@@ -527,6 +645,7 @@ class Writer:
         generator yields each scanline of the reduced passes in turn, in
         boxed row flat pixel format.
         """
+
         # http://www.w3.org/TR/PNG/#8InterlaceMethods
         # Array type.
         fmt = 'BH'[self.bitdepth > 8]
@@ -535,6 +654,7 @@ class Writer:
         for xstart, ystart, xstep, ystep in _adam7:
             if xstart >= self.width:
                 continue
+            # Pixels per row (of reduced image)
             ppr = int(math.ceil((self.width-xstart)/float(xstep)))
             # number of values in reduced image row.
             row_len = ppr*self.planes
@@ -561,7 +681,8 @@ def filter_scanline(type, line, fo, prev=None):
     (unfiltered) scanline as a sequence of bytes. `fo` specifies the
     filter offset; normally this is size of a pixel in bytes (the number
     of bytes per sample times the number of channels), but when this is
-    < 1 (for bit depths < 8) then the filter offset is 1."""
+    < 1 (for bit depths < 8) then the filter offset is 1.
+    """
 
     assert 0 <= type < 5
 
@@ -709,6 +830,7 @@ class Reader:
         that in general the order of chunks in PNGs is unspecified, so
         using `seek` can cause you to miss chunks.
         """
+
         self.validate_signature()
 
         while True:
@@ -749,7 +871,8 @@ class Reader:
         interlaced image), then this argument should be None.
 
         The scanline will have the effects of filtering removed, and the
-        result will be returned as a fresh sequence of bytes."""
+        result will be returned as a fresh sequence of bytes.
+        """
 
         # :todo: Would it be better to update scanline in place?
 
@@ -898,7 +1021,8 @@ class Reader:
 
     def serialtoflat(self, bytes, width=None):
         """Convert serial format (byte stream) pixel data to flat row
-        flat pixel."""
+        flat pixel.
+        """
 
         if self.bitdepth == 8:
             return bytes
@@ -928,6 +1052,7 @@ class Reader:
         Read raw scanline data, undo the filters, and return as
         serialised (byte stream) pixels.
         """
+
         # length of row, in bytes
         rb = self.row_bytes
         a = array('B')
@@ -948,13 +1073,14 @@ class Reader:
 
     def validate_signature(self):
         """If signature (header) has not been read then read and
-        validate it; otherwise do nothing."""
+        validate it; otherwise do nothing.
+        """
 
         if self.signature:
             return
         self.signature = self.file.read(8)
-        if self.signature != struct.pack("8B", 137, 80, 78, 71, 13, 10, 26, 10):
-            raise Error("PNG file has invalid header")
+        if self.signature != _signature:
+            raise Error("PNG file has invalid signature")
 
     def preamble(self):
         """
@@ -1151,6 +1277,7 @@ class Reader:
 
     def asRGB8Aopt(self, n, dropalpha=False):
         """n is the number of channels in the target."""
+
         assert n in (3,4)
 
         # :todo: remove assert
@@ -1177,6 +1304,7 @@ class Reader:
             """Handle RGB8 (and RGBA8)."""
             return iter(group(group(data, n), width))
         def rgb8add():
+            """Add alpha channel to convert RGB to RGBA."""
             assert n == 4
             return iter(group(map(lambda p: p + (maxval,),
                                   group(data, 3), width)))
@@ -1190,7 +1318,8 @@ class Reader:
         def scaledown(scanline):
             """Helper used by grey16 and rgb16.  Convert a scanline of
             samples from 16-bits to 8-bit.  Input is a sequence of 16-bit
-            integers."""
+            integers.
+            """
 
             def treatsample(x):
                 """Convert 16-bit sample to 8-bit.  Just a little bit
@@ -1205,8 +1334,7 @@ class Reader:
             # We expect this to be an integer of course, but we need the
             # answer as a float.
             divisor = float(65535)/float(maxval)
-            scanline = map(treatsample, scanline)
-            return scanline
+            return map(treatsample, scanline)
         def grey16():
             """Handle K16."""
             for scanline in group(data, self.width):
@@ -1243,7 +1371,8 @@ class Reader:
             raise Error("will not convert image with alpha channel to RGB")
         if self.colormap:
             if not self.plte:
-                raise Error("required PLTE chunk is missing in color type 3 image")
+                raise Error(
+                    "required PLTE chunk is missing in color type 3 image")
             plte = group(array('B', self.plte), 3)
             if n == 4:
                 # http://www.python.org/doc/2.4.4/lib/module-operator.html
@@ -1285,7 +1414,12 @@ class Reader:
 # opposed to tests which produce output files that are externally
 # validated).  Primarily they are unittests.
 
-# Run them from the command line with:
+# Note that it is difficult to internally validate the results of
+# writing a PNG file.  The only thing we can do is read it back in
+# again, which merely checks consistency, not that the PNG file we
+# produce is valid.
+
+# Run the tests from the command line:
 # python -c 'import png;png.test()'
 
 # http://www.python.org/doc/2.4.4/lib/module-unittest.html
@@ -1919,6 +2053,7 @@ def test_suite(options, args):
         is possible to create all PNG channel types (K, RGB, RGBA, KA),
         as well as non PNG channel types (RGA, and so on).
         """
+
         i = test_pattern(size, size, bitdepth, red)
         psize = 1
         for channel in (green, blue, alpha):
@@ -2003,6 +2138,7 @@ def read_pnm_header(infile, supported=('P5','P6')):
     and height are in pixels.  maxval is synthesized (as 1) for PBM
     images.
     """
+
     # Generally, see http://netpbm.sourceforge.net/doc/ppm.html
 
     header = [infile.read(3).rstrip()]
@@ -2063,10 +2199,10 @@ def read_pnm_header(infile, supported=('P5','P6')):
 def write_ppm(file, width, height, pixels, maxval=255):
     """Write a PPM file.  Assumes MAXVAL 255 and RGB pixels."""
     file.write('P6 %d %d %d\n' % (width, height, maxval))
-    # Samples per line
-    spl = 3 * width
+    # Values per row
+    vpr = 3 * width
     # struct format
-    fmt = '>%d' % spl
+    fmt = '>%d' % vpr
     if maxval > 0xff:
         fmt = fmt + 'H'
     else:
@@ -2098,9 +2234,11 @@ def _main():
     """
     Run the PNG encoder with options from the command line.
     """
+
     # Parse command line arguments
     from optparse import OptionParser
-    version = '%prog ' + __revision__.strip('$').replace('Rev: ', 'r')
+    import re
+    version = '%prog ' + re.sub(r'( ?\$|URL: |Rev:)', '', __version__)
     parser = OptionParser(version=version)
     parser.set_usage("%prog [options] [imagefile]")
     parser.add_option('-r', '--read-png', default=False,
