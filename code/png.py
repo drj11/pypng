@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-# $Id$
 # $URL$
+# $Rev$
 
 # Incorporated into Bangai-O Development Tools by drj on 2009-02-11 from
 # http://trac.browsershots.org/browser/trunk/pypng/lib/png.py?rev=2885
@@ -67,11 +67,7 @@ from the netpbm package. Type "python png.py --help" at the shell
 prompt for usage and a list of options.
 """
 
-
-__revision__ = '$Rev$'
-__date__ = '$Date: 2009/03/12 $'
-__author__ = '$Author: drj $'
-
+__version__ = "$URL$ $Rev$"
 
 from array import array
 import itertools
