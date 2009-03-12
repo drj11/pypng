@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 # $Id$
+# $URL$
+
 # Incorporated into Bangai-O Development Tools by drj on 2009-02-11 from
 # http://trac.browsershots.org/browser/trunk/pypng/lib/png.py?rev=2885
 
