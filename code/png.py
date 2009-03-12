@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# $Id: //depot/prj/bangaio/master/code/png.py#67 $
+# $Id$
 # Incorporated into Bangai-O Development Tools by drj on 2009-02-11 from
 # http://trac.browsershots.org/browser/trunk/pypng/lib/png.py?rev=2885
 
