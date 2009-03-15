@@ -448,9 +448,32 @@ class Writer:
         outfile.write(struct.pack("!i", checksum))
 
     def write(self, outfile, rows):
+	"""Write a PNG image to the output file.  `rows` should be
+	an iterable that yields each row in boxed row flat pixel format.
+        The rows should be the rows of the original image, so there
+        should be self.height rows of self.width * self.planes values.
+        If `interlace` is specified (when creating the instance), then
+        the interlacing is carried out internally.  This will require
+        the entire image to be in working memory.
         """
-        Write a PNG image to the output file.  `rows` should be an
-        iterable that yields each row in boxed row flat pixel format.
+
+        if self.interlace:
+            fmt = 'BH'[self.bitdepth > 8]
+            a = array(fmt, itertools.chain(*rows))
+            return self.write_array(outfile, a)
+        else:
+            return self.write_passes(outfile, rows)
+
+    def write_passes(self, outfile, rows):
+        """
+        Write a PNG image to the output file.  The rows should be given
+        to this method in the order that they appear in the output file.
+        For straightlaced images, this is the usual top to bottom
+        ordering, but for interlaced images the rows should have already
+        been interlaced before passing them to this function.  Most
+        users are expected to find the write() or write_array() method
+	more convenient.  `rows` should be an iterable that yields
+	each row in boxed row flat pixel format.
         """
 
         # http://www.w3.org/TR/PNG/#5PNG-file-signature
@@ -533,6 +556,11 @@ class Writer:
                 data.extend(l)
 
         for row in rows:
+            # Add "None" filter type.  Currently, it's essential that
+            # this filter type be used for every scanline as we do not
+            # mark the first row of a reduced pass image; that means we
+            # could accidentally compute the wrong filtered scanline if
+            # we used "up", "average", or "paeth" on such a line.
             data.append(0)
             extend(row)
             if len(data) > self.chunk_limit:
@@ -560,9 +588,9 @@ class Writer:
         """
 
         if self.interlace:
-            self.write(outfile, self.array_scanlines_interlace(pixels))
+            self.write_passes(outfile, self.array_scanlines_interlace(pixels))
         else:
-            self.write(outfile, self.array_scanlines(pixels))
+            self.write_passes(outfile, self.array_scanlines(pixels))
 
     def convert_pnm(self, infile, outfile):
         """
@@ -576,9 +604,9 @@ class Writer:
             pixels.fromfile(infile,
                             (self.bitdepth/8) * self.color_planes *
                             self.width * self.height)
-            self.write(outfile, self.array_scanlines_interlace(pixels))
+            self.write_passes(outfile, self.array_scanlines_interlace(pixels))
         else:
-            self.write(outfile, self.file_scanlines(infile))
+            self.write_passes(outfile, self.file_scanlines(infile))
 
     def convert_ppm_and_pgm(self, ppmfile, pgmfile, outfile):
         """
@@ -597,9 +625,9 @@ class Writer:
                                    (self.bitdepth/8) * self.color_planes,
                                    (self.bitdepth/8))
         if self.interlace:
-            self.write(outfile, self.array_scanlines_interlace(pixels))
+            self.write_passes(outfile, self.array_scanlines_interlace(pixels))
         else:
-            self.write(outfile, self.array_scanlines(pixels))
+            self.write_passes(outfile, self.array_scanlines(pixels))
 
     def file_scanlines(self, infile):
         """
@@ -1019,6 +1047,34 @@ class Reader:
                             flat[i::self.planes]
         return a
 
+    def iterboxed(self, rows):
+        """Iterator that yields each scanline in boxed row flat pixel
+        format.  `rows` should be an iterator that yields the bytes of
+        each row in turn.
+        """
+
+        def asvalues(raw):
+            """Convert a row of raw bytes into a flat row.  Result may
+            or may not share with argument"""
+
+            if self.bitdepth == 8:
+                return raw
+            if self.bitdepth == 16:
+                raw = raw.tostring()
+                return array('H', struct.unpack('!%dH' % (len(raw)//2), raw))
+            assert self.bitdepth < 8
+            width = self.width
+            # Samples per byte
+            spb = 8//self.bitdepth
+            out = array('B')
+            mask = 2**self.bitdepth - 1
+            shifts = map(self.bitdepth.__mul__, reversed(range(spb)))
+            for o in raw:
+                out.extend(map(lambda i: mask&(o>>i), shifts))
+            return out[:width]
+
+        return itertools.imap(asvalues, rows)
+
     def serialtoflat(self, bytes, width=None):
         """Convert serial format (byte stream) pixel data to flat row
         flat pixel.
@@ -1030,46 +1086,44 @@ class Reader:
             bytes = bytes.tostring()
             return array('H',
               struct.unpack('!%dH' % (len(bytes)//2), bytes))
-        else:
-            assert self.bitdepth < 8
-            if width is None:
-                width = self.width
-            # Samples per byte
-            spb = 8//self.bitdepth
-            out = array('B')
-            mask = 2**self.bitdepth - 1
-            shifts = map(self.bitdepth.__mul__, reversed(range(spb)))
-            l = width
-            for o in bytes:
-                out.extend(map(lambda i: mask&(o>>i), shifts)[:l])
-                l -= spb
-                if l <= 0:
-                    l = width
-            return out
+        assert self.bitdepth < 8
+        if width is None:
+            width = self.width
+        # Samples per byte
+        spb = 8//self.bitdepth
+        out = array('B')
+        mask = 2**self.bitdepth - 1
+        shifts = map(self.bitdepth.__mul__, reversed(range(spb)))
+        l = width
+        for o in bytes:
+            out.extend(map(lambda i: mask&(o>>i), shifts)[:l])
+            l -= spb
+            if l <= 0:
+                l = width
+        return out
 
-    def straightlaced(self, raw):
-        """
-        Read raw scanline data, undo the filters, and return as
-        serialised (byte stream) pixels.
-        """
+    def iterstraight(self, raw):
+        """Iterator that undoes the effect of filtering, and yields each
+        row in raw format (as a sequence of bytes).  Assumes input is
+        straightlaced.  `raw` should be an iterable that yields the
+        raw bytes in chunks of arbitrary size."""
 
         # length of row, in bytes
         rb = self.row_bytes
         a = array('B')
-        offset = 0
         source_offset = 0
         # The previous (reconstructed) scanline.  None indicates first
         # line of image.
         recon = None
-        for y in range(self.height):
-            filter_type = raw[source_offset]
-            source_offset += 1
-            scanline = array('B', raw[source_offset:source_offset+rb])
-            recon = self.undo_filter(filter_type, scanline, recon)
-            a.extend(recon)
-            offset += rb
-            source_offset += rb
-        return a
+        for some in raw:
+            a.extend(some)
+            while len(a) >= rb + 1:
+                filter_type = a[0]
+                scanline = a[1:rb+1]
+                del a[:rb+1]
+                recon = self.undo_filter(filter_type, scanline, recon)
+                yield recon
+        assert len(a) == 0
 
     def validate_signature(self):
         """If signature (header) has not been read then read and
@@ -1208,6 +1262,69 @@ class Reader:
 
     def read(self):
         """
+        Read the PNG file and decode it.  Returns (width, height,
+        pixels, metadata).
+
+        May use excessive memory.
+
+        pixels are returned in boxed row flat pixel format.
+        """
+
+        def iteridat():
+            """Iterator that yields all the IDAT chunks as strings."""
+            while True:
+                try:
+                    type, data = self.chunk()
+                except ValueError, e:
+                    raise Error('Chunk error: ' + e.args[0])
+                if type == 'IEND':
+                    # http://www.w3.org/TR/PNG/#11IEND
+                    break
+                if type != 'IDAT':
+                    continue
+                # type == 'IDAT'
+                # http://www.w3.org/TR/PNG/#11IDAT
+                if self.colormap and not self.plte:
+                    warnings.warn("PLTE chunk is required before IDAT chunk")
+                yield data
+
+        def iterdecomp(idat):
+            """Iterator that yields decompressed strings.  `idat` should
+            be an iterator that yields the IDAT chunk data.
+            """
+
+            # Currently, with no max_length paramter to decompress, this
+            # routine will do one yield per IDAT chunk.  So not very
+            # incremental.
+            d = zlib.decompressobj()
+            for data in idat:
+                # :todo: add a max_length argument here to limit output
+                # size.
+                yield array('B', d.decompress(data))
+                while d.unused_data:
+                    yield array('B', d.decompress(d.unused_data))
+            yield array('B', d.flush())
+
+        self.preamble()
+        raw = iterdecomp(iteridat())
+
+        if self.interlace:
+            raw = array('B', itertools.chain(*raw))
+            pixels = group(self.deinterlace(raw), self.width*self.planes)
+        else:
+            pixels = self.iterboxed(self.iterstraight(raw))
+        meta = dict()
+        for attr in 'greyscale alpha bitdepth interlace'.split():
+            meta[attr] = getattr(self, attr)
+        for attr in 'gamma transparent background'.split():
+            a = getattr(self, attr, None)
+            if a is not None:
+                meta[attr] = a
+        return self.width, self.height, pixels, meta
+
+
+    def read_flat(self):
+        """
         Read a simple PNG file; return width, height, pixels and image
         metadata.
 
@@ -1289,20 +1406,16 @@ class Reader:
             factor = maxval / (2**bitdepth - 1)
             # Number of pixels remaining in scanline
             w = width
-            scanline = []
-            for pixel in data:
-                scanline.append((pixel*factor,)*3)
-                if n == 4:
-                    scanline.append(maxval)
-                w -= 1
-                if 0 == w:
-                    w = width
-                    # Making each scanline a tuple is consistent with rgb8().
-                    yield tuple(scanline)
-                    scanline = []
+            if n == 3:
+                def expand(k): return (k*factor,)*3
+            else:
+                def expand(k): return (k*factor,)*3 + (maxval,)
+            for row in data:
+                yield tuple(map(expand, row))
         def rgb8():
             """Handle RGB8 (and RGBA8)."""
-            return iter(group(group(data, n), width))
+            for row in data:
+                yield group(row, n)
         def rgb8add():
             """Add alpha channel to convert RGB to RGBA."""
             assert n == 4
@@ -1311,10 +1424,12 @@ class Reader:
         if 3 == n:
             def grey8():
                 """Handle K8."""
-                return iter(group(zip(data, data, data), width))
+                for row in data:
+                    yield zip(row, row, row)
         else:
             def grey8():
-                return iter(group(zip(data, data, data, maxval), width))
+                for row in data:
+                    yield zip(row, row, row, itertools.repeat(maxval))
         def scaledown(scanline):
             """Helper used by grey16 and rgb16.  Convert a scanline of
             samples from 16-bits to 8-bit.  Input is a sequence of 16-bit
@@ -1337,7 +1452,7 @@ class Reader:
             return map(treatsample, scanline)
         def grey16():
             """Handle K16."""
-            for scanline in group(data, self.width):
+            for scanline in data:
                 scanline = scaledown(scanline)
                 # expand into triples
                 if 3 == n:
@@ -1346,19 +1461,19 @@ class Reader:
                     yield tuple(zip(scanline, scanline, scanline, maxval))
         def rgb16():
             """Handle RGB16."""
-            for scanline in group(data, self.width * self.planes):
+            for scanline in data:
                 scanline = scaledown(scanline)
                 yield tuple(group(scanline, n))
         def rgb16add():
-            for scanline in group(data, self.width * self.planes):
+            for scanline in data:
                 scanline = scaledown(scanline)
                 yield tuple(map(lambda p: p + (maxval,),
                                 group(scanline, 3)))
         def palette():
             """Handle palette, color type 3."""
-            for scanline in group(data, self.width):
-                scanline = map(plte.__getitem__, scanline)
-                yield tuple(scanline)
+            for row in data:
+                row = map(plte.__getitem__, row)
+                yield tuple(row)
 
         width, height, data, meta = self.read()
         bitdepth = meta["bitdepth"]
@@ -1429,19 +1544,21 @@ from StringIO import StringIO
 def test():
     unittest.main(__name__)
 
-def topngbytes(name, array, x, y, **k):
+def topngbytes(name, rows, x, y, **k):
     """Convenience function for creating a PNG file "in memory" as a
     string.  Creates a Writer instance using the keyword arguments, then
-    passes the array to its write_array method.  The resulting PNG file
+    passes the rows to its write method.  The resulting PNG file
     is returned as a string.  `name` is used to identify the file for
     debugging.
     """
 
+    import os
+
     print name
     f = StringIO()
     w = Writer(x, y, **k)
-    w.write_array(f, array)
-    if False:
+    w.write(f, rows)
+    if os.environ.get('PYPNG_TEST_TMP'):
         w = open(name, 'wb')
         w.write(f.getvalue())
         w.close()
@@ -1457,7 +1574,8 @@ class Test(unittest.TestCase):
         x,y,pixels,meta = r.read()
         self.assertEqual(x, 15)
         self.assertEqual(y, 17)
-        self.assertEqual(list(pixels), map(mask.__and__, range(1,256)))
+        self.assertEqual(list(itertools.chain(*pixels)),
+                         map(mask.__and__, range(1,256)))
     def testK8(self):
         return self.helperKN(8)
     def testK4(self):
@@ -1506,10 +1624,10 @@ class Test(unittest.TestCase):
         e = e+(255,)
         self.assertEqual(list(pixels), [(e,d,c),(d,c,a),(c,a,b)])
     def testAdam7read(self):
-        """Test Adam7 interlacing.  Specifically, test that for images
-        in the PngSuite that have both an interlaced and straightlaced
-        pair that both images from the pair produce the same array of
-        pixels."""
+        """Adam7 interlace reading.
+	Specifically, test that for images in the PngSuite that
+	have both an interlaced and straightlaced pair that both
+	images from the pair produce the same array of pixels."""
         for candidate in _pngsuite:
             if not candidate.startswith('basn'):
                 continue
@@ -1519,13 +1637,16 @@ class Test(unittest.TestCase):
             print 'adam7 read', candidate
             straight = Reader(bytes=_pngsuite[candidate])
             adam7 = Reader(bytes=_pngsuite[candi])
-            # metadata is ignored because the "interlace" member
-            # differs.  Lame.
-            self.assertEqual(straight.read()[:3], adam7.read()[:3])
+            # Just compare the pixels.  Ignore x,y (because they're
+            # likely to be correct?); metadata is ignored because the
+            # "interlace" member differs.  Lame.
+            straight = straight.read()[2]
+            adam7 = adam7.read()[2]
+            self.assertEqual(map(list, straight), map(list, adam7))
     def testAdam7write(self):
-        """Test Adam7 interlacing.  For each test image in the PngSuite,
-        write an interlaced and a srtaightlaced version.  Decode both,
-        and compare results.
+        """Adam7 interlace writing.
+        For each test image in the PngSuite, write an interlaced
+        and a straightlaced version.  Decode both, and compare results.
         """
         # Not such a great test, because the only way we can check what
         # we have written is to read it back again.
@@ -1536,17 +1657,18 @@ class Test(unittest.TestCase):
                 continue
             it = Reader(bytes=bytes)
             x,y,pixels,meta = it.read()
-            pngi = topngbytes('adam7wn'+name+'.png', pixels,
+            p1,p2 = itertools.tee(pixels)
+            pngi = topngbytes('adam7wn'+name+'.png', p1,
               x=x, y=y, bitdepth=it.bitdepth,
               greyscale=it.greyscale, alpha=it.alpha,
               interlace=False)
             x,y,ps,meta = Reader(bytes=pngi).read()
-            pngs = topngbytes('adam7wi'+name+'.png', pixels,
+            pngs = topngbytes('adam7wi'+name+'.png', p2,
               x=x, y=y, bitdepth=it.bitdepth,
               greyscale=it.greyscale, alpha=it.alpha,
               interlace=True)
             x,y,pi,meta = Reader(bytes=pngs).read()
-            self.assertEqual(ps, pi)
+            self.assertEqual(map(list, ps), map(list, pi))
 
 
 # === Command Line Support ===
