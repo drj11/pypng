@@ -5,7 +5,8 @@ $Rev$
 README for PyPNG
 drj@pobox.com
 
-PyPNG provides Python code for encoding/decoding PNG files.
+PyPNG provides Python code for encoding/decoding PNG files.  In
+particular png.py is a Python module written entirely in Python.
 
 
 INSTALLATION
@@ -18,6 +19,15 @@ python setup.py install
 
 The png module will be installed; "import png" will allow you to use it
 from your Python programs.
+
+Alternatively, you can copy png.py wherever you like.  It's intended
+that you can copy png.py into your application and distribute it.
+
+
+GETTING STARTED
+
+"import png" then "help(png)" should be a good place to start.  Also,
+see the example in the man/ex/ directory.
 
 
 PROJECT HOME
