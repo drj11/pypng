@@ -1,0 +1,28 @@
+$URL$
+$Rev$
+
+Release Procedure
+
+Not even a draft, just some notes.
+
+Edit setup.py for new version number.  Then "svn commit" this.
+
+Get the latest svn change number:
+svn st -u | tail -1
+(this is called CHANGE below)
+
+at top-level...
+
+Update our sources to the particular revision.
+svn up -r CHANGE
+
+Make source distribution using Python distutils
+python setup.py sdist -f
+
+The -f option is essential, it prevents sdist from copying the wrong set
+of files.  Without -f sdist will examine the MANIFEST file which may be
+out of date.
+
+Make a record in release/index.txt
+
+Upload dist/pypng-X.Y.X.tar.gz to google code.
