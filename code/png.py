@@ -262,9 +262,9 @@ class Writer:
         interlace - create an interlaced image
         chunk_limit - write multiple IDAT chunks to save memory
 
-	`greyscale` and `alpha` are booleans that specify whether
-	an image is greyscale (or color), and whether it has an
-	alpha channel (or not).
+        `greyscale` and `alpha` are booleans that specify whether
+        an image is greyscale (or color), and whether it has an
+        alpha channel (or not).
 
         `bitdepth` specifies the bit depth of the PNG image.  This is the
         number of bits used to specify the value of each color channel
@@ -280,16 +280,16 @@ class Writer:
         to 3; greyscale must not be set; alpha must not be set;
         transparent must not be set; the bit depth must be 1,2,4, or 8.
 
-	The palette argument value should be a sequence of 3- or
-	4-tuples.  3-tuples specify RGB palette entries; 4-tuples
-	specify RGBA palette entries.  If both 4-tuples and 3-tuples
-	appear in the sequence then all the 4-tuples must come
-	before all the 3-tuples.  A PLTE chunk is created; if there
-	are 4-tuples then a tRNS chunk is created as well.  The
-	PLTE chunk will contain all the RGB triples in the same
-	sequence; the tRNS chunk will contain the alpha channel for
-	all the 4-tuples, in the same sequence.  Palette entries
-	are always 8-bit.
+        The palette argument value should be a sequence of 3- or
+        4-tuples.  3-tuples specify RGB palette entries; 4-tuples
+        specify RGBA palette entries.  If both 4-tuples and 3-tuples
+        appear in the sequence then all the 4-tuples must come
+        before all the 3-tuples.  A PLTE chunk is created; if there
+        are 4-tuples then a tRNS chunk is created as well.  The
+        PLTE chunk will contain all the RGB triples in the same
+        sequence; the tRNS chunk will contain the alpha channel for
+        all the 4-tuples, in the same sequence.  Palette entries
+        are always 8-bit.
 
         If specified, the `transparent` and `background` parameters must
         be a tuple with three integer values for red, green, blue, or
@@ -435,8 +435,8 @@ class Writer:
 
     def write_chunk(self, outfile, tag, data=''):
         """
-	Write a PNG chunk to the output file, including length and
-	checksum.
+        Write a PNG chunk to the output file, including length and
+        checksum.
         """
 
         # http://www.w3.org/TR/PNG/#5Chunk-layout
@@ -448,8 +448,8 @@ class Writer:
         outfile.write(struct.pack("!i", checksum))
 
     def write(self, outfile, rows):
-	"""Write a PNG image to the output file.  `rows` should be
-	an iterable that yields each row in boxed row flat pixel format.
+        """Write a PNG image to the output file.  `rows` should be
+        an iterable that yields each row in boxed row flat pixel format.
         The rows should be the rows of the original image, so there
         should be self.height rows of self.width * self.planes values.
         If `interlace` is specified (when creating the instance), then
@@ -472,8 +472,8 @@ class Writer:
         ordering, but for interlaced images the rows should have already
         been interlaced before passing them to this function.  Most
         users are expected to find the write() or write_array() method
-	more convenient.  `rows` should be an iterable that yields
-	each row in boxed row flat pixel format.
+        more convenient.  `rows` should be an iterable that yields
+        each row in boxed row flat pixel format.
         """
 
         # http://www.w3.org/TR/PNG/#5PNG-file-signature
@@ -1625,9 +1625,9 @@ class Test(unittest.TestCase):
         self.assertEqual(list(pixels), [(e,d,c),(d,c,a),(c,a,b)])
     def testAdam7read(self):
         """Adam7 interlace reading.
-	Specifically, test that for images in the PngSuite that
-	have both an interlaced and straightlaced pair that both
-	images from the pair produce the same array of pixels."""
+        Specifically, test that for images in the PngSuite that
+        have both an interlaced and straightlaced pair that both
+        images from the pair produce the same array of pixels."""
         for candidate in _pngsuite:
             if not candidate.startswith('basn'):
                 continue
