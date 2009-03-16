@@ -57,7 +57,7 @@
 Pure Python PNG Reader/Writer
 
 This Python module implements support for PNG images (see PNG
-specification at http://www.w3.org/TR/2003/REC-PNG-20031110 ). It reads
+specification at http://www.w3.org/TR/2003/REC-PNG-20031110/ ). It reads
 and writes PNG files with all allowable bit depths (1/2/4/8/16/24/32/48/64
 bits per pixel) and color combinations: greyscale (1/2/4/8/16 bit); RGB,
 RGBA, KA (greyscale with alpha) with 8/16 bits per channel; colormapped
@@ -65,22 +65,24 @@ images (1/2/4/8 bit).  Adam7 interlacing is supported for reading and
 writing.  A number of optional chunks can be specified (when writing)
 and understood (when reading): tRNS, bKGD, gAMA.
 
-For help, type "import png; help(png)" in your python interpreter.
+For help, type ``import png; help(png)`` in your python interpreter.
 
-A good place to start is the Reader and Writer classes.
+A good place to start is the :class:`Reader` and :class:`Writer` classes.
 
 This file can also be used as a command-line utility to convert
-Netpbm's PNM files to PNG, and the reverse conversion from PNG to
-PNM. The interface is similar to that of the pnmtopng program from
-the netpbm package.  Type "python png.py --help" at the shell prompt
+`Netpbm <http://netpbm.sourceforge.net/>`_ PNM files to PNG, and the reverse conversion from PNG to
+PNM. The interface is similar to that of the ``pnmtopng`` program from
+Netpbm.  Type ``python png.py --help`` at the shell prompt
 for usage and a list of options.
 
 A note on spelling
+------------------
 
-greyscale (British English)
-color (North American English)
+* greyscale (British English);
+* color (North American English).
 
 A note on formats
+-----------------
 
 When getting pixel data out of this module (reading) and presenting
 data to this module (writing) there are a number of ways the data could
@@ -92,10 +94,10 @@ and each row comes in its own little tuple (box), or not.
 Consider an image that is 3 pixels wide by 2 pixels high, and each pixel
 has RGB components:
 
-Boxed row flat pixel:
+Boxed row flat pixel::
 
-list([R,G,B, R,G,B, R,G,B],
-     [R,G,B, R,G,B, R,G,B])
+  list([R,G,B, R,G,B, R,G,B],
+       [R,G,B, R,G,B, R,G,B])
 
 Each row appears as its own list, but the pixels are flattened so that
 three values for one pixel simply follow the three values for the previous
@@ -106,18 +108,18 @@ other sequence type; in practice each row is an array (from the array
 module), and the outer list is sometimes an iterator rather than an
 explicit list (so that streaming is possible).
 
-Flat row flat pixel:
+Flat row flat pixel::
 
-[R,G,B, R,G,B, R,G,B,
- R,G,B, R,G,B, R,G,B]
+  [R,G,B, R,G,B, R,G,B,
+   R,G,B, R,G,B, R,G,B]
 
 The entire image is one single giant sequence of colour values.
 Generally an array will be used (to save space), not a list.
 
-Boxed row boxed pixel:
+Boxed row boxed pixel::
 
-list([ (R,G,B), (R,G,B), (R,G,B) ],
-     [ (R,G,B), (R,G,B), (R,G,B) ])
+  list([ (R,G,B), (R,G,B), (R,G,B) ],
+       [ (R,G,B), (R,G,B), (R,G,B) ])
 
 Each row appears in its own list, but each pixel also appears in its own
 tuple.  A serious memory burn in Python.
@@ -896,7 +898,7 @@ class Reader:
         in general is not the previous pixel row in the final image).
         When there is no previous scanline (the first row of a
         straightlaced image, or the first row in one of the passes in an
-        interlaced image), then this argument should be None.
+        interlaced image), then this argument should be ``None``.
 
         The scanline will have the effects of filtering removed, and the
         result will be returned as a fresh sequence of bytes.
@@ -1104,8 +1106,8 @@ class Reader:
 
     def iterstraight(self, raw):
         """Iterator that undoes the effect of filtering, and yields each
-        row in raw format (as a sequence of bytes).  Assumes input is
-        straightlaced.  `raw` should be an iterable that yields the
+        row in serialised format (as a sequence of bytes).  Assumes input
+        is straightlaced.  `raw` should be an iterable that yields the
         raw bytes in chunks of arbitrary size."""
 
         # length of row, in bytes
@@ -1139,8 +1141,8 @@ class Reader:
     def preamble(self):
         """
         Extract the image metadata by reading the initial part of the PNG
-        file up to the start of the IDAT chunk.  All the chunks that
-        precede the IDAT chunk are read and either processed for
+        file up to the start of the ``IDAT`` chunk.  All the chunks that
+        precede the ``IDAT`` chunk are read and either processed for
         metadata or discarded.
         """
 
@@ -1158,8 +1160,8 @@ class Reader:
 
     def process_chunk(self):
         """Process the next chunk and its data.  This only processes the
-        following chunk types, all others are ignored: IHDR, PLTE, bKGD,
-        tRNS, gAMA.
+        following chunk types, all others are ignored: ``IHDR``,
+        ``PLTE``, ``bKGD``, ``tRNS``, ``gAMA``.
         """
 
         type, data = self.chunk()
@@ -1262,8 +1264,8 @@ class Reader:
 
     def read(self):
         """
-        Read the PNG file and decode it.  Returns (width, height,
-        pixels, metadata).
+        Read the PNG file and decode it.  Returns (`width`, `height`,
+        `pixels`, `metadata`).
 
         May use excessive memory.
 
@@ -1271,7 +1273,7 @@ class Reader:
         """
 
         def iteridat():
-            """Iterator that yields all the IDAT chunks as strings."""
+            """Iterator that yields all the ``IDAT`` chunks as strings."""
             while True:
                 try:
                     type, data = self.chunk()
@@ -1290,7 +1292,7 @@ class Reader:
 
         def iterdecomp(idat):
             """Iterator that yields decompressed strings.  `idat` should
-            be an iterator that yields the IDAT chunk data.
+            be an iterator that yields the ``IDAT`` chunk data.
             """
 
             # Currently, with no max_length paramter to decompress, this
@@ -1372,28 +1374,28 @@ class Reader:
         An alpha channel will raise an exception.
 
         This function returns a 4-tuple:
-        (width, height, pixels, metadata).
-        width, height, metadata are as per the read method.
+        (*width*, *height*, *pixels*, *metadata*).
+        *width*, *height*, *metadata* are as per the :meth:`read` method.
         
-        `pixels` is the pixel data in boxed row boxed pixel format.  It is
+        *pixels* is the pixel data in boxed row boxed pixel format.  It is
         an iterator that yields each row.  A row is a
         sequence of pixels; each pixel is an (R,G,B) triple with each
-        channel from 0 to 255.
+        channel being from 0 to 255.
         """
 
         return self.asRGB8Aopt(3)
 
     def asRGBA8(self):
         """Return the image data as an RGBA image with 8-bits per
-        sample.  Greyscales are expanded into RGB triplets; an Alpha
+        sample.  Greyscales are expanded into RGB triplets; an alpha
         channel is synthesized if necessary.  Otherwise performs same as
-        asRGB8().
+        :meth:`asRGB8`.
         """
 
         return self.asRGB8Aopt(4)
 
     def asRGB8Aopt(self, n, dropalpha=False):
-        """n is the number of channels in the target."""
+        """*n* is the number of channels in the target."""
 
         assert n in (3,4)
 

@@ -188,3 +188,6 @@ latex_documents = [
 
 # If false, no module index is generated.
 #latex_use_modindex = True
+
+# http://sphinx.pocoo.org/ext/autodoc.html?highlight=__init__
+autoclass_content='both'
