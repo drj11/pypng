@@ -138,6 +138,8 @@ convenient format, but it is produced (in part) as a necessary step for
 decoding and encoding PNG files.  There are some sorts of PNG to PNG
 recoding where this might be the most efficient format to use.
 
+And now, my famous members
+--------------------------
 """
 
 __version__ = "$URL$ $Rev$"
