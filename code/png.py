@@ -559,7 +559,7 @@ class Writer:
                                            (x << self.bitdepth) + y, e), l)
                 data.extend(l)
 
-        for row in rows:
+        for i,row in enumerate(rows):
             # Add "None" filter type.  Currently, it's essential that
             # this filter type be used for every scanline as we do not
             # mark the first row of a reduced pass image; that means we
@@ -572,6 +572,11 @@ class Writer:
                 if len(compressed):
                     # print >> sys.stderr, len(data), len(compressed)
                     self.write_chunk(outfile, 'IDAT', compressed)
+                # Because of our very writty definition of ``extend``,
+                # above, we must re-use the same ``data`` object.  Hence
+                # we use ``del`` to empty this one, rather than create a
+                # fresh one (which would be my natural FP instinct).
+                # del data[:]
                 data = array('B')
         if len(data):
             compressed = compressor.compress(data.tostring())
@@ -1571,7 +1576,9 @@ def topngbytes(name, rows, x, y, **k):
 class Test(unittest.TestCase):
     def helperKN(self, n):
         mask = (1 << n) - 1
-        w = Writer(15, 17, greyscale=True, bitdepth=n)
+        # Use small chunk_limit so that multiple chunk writing is
+        # tested.
+        w = Writer(15, 17, greyscale=True, bitdepth=n, chunk_limit=99)
         f = StringIO()
         w.write_array(f, array('B', map(mask.__and__, range(1, 256))))
         r = Reader(bytes=f.getvalue())
