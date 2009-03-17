@@ -576,8 +576,7 @@ class Writer:
                 # above, we must re-use the same ``data`` object.  Hence
                 # we use ``del`` to empty this one, rather than create a
                 # fresh one (which would be my natural FP instinct).
-                # del data[:]
-                data = array('B')
+                del data[:]
         if len(data):
             compressed = compressor.compress(data.tostring())
         else:
