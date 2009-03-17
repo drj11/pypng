@@ -2452,11 +2452,13 @@ def _main():
         # Encode PNM to PNG
         format, width, height, maxval = read_pnm_header(infile, ('P5','P6'))
         greyscale = format == 'P5'
+        supported = [1, 3, 15, 255, 65535]
         try:
-            mi = [1, 3, 15, 255, 65535].index(maxval)
+            mi = supported.index(maxval)
         except ValueError:
             raise NotImplementedError(
-              'maxval %s not supported' % header[3])
+              'your maxval (%s) not in supported list %s' %
+              (maxval, str(supported)))
         bitdepth = 2**mi
         if bitdepth < 8 and options.alpha:
             raise ValueError('alpha channel not supported with bit depth %d' %
