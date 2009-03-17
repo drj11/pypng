@@ -20,7 +20,7 @@ python setup.py install
 The png module will be installed; "import png" will allow you to use it
 from your Python programs.
 
-Alternatively, you can copy png.py wherever you like.  It's intended
+Alternatively, you can copy code/png.py wherever you like.  It's intended
 that you can copy png.py into your application and distribute it.
 
 
@@ -28,6 +28,14 @@ GETTING STARTED
 
 "import png" then "help(png)" should be a good place to start.  Also,
 see the example in the man/ex/ directory.
+
+
+MANIFEST
+
+.../ - top-level crud (like this README, and setup.py).
+.../code/ - the Python code.
+.../html/ - lickable manuals (generated).
+.../man/ - manuals (in source/plain-text).
 
 
 PROJECT HOME

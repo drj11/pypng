@@ -16,6 +16,9 @@ at top-level...
 Update our sources to the particular revision.
 svn up -r CHANGE
 
+Buld the documentation:
+python build.py
+
 Make source distribution using Python distutils
 python setup.py sdist -f
 

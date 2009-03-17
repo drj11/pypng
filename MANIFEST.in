@@ -2,3 +2,4 @@
 # $Rev$
 # http://www.python.org/doc/2.4.4/dist/sdist-cmd.html
 graft man
+graft html
