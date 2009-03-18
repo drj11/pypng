@@ -1706,13 +1706,14 @@ class Test(unittest.TestCase):
                 continue
             it = Reader(bytes=bytes)
             x,y,pixels,meta = it.read()
-            p1,p2 = itertools.tee(pixels)
-            pngi = topngbytes('adam7wn'+name+'.png', p1,
+            pngi = topngbytes('adam7wn'+name+'.png', pixels,
               x=x, y=y, bitdepth=it.bitdepth,
               greyscale=it.greyscale, alpha=it.alpha,
               transparent=it.transparent,
               interlace=False)
             x,y,ps,meta = Reader(bytes=pngi).read()
+            it = Reader(bytes=bytes)
+            x,y,pixels,meta = it.read()
             pngs = topngbytes('adam7wi'+name+'.png', p2,
               x=x, y=y, bitdepth=it.bitdepth,
               greyscale=it.greyscale, alpha=it.alpha,
