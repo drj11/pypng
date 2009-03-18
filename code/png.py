@@ -466,7 +466,11 @@ class Writer:
             a = array(fmt, itertools.chain(*rows))
             return self.write_array(outfile, a)
         else:
-            return self.write_passes(outfile, rows)
+            nrows = self.write_passes(outfile, rows)
+            if nrows != self.height:
+                raise ValueError(
+                  "rows supplied (%d) does not match height (%d)" %
+                  (nrows, self.height))
 
     def write_passes(self, outfile, rows):
         """
@@ -559,6 +563,9 @@ class Writer:
                                            (x << self.bitdepth) + y, e), l)
                 data.extend(l)
 
+        # Hack to make the row count and the error message correct in the
+        # case where caller supplies no data.
+        i = -1
         for i,row in enumerate(rows):
             # Add "None" filter type.  Currently, it's essential that
             # this filter type be used for every scanline as we do not
@@ -585,9 +592,9 @@ class Writer:
         if len(compressed) or len(flushed):
             # print >> sys.stderr, len(data), len(compressed), len(flushed)
             self.write_chunk(outfile, 'IDAT', compressed + flushed)
-
         # http://www.w3.org/TR/PNG/#11IEND
         self.write_chunk(outfile, 'IEND')
+        return i+1
 
     def write_array(self, outfile, pixels):
         """
@@ -1701,14 +1708,15 @@ class Test(unittest.TestCase):
             it = Reader(bytes=bytes)
             x,y,pixels,meta = it.read()
             p1,p2 = itertools.tee(pixels)
+            alpha = it.planes in (2,4)
             pngi = topngbytes('adam7wn'+name+'.png', p1,
               x=x, y=y, bitdepth=it.bitdepth,
-              greyscale=it.greyscale, alpha=it.alpha,
+              greyscale=it.greyscale, alpha=alpha,
               interlace=False)
             x,y,ps,meta = Reader(bytes=pngi).read()
             pngs = topngbytes('adam7wi'+name+'.png', p2,
               x=x, y=y, bitdepth=it.bitdepth,
-              greyscale=it.greyscale, alpha=it.alpha,
+              greyscale=it.greyscale, alpha=alpha,
               interlace=True)
             x,y,pi,meta = Reader(bytes=pngs).read()
             self.assertEqual(map(list, ps), map(list, pi))
