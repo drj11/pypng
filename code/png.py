@@ -834,6 +834,7 @@ class Reader:
 
         # Will be the first 8 bytes, later on.  See validate_signature.
         self.signature = None
+        self.transparent = None
         # A pair of (len,type) if a chunk has been read but its data and
         # checksum have not (in other words the file position is just
         # past the 4 bytes that specify the chunk type).  See preamble
@@ -1403,6 +1404,9 @@ class Reader:
     def asRGB8Aopt(self, n, dropalpha=False):
         """*n* is the number of channels in the target."""
 
+        # http://www.python.org/doc/2.4.4/lib/module-operator.html
+        import operator
+
         assert n in (3,4)
 
         # :todo: remove assert
@@ -1425,10 +1429,29 @@ class Reader:
             for row in data:
                 yield group(row, n)
         def rgb8add():
-            """Add alpha channel to convert RGB to RGBA."""
+            """Add alpha channel to convert RGB to RGBA.  This handles
+            RGB sources both with and without ``tRNS`` chunks.  It seems
+            like a waste of time to do the ``tRNS`` processing when
+            there is no ``tRNS`` chunk, but it keeps the proliferation
+            of codes down, and this is not the fast path for getting
+            data out of the image anyway.
+            """
             assert n == 4
+            # This is the value we compare each pixel with to see if it
+            # is transparent.  When there is no tRNS chunk,
+            # self.transparent is None.  But None doesn't have the
+            # __ne__ method that we rely on.  *sigh*
+            it = self.transparent or []
             for row in data:
-                yield map(lambda p: p + (maxval,), group(row, 3))
+                # For each row we group it into pixels, then form a
+                # characterisation vector that says whether each pixel
+                # is opaque or not.  Then we expand that to an 8-bit
+                # alpha channel and add it as the extra channel.
+                row = group(row, 3)
+                opa = map(it.__ne__, row)
+                opa = map((255).__mul__, opa)
+                opa = zip(opa) # convert to 1-tuples
+                yield map(operator.add, row, opa)
         if 3 == n:
             def grey8():
                 """Handle K8."""
@@ -1498,8 +1521,6 @@ class Reader:
                     "required PLTE chunk is missing in color type 3 image")
             plte = group(array('B', self.plte), 3)
             if n == 4:
-                # http://www.python.org/doc/2.4.4/lib/module-operator.html
-                import operator
                 trns = array('B', self.trns or '')
                 trns.extend([255]*(len(plte)-len(trns)))
                 plte = map(operator.add, plte, group(trns, 1))
