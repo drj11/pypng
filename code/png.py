@@ -1252,7 +1252,6 @@ class Reader:
                 else:
                     if len(data) > len(self.plte)/3:
                         warnings.warn("tRNS chunk is too long")
-                self.alpha = True
             else:
                 if self.alpha:
                     raise Error("tRNS chunk is not valid with colortype %d" %
@@ -1262,6 +1261,7 @@ class Reader:
                         struct.unpack("!%dH" % self.color_planes, data)
                 except struct.error:
                     raise ValueError("tRNS chunk has incorrect length")
+            self.alpha = True
         elif type == 'gAMA':
             try:
                 self.gamma = struct.unpack("!L", data)[0] / 100000.0
@@ -1633,6 +1633,10 @@ class Test(unittest.TestCase):
         d = d+(255,)
         e = e+(255,)
         self.assertEqual(list(pixels), [(e,d,c),(d,c,a),(c,a,b)])
+    def testRGBtoRGBA(self):
+        "asRGBA8() on color type 2 source."""
+        r = Reader(bytes=_pngsuite['basn2c08'])
+        x,y,pixels,meta = r.asRGBA8()
     def testAdam7read(self):
         """Adam7 interlace reading.
         Specifically, test that for images in the PngSuite that
@@ -1875,6 +1879,13 @@ ae426082
 3a82601d089900dd82f640ca04e816dc06422640b7a03d903201ba05b7819009
 d02d680fa44c603f6f07ec4ff41938cf7f0016d84bd85fae2b9fd70000000049
 454e44ae426082
+"""),
+  basn2c08=_dehex("""
+89504e470d0a1a0a0000000d4948445200000020000000200802000000fc18ed
+a30000000467414d41000186a031e8965f0000004849444154789cedd5c10900
+300c024085ec91fdb772133b442bf4a1f8cee12bb40d043b800a14f81ca0ede4
+7d4c784081020f4a871fc284071428f0a0743823a94081bb7077a3c00182b1f9
+5e0f40cf4b0000000049454e44ae426082
 """),
   basn2c16=_dehex("""
 89504e470d0a1a0a0000000d4948445200000020000000201002000000ac8831
