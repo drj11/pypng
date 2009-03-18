@@ -12,4 +12,5 @@
 # building.
 
 import os
-os.system('sphinx-build -N -a man html')
+os.system('rm -fr html')
+os.system('sphinx-build -N -d sphinx-crud -a man html')
