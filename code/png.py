@@ -153,6 +153,35 @@ import zlib
 # http://www.python.org/doc/2.4.4/lib/module-warnings.html
 import warnings
 
+# In order work on Python 2.3 we fix up a recurring annoyance involving
+# the array type.  In Python 2.3 an array cannot be initialised with an
+# array, and it cannot be extended with a list (or other sequence).
+# Both of those are repeated issues in the code.  Whilst I would not
+# normally tolerate this sort of behaviour, here we "shim" a replacement
+# for array into place (and hope no-ones notices).  You never read this.
+try:
+    array('B').extend([])
+    array('B', array('B'))
+except:
+    class _array_shim(array):
+        true_array = array
+        def __new__(cls, typecode, init=None):
+            super_new = super(_array_shim, cls).__new__
+            it = super_new(cls, typecode)
+            if init is None:
+                return it
+            it.extend(init)
+            return it
+        def extend(self, extension):
+            super_extend = super(_array_shim, self).extend
+            if isinstance(extension, self.true_array):
+                return super_extend(extension)
+            if not isinstance(extension, (list, str)):
+                # Convert to list.  Allows iterators to work.
+                extension = list(extension)
+            return super_extend(self.true_array('B', extension))
+    array = _array_shim
+
 __all__ = ['Reader', 'Writer']
 
 
