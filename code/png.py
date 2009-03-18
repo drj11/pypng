@@ -1743,7 +1743,7 @@ class Test(unittest.TestCase):
             x,y,ps,meta = Reader(bytes=pngi).read()
             it = Reader(bytes=bytes)
             x,y,pixels,meta = it.read()
-            pngs = topngbytes('adam7wi'+name+'.png', p2,
+            pngs = topngbytes('adam7wi'+name+'.png', pixels,
               x=x, y=y, bitdepth=it.bitdepth,
               greyscale=it.greyscale, alpha=it.alpha,
               transparent=it.transparent,
