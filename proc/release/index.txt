@@ -1,31 +1,41 @@
-$URL$
-$Rev$
+.. $URL$
+.. $Rev$
 
 Release Procedure
+=================
 
-Not even a draft, just some notes.
+Extremely draft.
 
-Edit setup.py for new version number.  Then "svn commit" this.
+At top-level...
 
-Get the latest svn change number:
-svn st -u | tail -1
-(this is called CHANGE below)
+Edit ``setup.py`` for new version number.  Then ``svn commit`` this.
 
-at top-level...
+Get release notes into ``README.txt`` somehow.
 
-Update our sources to the particular revision.
-svn up -r CHANGE
+Get the latest svn change number::
 
-Buld the documentation:
-python build.py
+  svn st -u | tail -1
 
-Make source distribution using Python distutils
-python setup.py sdist -f
+(this is called *CHANGE* below)
 
-The -f option is essential, it prevents sdist from copying the wrong set
-of files.  Without -f sdist will examine the MANIFEST file which may be
-out of date.
+Update our sources to the particular revision::
 
-Make a record in release/index.txt
+  svn up -r CHANGE
 
-Upload dist/pypng-X.Y.X.tar.gz to google code.
+Buld the documentation::
+
+  python build.py
+
+Make source distribution using Python distutils::
+
+  python setup.py sdist -f
+
+The ``-f`` option is essential, it prevents ``sdist`` from copying the wrong
+set of files.  Without ``-f`` ``sdist`` will examine the ``MANIFEST`` file
+which may be out of date.
+
+Make a record in ``release/index.txt``
+
+Upload ``dist/pypng-X.Y.Z.tar.gz`` to google code.
+
+Register release with PyPI (and upload it?).

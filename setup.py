@@ -14,7 +14,7 @@
 
 conf = dict(
     name='pypng',
-    version='0.0.1',
+    version='0.0.2',
     description='Pure Python PNG encoder/decoder',
     author='David Jones',
     author_email='drj@pobox.com',

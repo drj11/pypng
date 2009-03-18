@@ -30,6 +30,24 @@ GETTING STARTED
 see the example in the man/ex/ directory.
 
 
+RELEASE NOTES
+
+(For issues see http://code.google.com/p/pypng/issues/list )
+
+Release 0.0.2 (This release)
+
+The following issues have been fixed:
+
+  Issue 8:  Documentation is not lickable.
+  Issue 9:  Advantage over PIL is not clear.
+  Issue 19: Bogus message for PNM inputs with unsupported maxval
+  Issue 20: Cannot write large PNG files
+
+Release 0.0.1
+
+Stuff happened.
+
+
 MANIFEST
 
 .../ - top-level crud (like this README, and setup.py).

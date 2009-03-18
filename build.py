@@ -12,4 +12,4 @@
 # building.
 
 import os
-os.system('sphinx-build -a man html')
+os.system('sphinx-build -N -a man html')
