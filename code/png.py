@@ -1269,7 +1269,6 @@ class Reader:
                         struct.unpack("!%dH" % self.color_planes, data)
                 except struct.error:
                     raise ValueError("tRNS chunk has incorrect length")
-            self.alpha = True
         elif type == 'gAMA':
             try:
                 self.gamma = struct.unpack("!L", data)[0] / 100000.0
@@ -1708,15 +1707,16 @@ class Test(unittest.TestCase):
             it = Reader(bytes=bytes)
             x,y,pixels,meta = it.read()
             p1,p2 = itertools.tee(pixels)
-            alpha = it.planes in (2,4)
             pngi = topngbytes('adam7wn'+name+'.png', p1,
               x=x, y=y, bitdepth=it.bitdepth,
-              greyscale=it.greyscale, alpha=alpha,
+              greyscale=it.greyscale, alpha=it.alpha,
+              transparent=it.transparent,
               interlace=False)
             x,y,ps,meta = Reader(bytes=pngi).read()
             pngs = topngbytes('adam7wi'+name+'.png', p2,
               x=x, y=y, bitdepth=it.bitdepth,
-              greyscale=it.greyscale, alpha=alpha,
+              greyscale=it.greyscale, alpha=it.alpha,
+              transparent=it.transparent,
               interlace=True)
             x,y,pi,meta = Reader(bytes=pngs).read()
             self.assertEqual(map(list, ps), map(list, pi))
@@ -2307,13 +2307,15 @@ def test_suite(options, args):
             raise NotImplementedError("cannot find PngSuite file %s (use -L for a list)" % name)
         r = Reader(bytes=_pngsuite[name])
         r.preamble()
-        if r.alpha:
+        # There are two ways of representing an alpha channel in PNG.
+        alpha = r.alpha or r.trns
+        if alpha:
             get = r.asRGBA8
         else:
             get = r.asRGB8
         w,h,pixels,meta = get()
         assert w == h
-        return w, array('B', itertools.chain(*flatten())), r.alpha
+        return w, array('B', itertools.chain(*flatten())), alpha
 
     # The body of test_suite()
     size = 256
@@ -2523,7 +2525,9 @@ def _main():
         options.background = color_triple(options.background)
 
     if options.list:
-        for name in sorted(_pngsuite):
+        names = list(_pngsuite)
+        names.sort()
+        for name in names:
             print name
         return
 
