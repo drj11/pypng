@@ -1427,8 +1427,8 @@ class Reader:
         def rgb8add():
             """Add alpha channel to convert RGB to RGBA."""
             assert n == 4
-            return iter(group(map(lambda p: p + (maxval,),
-                                  group(data, 3), width)))
+            for row in data:
+                yield map(lambda p: p + (maxval,), group(row, 3))
         if 3 == n:
             def grey8():
                 """Handle K8."""
