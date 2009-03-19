@@ -676,7 +676,11 @@ class Writer:
     def file_scanlines(self, infile):
         """
         Generates boxed rows in flat pixel format, from the input file
-        `infile`.
+        `infile`.  It assumes that the input file is in a "Netpbm-like"
+        binary format, and is positioned at the beginning of the first
+        pixel.  The number of pixels to read is taken from the image
+        dimensions (`width`, `height`, `planes`) and the number of bytes
+        per value is implied by the image `bitdepth`.
         """
 
         # Values per row
@@ -1789,14 +1793,18 @@ class Test(unittest.TestCase):
         s = StringIO()
         s.write('P7\nWIDTH 3\nHEIGHT 1\nDEPTH 4\nMAXVAL 255\n'
                 'TUPLTYPE RGB_ALPHA\nENDHDR\n')
-        s.write(array('B', [255,0,0,255, 0,255,0,120, 0,0,255,30]).tostring())
+        # The pixels in flat row flat pixel format
+        flat =  [255,0,0,255, 0,255,0,120, 0,0,255,30]
+        s.write(array('B', flat).tostring())
         s.flush()
         s.seek(0)
         o = StringIO()
         testWithIO(s, o, do)
         r = Reader(bytes=o.getvalue())
-        x.y,pixels,meta = r.read()
+        x,y,pixels,meta = r.read()
         self.assert_(r.alpha)
+        self.assert_(not r.greyscale)
+        self.assertEqual(list(itertools.chain(*pixels)), flat)
 
 # === Command Line Support ===
 
@@ -2434,24 +2442,73 @@ def test_suite(options, args):
                     interlace=options.interlace)
     writer.write_array(sys.stdout, pixels)
 
+def read_pam_header(infile):
+    """
+    Read (the rest of a) PAM header.  `infile` should be positioned
+    immediately after the initial 'P7' line (at the beginning of the
+    second line).  Returns are as for `read_pnm_header`.
+    """
+    
+    # Unlike PBM, PGM, and PPM, we can read the header a line at a time.
+    header = dict()
+    while True:
+        l = infile.readline().strip()
+        if l == 'ENDHDR':
+            break
+        if l == '':
+            raise EOFError('PAM ended prematurely')
+        if l[0] == '#':
+            continue
+        l = l.split(None, 1)
+        if l[0] not in header:
+            header[l[0]] = l[1]
+        else:
+            header[l[0]] += ' ' + l[1]
+
+    if ('WIDTH' not in header or
+        'HEIGHT' not in header or
+        'DEPTH' not in header or
+        'MAXVAL' not in header):
+        raise Error('PAM file must specify WIDTH, HEIGHT, DEPTH, and MAXVAL')
+    width = int(header['WIDTH'])
+    height = int(header['HEIGHT'])
+    depth = int(header['DEPTH'])
+    maxval = int(header['MAXVAL'])
+    if (width <= 0 or
+        height <= 0 or
+        depth <= 0 or
+        maxval <= 0):
+        raise Error(
+          'WIDTH, HEIGHT, DEPTH, MAXVAL must all be positive integers')
+    return 'P7', width, height, depth, maxval
 
 def read_pnm_header(infile, supported=('P5','P6')):
     """
-    Read a PNM header, returning (format,width,height,maxval).  width
-    and height are in pixels.  maxval is synthesized (as 1) for PBM
-    images.
+    Read a PNM header, returning (format,width,height,depth,maxval).
+    `width` and `height` are in pixels.  `depth` is the number of
+    channels in the image; for PBM and PGM it is synthesized as 1, for
+    PPM as 3; for PAM images it is read from the header.  `maxval` is
+    synthesized (as 1) for PBM images.
     """
 
     # Generally, see http://netpbm.sourceforge.net/doc/ppm.html
+    # and http://netpbm.sourceforge.net/doc/pam.html
 
-    header = [infile.read(3).rstrip()]
-    if header[0] not in supported:
-        raise NotImplementedError('file format %s not supported' % header[0])
+    # Technically 'P7' must be followed by a newline, so by using
+    # rstrip() we are being liberal in what we accept.  I think this
+    # is acceptable.
+    type = infile.read(3).rstrip()
+    if type not in supported:
+        raise NotImplementedError('file format %s not supported' % type)
+    if type == 'P7':
+        # PAM header parsing is completely different.
+        return read_pam_header(infile)
     # Expected number of tokens in header (3 for P4, 4 for P6)
     expected = 4
     pbm = ('P1', 'P4')
-    if header in pbm:
+    if type in pbm:
         expected = 3
+    header = [type]
 
     # We have to read the rest of the header byte by byte because the
     # final whitespace character (immediately following the MAXVAL in
@@ -2484,7 +2541,9 @@ def read_pnm_header(infile, supported=('P5','P6')):
         while c.isdigit():
             token += c
             c = getc()
-        header.append(token)
+        # Slight hack.  All "tokens" are decimal integers, so convert
+        # them here.
+        header.append(int(token))
         if len(header) == expected:
             break
     # Skip comments (again)
@@ -2494,10 +2553,11 @@ def read_pnm_header(infile, supported=('P5','P6')):
     if not c.isspace():
         raise Error('expected header to end with whitespace, not %s' % c)
 
-    if header[0] in pbm:
+    if type in pbm:
         # synthesize a MAXVAL
         header.append(1)
-    return header[0], int(header[1]), int(header[2]), int(header[3])
+    depth = (1,3)[type == 'P6']
+    return header[0], header[1], header[2], depth, header[3]
 
 def write_ppm(file, width, height, pixels, maxval=255):
     """Write a PPM file.  Assumes MAXVAL 255 and RGB pixels."""
@@ -2629,8 +2689,16 @@ def _main(argv):
         write_ppm(outfile, width, height, pixels) 
     else:
         # Encode PNM to PNG
-        format, width, height, maxval = read_pnm_header(infile, ('P5','P6'))
-        greyscale = format == 'P5'
+        format, width, height, depth, maxval = \
+          read_pnm_header(infile, ('P5','P6','P7'))
+        # When it comes to the variety of input formats, we do something
+        # rather rude.  Observe that L, LA, RGB, RGBA are the 4 color
+        # types supported by PNG and that they correspond to 1, 2, 3, 4
+        # channels respectively.  So we use the number of channels in
+        # the source image to determine which one we have.  We do not
+        # care about TUPLTYPE.
+        greyscale = depth <= 2
+        pamalpha = depth in (2,4)
         supported = [1, 3, 15, 255, 65535]
         try:
             mi = supported.index(maxval)
@@ -2639,8 +2707,8 @@ def _main(argv):
               'your maxval (%s) not in supported list %s' %
               (maxval, str(supported)))
         bitdepth = 2**mi
-        if bitdepth < 8 and options.alpha:
-            raise ValueError('alpha channel not supported with bit depth %d' %
+        if bitdepth < 8 and (pamalpha or options.alpha or not greyscale):
+            raise ValueError('bit depth %d must be greyscale only' %
               bitdepth)
         writer = Writer(width, height,
                         greyscale=greyscale,
@@ -2648,12 +2716,13 @@ def _main(argv):
                         interlace=options.interlace,
                         transparent=options.transparent,
                         background=options.background,
-                        alpha=bool(options.alpha),
+                        alpha=bool(pamalpha or options.alpha),
                         gamma=options.gamma,
                         compression=options.compression)
         if options.alpha:
             pgmfile = open(options.alpha, 'rb')
-            format, awidth, aheight, amaxval = read_pnm_header(pgmfile, 'P5')
+            format, awidth, aheight, adepth, amaxval = \
+              read_pnm_header(pgmfile, 'P5')
             if amaxval != '255':
                 raise NotImplementedError(
                   'maxval %s not supported for alpha channel' % amaxval)
