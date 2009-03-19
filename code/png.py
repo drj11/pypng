@@ -2435,43 +2435,28 @@ def test_suite(options, args):
                 psize += 1
         return i
 
-    def test_image(name, bitdepth):
+    def pngsuite_image(name):
         """
         Create a test image by reading an internal copy of the files
         from the PngSuite.  Returned in flat row flat pixel format.
         """
 
-        def flatten():
-            """Returns an iterator that flattens scanlines."""
-
-            for scanline in pixels:
-                yield tuple(itertools.chain(*scanline))
-
-        if bitdepth != 8:
-            raise NotImplementedError("bit depth %d not supported" % bitdepth)
-
         if name not in _pngsuite:
             raise NotImplementedError("cannot find PngSuite file %s (use -L for a list)" % name)
         r = Reader(bytes=_pngsuite[name])
-        r.preamble()
-        # There are two ways of representing an alpha channel in PNG.
-        alpha = r.alpha or r.trns
-        if alpha:
-            get = r.asRGBA8
-        else:
-            get = r.asRGB8
-        w,h,pixels,meta = get()
+        w,h,pixels,meta = r.asDirect()
         assert w == h
-        return w, array('B', itertools.chain(*flatten())), alpha
+        arraycode = 'BH'[meta['bitdepth']>8]
+        return w, array(arraycode, itertools.chain(*pixels)), meta
 
     # The body of test_suite()
     size = 256
     if options.test_size:
         size = options.test_size
-    depth = 8
+    options.bitdepth = 8
     if options.test_deep:
-        depth = 16
-    greyscale=bool(options.test_black)
+        options.bitdepth = 16
+    options.greyscale=bool(options.test_black)
 
     kwargs = {}
     if options.test_red:
@@ -2482,25 +2467,27 @@ def test_suite(options, args):
         kwargs["blue"] = options.test_blue
     if options.test_alpha:
         kwargs["alpha"] = options.test_alpha
-    if greyscale:
+    if options.greyscale:
         if options.test_red or options.test_green or options.test_blue:
             raise ValueError("cannot specify colours (R, G, B) when greyscale image (black channel, K) is specified")
         kwargs["red"] = options.test_black
         kwargs["green"] = None
         kwargs["blue"] = None
-    alpha = bool(options.test_alpha)
+    options.alpha = bool(options.test_alpha)
     if not args:
-        pixels = test_rgba(size, depth, **kwargs)
+        pixels = test_rgba(size, options.bitdepth, **kwargs)
     else:
-        size,pixels,alpha = test_image(args[0], depth)
+        size,pixels,meta = pngsuite_image(args[0])
+        for k in ['bitdepth', 'alpha', 'greyscale']:
+            setattr(options, k, meta[k])
 
     writer = Writer(size, size,
-                    bitdepth=depth,
+                    bitdepth=options.bitdepth,
                     transparent=options.transparent,
                     background=options.background,
                     gamma=options.gamma,
-                    greyscale=greyscale,
-                    alpha=alpha,
+                    greyscale=options.greyscale,
+                    alpha=options.alpha,
                     compression=options.compression,
                     interlace=options.interlace)
     writer.write_array(sys.stdout, pixels)
