@@ -307,8 +307,8 @@ class Writer:
         1,2,4,8, or 16, but there are some restrictions on some values.
 
         For greyscale and palette images the PNG specification allows
-        the bit depth to be less than 8.  For other types, bit depths
-        less than 8 are rejected.
+        the bit depth to be less than 8.  For other types (including
+        greyscale+alpha), bit depths less than 8 are rejected.
 
         The palette option, when specified, causes a palettized
         (colour-mapped) image to be created: the PNG color type is set
@@ -384,8 +384,9 @@ class Writer:
         if bitdepth not in (1,2,4,8,16):
             raise ValueError("bitdepth must be 1, 2, 4, 8, or 16")
 
-        if bitdepth < 8 and not greyscale and not palette:
-            raise ValueError("color images must use bitdepth 8 or 16")
+        if bitdepth < 8 and (alpha or not greyscale and not palette):
+            raise ValueError(
+              "bitdepth < 8 only permitted with greyscale or palette")
         if bitdepth > 8 and palette:
             raise ValueError(
                 "bit depth must be 8 or less for images with palette")
