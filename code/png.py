@@ -690,8 +690,7 @@ class Writer:
                 return array('H', struct.unpack(fmt, infile.read(row_bytes)))
         else:
             def line():
-                scanline = array('B')
-                scanline.fromfile(infile, row_bytes)
+                scanline = array('B', infile.read(row_bytes))
                 return scanline
         for y in range(self.height):
             yield line()
@@ -1601,9 +1600,11 @@ class Reader:
 # Run the tests from the command line:
 # python -c 'import png;png.test()'
 
+from StringIO import StringIO
+import tempfile
 # http://www.python.org/doc/2.4.4/lib/module-unittest.html
 import unittest
-from StringIO import StringIO
+
 
 def test():
     unittest.main(__name__)
@@ -1627,6 +1628,20 @@ def topngbytes(name, rows, x, y, **k):
         w.write(f.getvalue())
         w.close()
     return f.getvalue()
+
+def testWithIO(inp, out, f):
+    """Calls the function `f` with ``sys.stdin`` changed to `inp`
+    and ``sys.stdout`` changed to `out`.  They are restored when `f`
+    returns.  This function returns whatever `f` returns.
+    """
+    try:
+        oldin,sys.stdin = sys.stdin,inp
+        oldout,sys.stdout = sys.stdout,out
+        x = f()
+    finally:
+        sys.stdin = oldin
+        sys.stdout = oldout
+    return x
 
 class Test(unittest.TestCase):
     def helperKN(self, n):
@@ -1752,7 +1767,21 @@ class Test(unittest.TestCase):
               interlace=True)
             x,y,pi,meta = Reader(bytes=pngs).read()
             self.assertEqual(map(list, ps), map(list, pi))
-
+    def testPGMin(self):
+        """Test that the command line tool can read PGM files."""
+        def do():
+            return _main(['testPGMin'])
+        s = StringIO()
+        s.write('P5 2 2 3\n')
+        s.write(array('B', range(4)).tostring())
+        s.flush()
+        s.seek(0)
+        o = StringIO()
+        testWithIO(s, o, do)
+        r = Reader(bytes=o.getvalue())
+        x,y,pixels,meta = r.read()
+        self.assert_(r.greyscale)
+        self.assert_(r.bitdepth, 2)
 
 # === Command Line Support ===
 
@@ -2548,7 +2577,7 @@ def _main(argv):
     parser.add_option("-S", "--test-size",
                       action="store", type="int", metavar="size",
                       help="width and height of the test image")
-    (options, args) = parser.parse_args(args=argv)
+    (options, args) = parser.parse_args(args=argv[1:])
 
     # Convert options
     if options.transparent is not None:
