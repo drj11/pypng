@@ -1,3 +1,6 @@
+.. $URL$
+.. $Rev$
+
 Why Use PyPNG?
 ==============
 
@@ -28,7 +31,9 @@ variety of image formats: RGB or greyscale, with or without an alpha
 channel; and a choice of bit depths from 1,2, or 4 (as long as your want
 greyscale or a pallete), 8, and 16 (but 16 bits is not allowed for
 palettes).  A pixel can vary in size from 1 to 64 bits:
-1/2/4/8/16/24/32/48/64.
+1/2/4/8/16/24/32/48/64.  In addition a PNG file can be `interlaced` or
+not.  An interlaced file allows an incrementally refined display of
+images being downloaded over slow links.
 
 PIL, according to its handbook, does not support interlaced PNG
 files.  Also, PIL only has internal representations (PIL `mode`)
@@ -48,6 +53,15 @@ processing is possible fairly easily, for example cropping to integer
 coordinates, or gamma conversion, but in any case PyPNG provides no
 support for it.  In the future a sister project to PyPNG may add some
 simple image processing, but processing in pure Python will be way slow.
+
+PyPNG (when used in its command-line mode) can read Netpbm PAM files,
+and use a single source file to create PNG files with all permitted
+channel combinations: greyscale, greyscale--alpha, RGB, RGBA.  Using PAM
+as an intermediate format is preferred over having to carry around your
+alpha channel in a separate file; it allows workflows to be pipelined
+more easily.  Netpbm does not have a ``pamtopng`` tool (yet?), its
+``pnmtopng`` tool requires an alpha channel to be specified in a
+separate file.
 
 ``libpng`` is made by the PNG gods, so if want to get at all that
 goodness, then you may want to interface directly to libpng via
