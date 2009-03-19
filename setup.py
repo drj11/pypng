@@ -10,7 +10,7 @@
 # to the disutil documentation for that.
 
 # This script is also imported as a module by the Sphinx conf.py script
-# in the man directory, so that there is a single source, here, for
+# in the man directory, so that this file forms a single source for
 # metadata.
 
 conf = dict(
@@ -24,6 +24,7 @@ conf = dict(
     py_modules=['png'],
     classifiers=[
       'Topic :: Multimedia :: Graphics',
+      'Topic :: Software Development :: Libraries :: Python Modules',
       'Programming Language :: Python',
       'Programming Language :: Python :: 2.3',
       'License :: OSI Approved :: MIT License',
