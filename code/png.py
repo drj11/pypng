@@ -1471,7 +1471,9 @@ class Reader:
         # Simple case, no conversion necessary.
         if not self.colormap and not self.trns:
             return self.read()
+
         x,y,pixels,meta = self.read()
+
         if self.colormap:
             meta['colormap'] = False
             meta['alpha'] = bool(self.trns)
@@ -1483,6 +1485,32 @@ class Reader:
                     row = map(plte.__getitem__, row)
                     yield array('B', itertools.chain(*row))
             return x,y,iterpal(),meta
+
+        assert self.trns
+        # It would be nice if there was some reasonable way of doing
+        # this without generating a whole load of intermediate tuples.
+        # But tuples does seem like the easiest way, with no other way
+        # clearly much simpler or much faster.  (Actually, the L to LA
+        # conversion could perhaps go faster (all those 1-tuples!), but
+        # I still wonder whether the code proliferation is worth it)
+        it = self.transparent
+        maxval = 2**meta['bitdepth']-1
+        planes = meta['planes']
+        meta['alpha'] = True
+        meta['planes'] += 1
+        def itertrns():
+            for row in pixels:
+                # For each row we group it into pixels, then form a
+                # characterisation vector that says whether each pixel
+                # is opaque or not.  Then we convert True/False to
+                # 0/maxval (by multiplication), and add it as the extra
+                # channel.
+                row = group(row, planes)
+                opa = map(it.__ne__, row)
+                opa = map(maxval.__mul__, opa)
+                opa = zip(opa) # convert to 1-tuples
+                yield itertools.chain(*map(operator.add, row, opa))
+        return x,y,itertrns(),meta
 
     def asRGB8(self):
         """Return the image data as an RGB image with 8-bits per
