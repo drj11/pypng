@@ -1465,6 +1465,17 @@ class Reader:
 
         All the other aspects of the image data (bit depth for example)
         are not changed.
+
+        .. note::
+
+          When the source image is greyscale, has bit depth < 8, and has
+          a ``tRNS`` chunk, then an alpha channel will be added, but the
+          bit depth does not change.  This results in pixel data which
+          is 2-channel (greyscale+alpha) but bit depth < 8.  Whilst this
+          is perfectly sensible, it is not a pixel format supported by
+          PNG so you cannot write it out unmodified is to another PNG file.
+          This is not regarded as a bug is this method, it is not the
+          job of this method to rescale pixel values.
         """
 
         self.preamble()
@@ -2496,6 +2507,15 @@ def test_suite(options, args):
         r = Reader(bytes=_pngsuite[name])
         w,h,pixels,meta = r.asDirect()
         assert w == h
+        # LAn for n < 8 is a special case for which we need to rescale
+        # the data.
+        if meta['greyscale'] and meta['alpha'] and meta['bitdepth'] < 8:
+            factor = 255 // (2**meta['bitdepth']-1)
+            def rescale(data):
+                for row in data:
+                    yield map(factor.__mul__, row)
+            pixels = rescale(pixels)
+            meta['bitdepth'] = 8
         arraycode = 'BH'[meta['bitdepth']>8]
         return w, array(arraycode, itertools.chain(*pixels)), meta
 
