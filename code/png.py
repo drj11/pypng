@@ -1361,7 +1361,7 @@ class Reader:
         else:
             pixels = self.iterboxed(self.iterstraight(raw))
         meta = dict()
-        for attr in 'greyscale alpha bitdepth interlace'.split():
+        for attr in 'greyscale alpha planes bitdepth interlace'.split():
             meta[attr] = getattr(self, attr)
         for attr in 'gamma transparent background'.split():
             a = getattr(self, attr, None)
@@ -1410,6 +1410,42 @@ class Reader:
             if a is not None:
                 meta[attr] = a
         return self.width, self.height, pixels, meta
+
+    def asDirect(self):
+        """Returns the image data as a direct representation of an
+        ``x * y * planes`` array.  This method is intended to remove the
+        need for callers to deal with palettes and transparency
+        themselves.  Images with a palette (color type 3)
+        are converted to RGB or RGBA; images with transparency (a
+        ``tRNS`` chunk) are converted to LA or RGBA as appropriate.
+        When returned in this format the pixel values represent the
+        colour value directly without needing to refer to palettes or
+        transparency information.
+
+        As for the :meth:`read` method this method returns a 4-tuple:
+
+        (*x*, *y*, *pixels*, *meta*)
+
+        The *meta* dictionary that is returned reflects the `direct`
+        format and not the original source image.  For example, an RGB
+        source image with a ``tRNS`` chunk to represent a transparent
+        colour, will have ``planes=3`` and ``alpha=False`` for the
+        source image, but the *meta* dictionary returned by this method
+        will have ``planes=4`` and ``alpha=True`` because an alpha
+        channel is synthesized and added.
+
+        *pixels* is the pixel data in boxed row flat pixel format (just
+        like the :meth:`read` method).
+
+        All the other aspects of the image data (bit depth for example)
+        are not changed.
+        """
+
+        self.preamble()
+
+        # Simple case, no conversion necessary.
+        if not self.colormap and not self.trns:
+            return self.read()
 
     def asRGB8(self):
         """Return the image data as an RGB image with 8-bits per
@@ -2559,19 +2595,47 @@ def read_pnm_header(infile, supported=('P5','P6')):
     depth = (1,3)[type == 'P6']
     return header[0], header[1], header[2], depth, header[3]
 
-def write_ppm(file, width, height, pixels, maxval=255):
-    """Write a PPM file.  Assumes MAXVAL 255 and RGB pixels."""
-    file.write('P6 %d %d %d\n' % (width, height, maxval))
+def write_pnm(file, width, height, pixels, meta):
+    """Write a PNM file."""
+    bitdepth = meta['bitdepth']
+    maxval = 2**bitdepth - 1
+    # Rudely, the number of image planes can be used to determine
+    # whether we are L (PGM), LA (PAM), RGB (PPM), or RGBA (PAM).
+    planes = meta['planes']
+    # Can be an assert as long as we assumes that pixels and meta came
+    # from a PNG file.
+    assert planes in (1,2,3,4)
+    if planes in (1,3):
+        if 1 == planes:
+            # PGM
+            # Could generate PBM if maxval is 1, but we don't (for one
+            # thing, we'd have to convert the data, not just blat it
+            # out).
+            fmt = 'P5'
+        else:
+            # PPM
+            fmt = 'P6'
+        file.write('%s %d %d %d\n' % (fmt, width, height, maxval))
+    if planes in (2,4):
+        # PAM
+        # See http://netpbm.sourceforge.net/doc/pam.html
+        if 2 == planes:
+            tupltype = 'GRAYSCALE_ALPHA'
+        else:
+            tupltype = 'RGB_ALPHA'
+        file.write('P7\nWIDTH %d\nHEIGHT %d\nDEPTH %d\nMAXVAL %d\n'
+                   'TUPLTYPE %s\nENDHDR\n' %
+                   (width, height, planes, maxval, tupltype))
     # Values per row
-    vpr = 3 * width
+    vpr = planes * width
     # struct format
     fmt = '>%d' % vpr
     if maxval > 0xff:
         fmt = fmt + 'H'
     else:
         fmt = fmt + 'B'
-    for l in pixels:
-        file.write(struct.pack(fmt, *itertools.chain(*l)))
+    for row in pixels:
+        file.write(struct.pack(fmt, *row))
     file.flush()
 
 def color_triple(color):
@@ -2685,8 +2749,8 @@ def _main(argv):
     if options.read_png:
         # Encode PNG to PPM
         png = Reader(file=infile)
-        width,height,pixels,meta = png.asRGB8()
-        write_ppm(outfile, width, height, pixels) 
+        width,height,pixels,meta = png.asDirect()
+        write_pnm(outfile, width, height, pixels, meta) 
     else:
         # Encode PNM to PNG
         format, width, height, depth, maxval = \
