@@ -1896,6 +1896,11 @@ class Test(unittest.TestCase):
         self.assert_(r.alpha)
         self.assert_(not r.greyscale)
         self.assertEqual(list(itertools.chain(*pixels)), flat)
+    def testLA4(self):
+        """Attempting to create an LA file with bitdepth 4 should fail."""
+        def it():
+            Writer(1, 1, greyscale=True, alpha=True, bitdepth=4)
+        self.assertRaises(Exception, it)
 
 # === Command Line Support ===
 
