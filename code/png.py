@@ -147,6 +147,8 @@ __version__ = "$URL$ $Rev$"
 from array import array
 import itertools
 import math
+# http://www.python.org/doc/2.4.4/lib/module-operator.html
+import operator
 import struct
 import sys
 import zlib
@@ -1411,6 +1413,29 @@ class Reader:
                 meta[attr] = a
         return self.width, self.height, pixels, meta
 
+    def palette(self, alpha='natural'):
+        """Returns a palette that is a sequence of 3-tuples or 4-tuples,
+        synthesizing it from the ``PLTE`` and ``tRNS`` chunks.  These
+        chunks should have already been processed (for example, by
+        calling the :meth:`preamble` method).  All the tuples are the
+        same size, 3-tuples if there is no ``tRNS`` chunk, 4-tuples when
+        there is a ``tRNS`` chunk.  Assumes that the image is color type
+        3 and therefore a ``PLTE`` chunk is required.
+
+        If the `alpha` argument is ``'force'`` then an alpha channel is
+        always added, forcing the result to be a sequence of 4-tuples.
+        """
+
+        if not self.plte:
+            raise Error(
+                "required PLTE chunk is missing in color type 3 image")
+        plte = group(array('B', self.plte), 3)
+        if self.trns or alpha == 'force':
+            trns = array('B', self.trns or '')
+            trns.extend([255]*(len(plte)-len(trns)))
+            plte = map(operator.add, plte, group(trns, 1))
+        return plte
+
     def asDirect(self):
         """Returns the image data as a direct representation of an
         ``x * y * planes`` array.  This method is intended to remove the
@@ -1446,6 +1471,18 @@ class Reader:
         # Simple case, no conversion necessary.
         if not self.colormap and not self.trns:
             return self.read()
+        x,y,pixels,meta = self.read()
+        if self.colormap:
+            meta['colormap'] = False
+            meta['alpha'] = bool(self.trns)
+            meta['bitdepth'] = 8
+            meta['planes'] = 3 + bool(self.trns)
+            plte = self.palette()
+            def iterpal():
+                for row in pixels:
+                    row = map(plte.__getitem__, row)
+                    yield array('B', itertools.chain(*row))
+            return x,y,iterpal(),meta
 
     def asRGB8(self):
         """Return the image data as an RGB image with 8-bits per
@@ -1477,9 +1514,6 @@ class Reader:
 
     def asRGB8Aopt(self, n, dropalpha=False):
         """*n* is the number of channels in the target."""
-
-        # http://www.python.org/doc/2.4.4/lib/module-operator.html
-        import operator
 
         assert n in (3,4)
 
@@ -1590,14 +1624,7 @@ class Reader:
         if 3 == n and meta["alpha"] and not dropalpha:
             raise Error("will not convert image with alpha channel to RGB")
         if self.colormap:
-            if not self.plte:
-                raise Error(
-                    "required PLTE chunk is missing in color type 3 image")
-            plte = group(array('B', self.plte), 3)
-            if n == 4:
-                trns = array('B', self.trns or '')
-                trns.extend([255]*(len(plte)-len(trns)))
-                plte = map(operator.add, plte, group(trns, 1))
+            plte = self.palette()
             return width, height, palette(), meta
         elif bitdepth < 8:
             # assert grey because the colormap case is handled
