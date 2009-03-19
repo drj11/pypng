@@ -1632,7 +1632,7 @@ class Test(unittest.TestCase):
     def helperKN(self, n):
         mask = (1 << n) - 1
         # Use small chunk_limit so that multiple chunk writing is
-        # tested.
+        # tested.  Making it a test for Issue 20.
         w = Writer(15, 17, greyscale=True, bitdepth=n, chunk_limit=99)
         f = StringIO()
         w.write_array(f, array('B', map(mask.__and__, range(1, 256))))
@@ -1691,10 +1691,12 @@ class Test(unittest.TestCase):
         self.assertEqual(list(pixels), [(e,d,c),(d,c,a),(c,a,b)])
     def testRGBtoRGBA(self):
         "asRGBA8() on color type 2 source."""
+        # Test for Issue 26
         r = Reader(bytes=_pngsuite['basn2c08'])
         x,y,pixels,meta = r.asRGBA8()
     def testCtrns(self):
         "Test color type 2 and tRNS chunk."
+        # Test for Issue 25
         r = Reader(bytes=_pngsuite['tbrn2c08'])
         x,y,pixels,meta = r.asRGBA8()
         # I just happen to know that the first pixel is transparent.
@@ -2487,7 +2489,7 @@ def color_triple(color):
                 int(color[9:13], 16))
 
 
-def _main():
+def _main(argv):
     """
     Run the PNG encoder with options from the command line.
     """
@@ -2546,7 +2548,7 @@ def _main():
     parser.add_option("-S", "--test-size",
                       action="store", type="int", metavar="size",
                       help="width and height of the test image")
-    (options, args) = parser.parse_args()
+    (options, args) = parser.parse_args(args=argv)
 
     # Convert options
     if options.transparent is not None:
@@ -2622,4 +2624,4 @@ def _main():
 
 
 if __name__ == '__main__':
-    _main()
+    _main(sys.argv)
