@@ -1781,7 +1781,22 @@ class Test(unittest.TestCase):
         r = Reader(bytes=o.getvalue())
         x,y,pixels,meta = r.read()
         self.assert_(r.greyscale)
-        self.assert_(r.bitdepth, 2)
+        self.assertEqual(r.bitdepth, 2)
+    def testPAMin(self):
+        """Test that the command line tool can read PAM file."""
+        def do():
+            return _main(['testPAMin'])
+        s = StringIO()
+        s.write('P7\nWIDTH 3\nHEIGHT 1\nDEPTH 4\nMAXVAL 255\n'
+                'TUPLTYPE RGB_ALPHA\nENDHDR\n')
+        s.write(array('B', [255,0,0,255, 0,255,0,120, 0,0,255,30]).tostring())
+        s.flush()
+        s.seek(0)
+        o = StringIO()
+        testWithIO(s, o, do)
+        r = Reader(bytes=o.getvalue())
+        x.y,pixels,meta = r.read()
+        self.assert_(r.alpha)
 
 # === Command Line Support ===
 
