@@ -1541,174 +1541,149 @@ class Reader:
                 yield itertools.chain(*map(operator.add, row, opa))
         return x,y,itertrns(),meta
 
+    def _as_rescale(self, get, targetbitdepth):
+        """Helper used by :meth:`asRGB8` and :meth:`asRGBA8`."""
+
+        width,height,pixels,meta = get()
+        maxval = 2**meta['bitdepth'] - 1
+        targetmaxval = 2**targetbitdepth - 1
+        factor = float(targetmaxval) / float(maxval)
+        meta['bitdepth'] = targetbitdepth
+        def iterscale():
+            for row in pixels:
+                yield map(lambda x: int(round(x*factor)), row)
+        return width, height, iterscale(), meta
+
     def asRGB8(self):
-        """Return the image data as an RGB image with 8-bits per
-        sample.  Greyscales are expanded into RGB triplets; bit depths
-        less than 8 are scaled up to 8-bits; bit depths greater than
-        8 are scaled down to 8 (note: no dithering is performed).
-        An alpha channel will raise an exception.
+	"""Return the image data as an RGB pixels with 8-bits per
+	sample.  This is like the :meth:`asRGB` method except that
+	this method additionally rescales the values so that they
+	are all between 0 and 255 (8-bit).  In the case where the
+	source image has a bit depth < 8 the transformation preserves
+	all the information; where the source image has bit depth
+	> 8, then rescaling to 8-bit values loses precision.  No
+	dithering is performed.  Like :meth:`asRGB`, an alpha channel
+	in the source image will raise an exception.
 
         This function returns a 4-tuple:
         (*width*, *height*, *pixels*, *metadata*).
         *width*, *height*, *metadata* are as per the :meth:`read` method.
         
-        *pixels* is the pixel data in boxed row boxed pixel format.  It is
-        an iterator that yields each row.  A row is a
-        sequence of pixels; each pixel is an (R,G,B) triple with each
-        channel being from 0 to 255.
+        *pixels* is the pixel data in boxed row flat pixel format.
+
+        Note that unlike :meth:`asRGB` this method always returns pixels
+        in a format that can be represented in a PNG; that's because it
+        forces data to be 8-bit.
         """
 
-        return self.asRGB8Aopt(3)
+        return self._as_rescale(self.asRGB, 8)
 
     def asRGBA8(self):
-        """Return the image data as an RGBA image with 8-bits per
-        sample.  Greyscales are expanded into RGB triplets; an alpha
-        channel is synthesized if necessary.  Otherwise performs same as
-        :meth:`asRGB8`.
+        """Return the image data as RGBA pixels with 8-bits per
+        sample.  This method is similar to :meth:`asRGB8` and
+        :meth:`asRGBA`:  The result pixels have an alpha channel, _and_
+        values are rescale to the range 0 to 255.  The alpha channel is
+        synthesized if necessary.
+
+        Note that unlike :meth:`asRGBA` this method always returns pixels
+        in a format that can be represented in a PNG; that's because it
+        forces data to be 8-bit.
         """
 
-        return self.asRGB8Aopt(4)
+        return self._as_rescale(self.asRGBA, 8)
 
-    def asRGB8Aopt(self, n, dropalpha=False):
-        """*n* is the number of channels in the target."""
+    def asRGB(self):
+        """Return image as RGB pixels.  Greyscales are expanded into RGB
+        triplets.  An alpha channel in the source image will raise an
+        exception.  The return values are as for the :meth:`read` method
+        except that the *metadata* reflect the returned pixels, not the
+        source image.  In particular, for this method
+        ``metadata['greyscale']`` will be ``False``.
 
-        assert n in (3,4)
+        .. note ::
 
-        # :todo: remove assert
-        assert not dropalpha
+          Like the :meth:`asDirect` method, this method can return pixels
+          in "non PNG" formats.  For example, a greyscale image of
+          bit depth 4 will be returned as a colour image with bit depth
+          4 by this method.  That format is not supported by PNG (but
+          makes sense in other formats).
+        """
 
-        def grey1():
-            """Handle greyscales of 1-,2-, and 4- bits."""
-            # Factor to convert from N-bits to 8-bit
-            factor = maxval / (2**bitdepth - 1)
-            # Number of pixels remaining in scanline
-            w = width
-            if n == 3:
-                def expand(k): return (k*factor,)*3
-            else:
-                def expand(k): return (k*factor,)*3 + (maxval,)
-            for row in data:
-                yield tuple(map(expand, row))
-        def rgb8():
-            """Handle RGB8 (and RGBA8)."""
-            for row in data:
-                yield group(row, n)
-        def rgb8add():
-            """Add alpha channel to convert RGB to RGBA.  This handles
-            RGB sources both with and without ``tRNS`` chunks.  It seems
-            like a waste of time to do the ``tRNS`` processing when
-            there is no ``tRNS`` chunk, but it keeps the proliferation
-            of codes down, and this is not the fast path for getting
-            data out of the image anyway.
-            """
-            assert n == 4
-            # This is the value we compare each pixel with to see if it
-            # is transparent.  When there is no tRNS chunk,
-            # self.transparent is None.  But None doesn't have the
-            # __ne__ method that we rely on.  *sigh*
-            it = self.transparent or []
-            for row in data:
-                # For each row we group it into pixels, then form a
-                # characterisation vector that says whether each pixel
-                # is opaque or not.  Then we expand that to an 8-bit
-                # alpha channel and add it as the extra channel.
-                row = group(row, 3)
-                opa = map(it.__ne__, row)
-                opa = map((255).__mul__, opa)
-                opa = zip(opa) # convert to 1-tuples
-                yield map(operator.add, row, opa)
-        if 3 == n:
-            def grey8():
-                """Handle L8."""
-                for row in data:
-                    yield zip(row, row, row)
-        else:
-            def grey8():
-                for row in data:
-                    yield zip(row, row, row, itertools.repeat(maxval))
-        def scaledown(scanline):
-            """Helper used by grey16 and rgb16.  Convert a scanline of
-            samples from 16-bits to 8-bit.  Input is a sequence of 16-bit
-            integers.
-            """
-
-            def treatsample(x):
-                """Convert 16-bit sample to 8-bit.  Just a little bit
-                long for a lambda.
-                """
-                # Philosophically, rint would be preferred over round.
-                # But in this case we are dividing an integer by an odd
-                # integer (divisor is 257), so the answer can never have
-                # a fractional value of exactly 0.5.  So round is good.
-                return int(round(x/divisor))
-
-            # We expect this to be an integer of course, but we need the
-            # answer as a float.
-            divisor = float(65535)/float(maxval)
-            return map(treatsample, scanline)
-        def grey16():
-            """Handle L16."""
-            for scanline in data:
-                scanline = scaledown(scanline)
-                # expand into triples
-                if 3 == n:
-                    yield tuple(zip(scanline, scanline, scanline))
-                if 4 == n:
-                    yield tuple(zip(scanline, scanline, scanline, maxval))
-        def rgb16():
-            """Handle RGB16."""
-            for scanline in data:
-                scanline = scaledown(scanline)
-                yield tuple(group(scanline, n))
-        def rgb16add():
-            for scanline in data:
-                scanline = scaledown(scanline)
-                yield tuple(map(lambda p: p + (maxval,),
-                                group(scanline, 3)))
-        def palette():
-            """Handle palette, colour type 3."""
-            for row in data:
-                row = map(plte.__getitem__, row)
-                yield tuple(row)
-
-        width, height, data, meta = self.read()
-        bitdepth = meta["bitdepth"]
-        targetdepth = 8
-        # Target maxval
-        maxval = 2**targetdepth - 1
-        if 4 == n and meta["greyscale"] and meta["alpha"]:
-            raise NotImplementedError("colour type 4 not supported")
-        if 3 == n and meta["alpha"] and not dropalpha:
+        width,height,pixels,meta = self.asDirect()
+        if meta['alpha']:
             raise Error("will not convert image with alpha channel to RGB")
-        if self.colormap:
-            plte = self.palette()
-            return width, height, palette(), meta
-        elif bitdepth < 8:
-            # assert grey because the colormap case is handled
-            # separately, above.
-            assert meta["greyscale"]
-            return width, height, grey1(), meta
-        elif bitdepth == 8:
-            if meta["greyscale"]:
-                return width, height, grey8(), meta
-            else:
-                if n == self.planes:
-                    return width, height, rgb8(), meta
-                elif n == 4:
-                    return width, height, rgb8add(), meta
-                elif n == 3:
-                    return width, height, rgb8drop(), meta
-        elif bitdepth == 16:
-            if meta["greyscale"]:
-                return width, height, grey16(), meta
-            else:
-                if n == self.planes:
-                    return width, height, rgb16(), meta
-                elif n == 4:
-                    return width, height, rgb16add(), meta
-                elif n == 3:
-                    return width, height, rgb16drop(), meta
-        assert False, "Illegal bit-depth of %d" % bitdepth
+        if not meta['greyscale']:
+            return width,height,pixels,meta
+        meta['greyscale'] = False
+        typecode = 'BH'[meta['bitdepth'] > 8]
+        def iterrgb():
+            for row in pixels:
+                a = array(typecode, [0]) * 3 * width
+                for i in range(3):
+                    a[i::3] = row
+                yield a
+        return width,height,iterrgb(),meta
+
+    def asRGBA(self):
+        """Return image as RGBA pixels.  Greyscales are expanded into
+        RGB triplets; an alpha channel is synthesized if necessary.
+        The return values are as for the :meth:`read` method
+        except that the *metadata* reflect the returned pixels, not the
+        source image.  In particular, for this method
+        ``metadata['greyscale']`` will be ``False``, and
+        ``metadata['alpha']`` will be ``True``.
+
+        .. note ::
+        
+          Like the :meth:`asDirect` method, this method can return
+          pixels in "non PNG" formats.  For example, a greyscale image
+          of bit depth 4 will be returned as an RGBA image with bit
+          depth 4.  That format is not supported by PNG (but makes sense
+          in other formats).
+        """
+
+        width,height,pixels,meta = self.asDirect()
+        if meta['alpha'] and not meta['greyscale']:
+            return width,height,pixels,meta
+        typecode = 'BH'[meta['bitdepth'] > 8]
+        maxval = 2**meta['bitdepth'] - 1
+        def newarray():
+            return array(typecode, [0]) * 4 * width
+        if meta['alpha'] and meta['greyscale']:
+            # LA to RGBA
+            def convert():
+                for row in pixels:
+                    # Create a fresh target row, then copy L channel
+                    # into first three target channels, and A channel
+                    # into fourth channel.
+                    a = newarray()
+                    for i in range(3):
+                        a[i::4] = row[0::2]
+                    a[3::4] = row[1::2]
+                    yield a
+        elif meta['greyscale']:
+            # L to RGBA
+            def convert():
+                for row in pixels:
+                    a = newarray()
+                    for i in range(3):
+                        a[i::4] = row
+                    a[3::4] = array(typecode, maxval) * width
+                    yield a
+        else:
+            assert not meta['alpha'] and not meta['greyscale']
+            # RGB to RGBA
+            def convert():
+                for row in pixels:
+                    a = newarray()
+                    for i in range(3):
+                        a[i::4] = row[i::3]
+                    a[3::4] = array(typecode, [maxval]) * width
+                    yield a
+        meta['alpha'] = True
+        meta['greyscale'] = False
+        return width,height,convert(),meta
+
 
 # === Internal Test Support ===
 
@@ -1795,8 +1770,8 @@ class Test(unittest.TestCase):
         self.assertEqual(x, 1)
         self.assertEqual(y, 4)
         for i,row in enumerate(pixels):
-            self.assertEqual(len(row), 1)
-            self.assertEqual(list(row[0]), [0x55*i]*3)
+            self.assertEqual(len(row), 3)
+            self.assertEqual(list(row), [0x55*i]*3)
     def testP2(self):
         "2-bit palette."
         a = (255,255,255)
@@ -1809,7 +1784,7 @@ class Test(unittest.TestCase):
         x,y,pixels,meta = r.asRGB8()
         self.assertEqual(x, 1)
         self.assertEqual(y, 4)
-        self.assertEqual(list(pixels), zip([a, b, b, c]))
+        self.assertEqual(list(pixels), map(list, [a, b, b, c]))
     def testPtrns(self):
         "Test colour type 3 and tRNS chunk (and 4-bit palette)."
         a = (50,99,50,50)
@@ -1827,12 +1802,18 @@ class Test(unittest.TestCase):
         c = c+(255,)
         d = d+(255,)
         e = e+(255,)
-        self.assertEqual(list(pixels), [(e,d,c),(d,c,a),(c,a,b)])
+        boxed = [(e,d,c),(d,c,a),(c,a,b)]
+        flat = map(lambda row: itertools.chain(*row), boxed)
+        self.assertEqual(map(list, pixels), map(list, flat))
     def testRGBtoRGBA(self):
         "asRGBA8() on colour type 2 source."""
         # Test for Issue 26
         r = Reader(bytes=_pngsuite['basn2c08'])
         x,y,pixels,meta = r.asRGBA8()
+        # Test the pixels at row 9 columns 0 and 1.
+        row9 = list(pixels)[9]
+        self.assertEqual(row9[0:8],
+                         [0xff, 0xdf, 0xff, 0xff, 0xff, 0xde, 0xff, 0xff])
     def testCtrns(self):
         "Test colour type 2 and tRNS chunk."
         # Test for Issue 25
@@ -1841,7 +1822,7 @@ class Test(unittest.TestCase):
         # I just happen to know that the first pixel is transparent.
         # In particular it should be #7f7f7f00
         row0 = list(pixels)[0]
-        self.assertEqual(tuple(row0[0]), (0x7f, 0x7f, 0x7f, 0x00))
+        self.assertEqual(tuple(row0[0:4]), (0x7f, 0x7f, 0x7f, 0x00))
     def testAdam7read(self):
         """Adam7 interlace reading.
         Specifically, test that for images in the PngSuite that
