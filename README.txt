@@ -44,6 +44,7 @@ The following issues have been fixed:
 
   Issue 14:  Does not read PAM files.
   Issue 15:  Does not write PAM files.
+  Issue 25:  Incorrect handling of tRNS chunk.
   Issue 26:  asRGBA8 method crashes out for color type 2 images.
   Issue 27:  Fails on Python 2.3.
 
