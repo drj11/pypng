@@ -295,17 +295,29 @@ class Writer:
         Create a PNG encoder object.
 
         Arguments:
-        width, height - size of the image in pixels
-        greyscale - input data is greyscale, not RGB
-        alpha - input data has alpha channel (RGBA or LA)
-        bitdepth - 1, 2, 4, 8, or 16
-        palette - create a palette for a colour mapped image (colour type 3)
-        transparent - create a tRNS chunk
-        background - create a bKGD chunk
-        gamma - create a gAMA chunk
-        compression - zlib compression level (1-9)
-        interlace - create an interlaced image
-        chunk_limit - write multiple IDAT chunks to save memory
+
+        width, height
+          Size of the image in pixels.
+        greyscale
+          Input data is greyscale, not RGB.
+        alpha
+          Input data has alpha channel (RGBA or LA).
+        bitdepth
+          Bit depth: 1, 2, 4, 8, or 16.
+        palette
+          Create a palette for a colour mapped image (colour type 3).
+        transparent
+          Specify a transparent colour (create a ``tRNS`` chunk).
+        background
+          Specify a default background colour (create a ``bKGD`` chunk).
+        gamma
+          Specify a gamma value (create a ``gAMA`` chunk).
+        compression
+          zlib compression level (1-9).
+        interlace
+          Create an interlaced image.
+        chunk_limit
+          Write multiple ``IDAT`` chunks to save memory.
 
         `greyscale` and `alpha` are booleans that specify whether
         an image is greyscale (or colour), and whether it has an
@@ -320,10 +332,10 @@ class Writer:
         the bit depth to be less than 8.  For other types (including
         greyscale+alpha), bit depths less than 8 are rejected.
 
-        The palette option, when specified, causes a palettized
-        (colour-mapped) image to be created: the PNG colour type is set
-        to 3; greyscale must not be set; alpha must not be set;
-        transparent must not be set; the bit depth must be 1,2,4, or 8.
+        The `palette` option, when specified, causes a colour mapped image
+	to be created: the PNG colour type is set to 3; greyscale
+	must not be set; alpha must not be set; transparent must
+	not be set; the bit depth must be 1,2,4, or 8.
 
         The palette argument value should be a sequence of 3- or
         4-tuples.  3-tuples specify RGB palette entries; 4-tuples
@@ -340,15 +352,18 @@ class Writer:
         be a tuple with three integer values for red, green, blue, or
         a simple integer (or singleton tuple) for a greyscale image.
 
-        If specified, the gamma parameter must be a positive number
+        If specified, the `gamma` parameter must be a positive number
         (generally, a float).  A ``gAMA`` chunk will be created.  Note that
         this will not change the values of the pixels as they appear in
         the PNG file, they are assumed to have already been converted
         appropriately for the gamma specified.
 
-        The default for the compression argument is ``None``; this does not
-        mean no compression, rather it means that the default from the
-        ``zlib`` module is used (which is generally acceptable).
+	The `compression` argument specifies the compression level
+	to be used by the ``zlib`` module.  Higher values are likely
+	to compress better, but will be slower to compress.  The
+	default for this argument is ``None``; this does not mean
+	no compression, rather it means that the default from the
+	``zlib`` module is used (which is generally acceptable).
 
         If `interlace` is true then an interlaced image is created
         (using PNG's so far only interace method, Adam7).  This does not
@@ -879,10 +894,14 @@ class Reader:
 
         The constructor expects exactly one keyword argument. If you
         supply a positional argument instead, it will guess the input
-        type. You can choose among the following arguments:
-        * `filename` - name of PNG input file
-        * `file` - object with a read() method
-        * `bytes` - array or string with PNG data
+        type. You can choose among the following keyword arguments:
+
+        filename
+          Name of input file (a PNG file).
+        file
+          A file-like object (object with a read() method).
+        bytes
+          ``array`` or ``string`` with PNG data.
 
         """
         if ((_guess is not None and len(kw) != 0) or
