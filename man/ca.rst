@@ -54,14 +54,28 @@ coordinates, or gamma conversion, but in any case PyPNG provides no
 support for it.  In the future a sister project to PyPNG may add some
 simple image processing, but processing in pure Python will be way slow.
 
-PyPNG (when used in its command-line mode) can read Netpbm PAM files,
-and use a single source file to create PNG files with all permitted
-channel combinations: greyscale, greyscale--alpha, RGB, RGBA.  Using PAM
-as an intermediate format is preferred over having to carry around your
-alpha channel in a separate file; it allows workflows to be pipelined
-more easily.  Netpbm does not have a ``pamtopng`` tool (yet?), its
-``pnmtopng`` tool requires an alpha channel to be specified in a
-separate file.
+PyPNG (when used in its command-line mode) can read and write Netpbm
+PAM files.  PAM is useful as an intermediary format for performing
+processing; it allows the pixel data to be transferred in a simple format
+that is easily processed.  A typical workflow using PAM might be:
+
+PNG to PAM ... process PAM file (for example, resize) ... PAM to PNG
+
+Using PAM as an intermediate format is preferred over having to
+carry around your alpha channel in a separate file; it allows
+workflows to be pipelined more easily.
+
+When reading PAM files a single source file can be used to create
+PNG files with all permitted channel combinations: greyscale,
+greyscale--alpha, RGB, RGBA.  When writing a PAM file is created for
+those PNG formats with an alpha channel, otherwise a compatible PGM or
+PPM file is created.
+
+Netpbm's support for PAM to PNG conversion is more limited that PyPNG's.
+Netpbm will only convert a source PAM that has 4 channels (so it does
+not create greyscale--alpha PNG files from ``GRAYSCALE_ALPHA`` PAM files).
+Netpbm's usual tool for create PNG files, ``pnmtopng``, requires an alpha
+channel to be specified in a separate file.
 
 ``libpng`` is made by the PNG gods, so if want to get at all that
 goodness, then you may want to interface directly to libpng via
