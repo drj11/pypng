@@ -60,7 +60,7 @@ This Python module implements support for PNG images (see PNG
 specification at http://www.w3.org/TR/2003/REC-PNG-20031110/ ). It reads
 and writes PNG files with all allowable bit depths (1/2/4/8/16/24/32/48/64
 bits per pixel) and color combinations: greyscale (1/2/4/8/16 bit); RGB,
-RGBA, KA (greyscale with alpha) with 8/16 bits per channel; colormapped
+RGBA, LA (greyscale with alpha) with 8/16 bits per channel; colormapped
 images (1/2/4/8 bit).  Adam7 interlacing is supported for reading and
 writing.  A number of optional chunks can be specified (when writing)
 and understood (when reading): ``tRNS``, ``bKGD``, ``gAMA``.
@@ -75,11 +75,20 @@ PNM. The interface is similar to that of the ``pnmtopng`` program from
 Netpbm.  Type ``python png.py --help`` at the shell prompt
 for usage and a list of options.
 
-A note on spelling
-------------------
+A note on spelling and terminology
+----------------------------------
 
 * greyscale (British English);
 * color (North American English).
+
+The major colour formats supported by PNG (and hence by PyPNG) are:
+greyscale, colour, greyscale--alpha, colour--alpha.  These are sometimes
+referred to using the abbreviations: L, RGB, LA, RGBA.  In this case
+each letter abbreviates a single channel: L is for Luminance or Luma or
+Lightness which is the channel used in greyscale images; R, G, B stand
+for Red, Green, Blue, the components of a colour image; A stands for
+Alpha, the opacity channel (used for transparency effects, but higher
+values are more opaque, so it makes sense to call it opacity).
 
 A note on formats
 -----------------
@@ -126,7 +135,7 @@ tuple.  A serious memory burn in Python.
 
 In all cases the top row comes first, and for each row the pixels are
 ordered from left-to-right.  Within a pixel the values appear in the
-order, R-G-B-A (or K-A for greyscale--alpha).
+order, R-G-B-A (or L-A for greyscale--alpha).
 
 There is a fourth format, mentioned because it is used internally, is
 close to what lies inside a PNG file itself, and may one day have a
@@ -287,7 +296,7 @@ class Writer:
         Arguments:
         width, height - size of the image in pixels
         greyscale - input data is greyscale, not RGB
-        alpha - input data has alpha channel (RGBA or KA)
+        alpha - input data has alpha channel (RGBA or LA)
         bitdepth - 1, 2, 4, 8, or 16
         palette - create a palettized image (color type 3)
         transparent - create a tRNS chunk
@@ -1609,7 +1618,7 @@ class Reader:
                 yield map(operator.add, row, opa)
         if 3 == n:
             def grey8():
-                """Handle K8."""
+                """Handle L8."""
                 for row in data:
                     yield zip(row, row, row)
         else:
@@ -1637,7 +1646,7 @@ class Reader:
             divisor = float(65535)/float(maxval)
             return map(treatsample, scanline)
         def grey16():
-            """Handle K16."""
+            """Handle L16."""
             for scanline in data:
                 scanline = scaledown(scanline)
                 # expand into triples
@@ -1758,7 +1767,7 @@ def testWithIO(inp, out, f):
     return x
 
 class Test(unittest.TestCase):
-    def helperKN(self, n):
+    def helperLN(self, n):
         mask = (1 << n) - 1
         # Use small chunk_limit so that multiple chunk writing is
         # tested.  Making it a test for Issue 20.
@@ -1771,11 +1780,11 @@ class Test(unittest.TestCase):
         self.assertEqual(y, 17)
         self.assertEqual(list(itertools.chain(*pixels)),
                          map(mask.__and__, range(1,256)))
-    def testK8(self):
-        return self.helperKN(8)
-    def testK4(self):
-        return self.helperKN(4)
-    def testK2(self):
+    def testL8(self):
+        return self.helperLN(8)
+    def testL4(self):
+        return self.helperLN(4)
+    def testL2(self):
         "Also tests asRGB8."
         w = Writer(1, 4, greyscale=True, bitdepth=2)
         f = StringIO()
@@ -2490,7 +2499,7 @@ def test_suite(options, args):
         Create a test image.  Each channel is generated from the
         specified pattern; any channel apart from red can be set to
         None, which will cause it not to be in the image.  It
-        is possible to create all PNG channel types (K, RGB, RGBA, KA),
+        is possible to create all PNG channel types (L, RGB, LA, RGBA),
         as well as non PNG channel types (RGA, and so on).
         """
 
