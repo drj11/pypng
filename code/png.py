@@ -59,8 +59,8 @@ Pure Python PNG Reader/Writer
 This Python module implements support for PNG images (see PNG
 specification at http://www.w3.org/TR/2003/REC-PNG-20031110/ ). It reads
 and writes PNG files with all allowable bit depths (1/2/4/8/16/24/32/48/64
-bits per pixel) and color combinations: greyscale (1/2/4/8/16 bit); RGB,
-RGBA, LA (greyscale with alpha) with 8/16 bits per channel; colormapped
+bits per pixel) and colour combinations: greyscale (1/2/4/8/16 bit); RGB,
+RGBA, LA (greyscale with alpha) with 8/16 bits per channel; colour mapped
 images (1/2/4/8 bit).  Adam7 interlacing is supported for reading and
 writing.  A number of optional chunks can be specified (when writing)
 and understood (when reading): ``tRNS``, ``bKGD``, ``gAMA``.
@@ -78,15 +78,16 @@ for usage and a list of options.
 A note on spelling and terminology
 ----------------------------------
 
-* greyscale (British English);
-* color (North American English).
+Generally British English spelling is used in the documentation.  So
+that's "greyscale" and "colour".  This not only matches the author's
+native language, it's also used by the PNG specification.
 
 The major colour formats supported by PNG (and hence by PyPNG) are:
 greyscale, colour, greyscale--alpha, colour--alpha.  These are sometimes
 referred to using the abbreviations: L, RGB, LA, RGBA.  In this case
-each letter abbreviates a single channel: L is for Luminance or Luma or
-Lightness which is the channel used in greyscale images; R, G, B stand
-for Red, Green, Blue, the components of a colour image; A stands for
+each letter abbreviates a single channel: *L* is for Luminance or Luma or
+Lightness which is the channel used in greyscale images; *R*, *G*, *B* stand
+for Red, Green, Blue, the components of a colour image; *A* stands for
 Alpha, the opacity channel (used for transparency effects, but higher
 values are more opaque, so it makes sense to call it opacity).
 
@@ -215,7 +216,7 @@ def group(s, n):
 
 def interleave_planes(ipixels, apixels, ipsize, apsize):
     """
-    Interleave color planes, e.g. RGB + A = RGBA.
+    Interleave (colour) planes, e.g. RGB + A = RGBA.
 
     Return an array of pixels consisting of the ipsize elements of data
     from each pixel in ipixels followed by the apsize elements of data
@@ -298,7 +299,7 @@ class Writer:
         greyscale - input data is greyscale, not RGB
         alpha - input data has alpha channel (RGBA or LA)
         bitdepth - 1, 2, 4, 8, or 16
-        palette - create a palettized image (color type 3)
+        palette - create a palette for a colour mapped image (colour type 3)
         transparent - create a tRNS chunk
         background - create a bKGD chunk
         gamma - create a gAMA chunk
@@ -307,11 +308,11 @@ class Writer:
         chunk_limit - write multiple IDAT chunks to save memory
 
         `greyscale` and `alpha` are booleans that specify whether
-        an image is greyscale (or color), and whether it has an
+        an image is greyscale (or colour), and whether it has an
         alpha channel (or not).
 
         `bitdepth` specifies the bit depth of the PNG image.  This is the
-        number of bits used to specify the value of each color channel
+        number of bits used to specify the value of each colour channel
         (or index, in the case of a palette).  PNG allows this to be
         1,2,4,8, or 16, but there are some restrictions on some values.
 
@@ -320,7 +321,7 @@ class Writer:
         greyscale+alpha), bit depths less than 8 are rejected.
 
         The palette option, when specified, causes a palettized
-        (colour-mapped) image to be created: the PNG color type is set
+        (colour-mapped) image to be created: the PNG colour type is set
         to 3; greyscale must not be set; alpha must not be set;
         transparent must not be set; the bit depth must be 1,2,4, or 8.
 
@@ -383,7 +384,7 @@ class Writer:
 
         if alpha and transparent is not None:
             raise ValueError(
-                "transparent color not allowed with alpha channel")
+                "transparent colour not allowed with alpha channel")
 
         if bytes_per_sample is not None:
             warnings.warn('please use bitdepth instead of bytes_per_sample',
@@ -415,27 +416,27 @@ class Writer:
             if greyscale:
                 if not isinteger(transparent):
                     raise ValueError(
-                        "transparent color for greyscale must be integer")
+                        "transparent colour for greyscale must be integer")
             else:
                 if not (len(transparent) == 3 and
                         isinteger(transparent[0]) and
                         isinteger(transparent[1]) and
                         isinteger(transparent[2])):
                     raise ValueError(
-                        "transparent color must be a triple of integers")
+                        "transparent colour must be a triple of integers")
 
         if background is not None:
             if greyscale:
                 if not isinteger(background):
                     raise ValueError(
-                        "background color for greyscale must be integer")
+                        "background colour for greyscale must be integer")
             else:
                 if not (len(background) == 3 and
                         isinteger(background[0]) and
                         isinteger(background[1]) and
                         isinteger(background[2])):
                     raise ValueError(
-                        "background color must be a triple of integers")
+                        "background colour must be a triple of integers")
 
         # It's important that the true boolean values (greyscale, alpha,
         # colormap, interlace) are converted to bool because Iverson's
@@ -1238,14 +1239,14 @@ class Reader:
             if self.bitdepth not in (1,2,4,8,16):
                 raise Error("invalid bit depth %d" % self.bitdepth)
             if self.color_type not in (0,2,3,4,6):
-                raise Error("invalid color type %d" % self.color_type)
+                raise Error("invalid colour type %d" % self.color_type)
             # Check indexed (palettized) images have 8 or fewer bits
             # per pixel; check only indexed or greyscale images have
             # fewer than 8 bits per pixel.
             if ((self.color_type & 1 and self.bitdepth > 8) or
                 (self.bitdepth < 8 and self.color_type not in (0,3))):
                 raise Error("illegal combination of bit depth (%d)"
-                            " and color type (%d)"
+                            " and colour type (%d)"
                   % (self.bitdepth, self.color_type))
             if self.compression != 0:
                 raise Error("unknown compression method %d" % self.compression)
@@ -1311,7 +1312,7 @@ class Reader:
                         warnings.warn("tRNS chunk is too long")
             else:
                 if self.alpha:
-                    raise Error("tRNS chunk is not valid with colortype %d" %
+                    raise Error("tRNS chunk is not valid with colour type %d" %
                                 self.colortype)
                 try:
                     self.transparent = \
@@ -1436,7 +1437,7 @@ class Reader:
         chunks should have already been processed (for example, by
         calling the :meth:`preamble` method).  All the tuples are the
         same size, 3-tuples if there is no ``tRNS`` chunk, 4-tuples when
-        there is a ``tRNS`` chunk.  Assumes that the image is color type
+        there is a ``tRNS`` chunk.  Assumes that the image is colour type
         3 and therefore a ``PLTE`` chunk is required.
 
         If the `alpha` argument is ``'force'`` then an alpha channel is
@@ -1445,7 +1446,7 @@ class Reader:
 
         if not self.plte:
             raise Error(
-                "required PLTE chunk is missing in color type 3 image")
+                "required PLTE chunk is missing in colour type 3 image")
         plte = group(array('B', self.plte), 3)
         if self.trns or alpha == 'force':
             trns = array('B', self.trns or '')
@@ -1457,7 +1458,7 @@ class Reader:
         """Returns the image data as a direct representation of an
         ``x * y * planes`` array.  This method is intended to remove the
         need for callers to deal with palettes and transparency
-        themselves.  Images with a palette (color type 3)
+        themselves.  Images with a palette (colour type 3)
         are converted to RGB or RGBA; images with transparency (a
         ``tRNS`` chunk) are converted to LA or RGBA as appropriate.
         When returned in this format the pixel values represent the
@@ -1665,7 +1666,7 @@ class Reader:
                 yield tuple(map(lambda p: p + (maxval,),
                                 group(scanline, 3)))
         def palette():
-            """Handle palette, color type 3."""
+            """Handle palette, colour type 3."""
             for row in data:
                 row = map(plte.__getitem__, row)
                 yield tuple(row)
@@ -1676,7 +1677,7 @@ class Reader:
         # Target maxval
         maxval = 2**targetdepth - 1
         if 4 == n and meta["greyscale"] and meta["alpha"]:
-            raise NotImplementedError("colortype 4 not supported")
+            raise NotImplementedError("colour type 4 not supported")
         if 3 == n and meta["alpha"] and not dropalpha:
             raise Error("will not convert image with alpha channel to RGB")
         if self.colormap:
@@ -1810,7 +1811,7 @@ class Test(unittest.TestCase):
         self.assertEqual(y, 4)
         self.assertEqual(list(pixels), zip([a, b, b, c]))
     def testPtrns(self):
-        "Test color type 3 and tRNS chunk (and 4-bit palette)."
+        "Test colour type 3 and tRNS chunk (and 4-bit palette)."
         a = (50,99,50,50)
         b = (200,120,120,80)
         c = (255,255,255)
@@ -1828,12 +1829,12 @@ class Test(unittest.TestCase):
         e = e+(255,)
         self.assertEqual(list(pixels), [(e,d,c),(d,c,a),(c,a,b)])
     def testRGBtoRGBA(self):
-        "asRGBA8() on color type 2 source."""
+        "asRGBA8() on colour type 2 source."""
         # Test for Issue 26
         r = Reader(bytes=_pngsuite['basn2c08'])
         x,y,pixels,meta = r.asRGBA8()
     def testCtrns(self):
-        "Test color type 2 and tRNS chunk."
+        "Test colour type 2 and tRNS chunk."
         # Test for Issue 25
         r = Reader(bytes=_pngsuite['tbrn2c08'])
         x,y,pixels,meta = r.asRGBA8()
@@ -2740,7 +2741,7 @@ def write_pnm(file, width, height, pixels, meta):
 
 def color_triple(color):
     """
-    Convert a command line color value to a RGB triple of integers.
+    Convert a command line colour value to a RGB triple of integers.
     FIXME: Somewhere we need support for greyscale backgrounds etc.
     """
     if color.startswith('#') and len(color) == 4:
@@ -2776,10 +2777,10 @@ def _main(argv):
                       help="create an interlaced PNG file (Adam7)")
     parser.add_option("-t", "--transparent",
                       action="store", type="string", metavar="color",
-                      help="mark the specified color (#RRGGBB) as transparent")
+                      help="mark the specified colour (#RRGGBB) as transparent")
     parser.add_option("-b", "--background",
                       action="store", type="string", metavar="color",
-                      help="save the specified background color")
+                      help="save the specified background colour")
     parser.add_option("-a", "--alpha",
                       action="store", type="string", metavar="pgmfile",
                       help="alpha channel transparency (RGBA)")
@@ -2856,7 +2857,7 @@ def _main(argv):
         format, width, height, depth, maxval = \
           read_pnm_header(infile, ('P5','P6','P7'))
         # When it comes to the variety of input formats, we do something
-        # rather rude.  Observe that L, LA, RGB, RGBA are the 4 color
+        # rather rude.  Observe that L, LA, RGB, RGBA are the 4 colour
         # types supported by PNG and that they correspond to 1, 2, 3, 4
         # channels respectively.  So we use the number of channels in
         # the source image to determine which one we have.  We do not
