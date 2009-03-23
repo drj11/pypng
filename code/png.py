@@ -63,7 +63,7 @@ bits per pixel) and color combinations: greyscale (1/2/4/8/16 bit); RGB,
 RGBA, KA (greyscale with alpha) with 8/16 bits per channel; colormapped
 images (1/2/4/8 bit).  Adam7 interlacing is supported for reading and
 writing.  A number of optional chunks can be specified (when writing)
-and understood (when reading): tRNS, bKGD, gAMA.
+and understood (when reading): ``tRNS``, ``bKGD``, ``gAMA``.
 
 For help, type ``import png; help(png)`` in your python interpreter.
 
@@ -319,10 +319,10 @@ class Writer:
         4-tuples.  3-tuples specify RGB palette entries; 4-tuples
         specify RGBA palette entries.  If both 4-tuples and 3-tuples
         appear in the sequence then all the 4-tuples must come
-        before all the 3-tuples.  A PLTE chunk is created; if there
-        are 4-tuples then a tRNS chunk is created as well.  The
-        PLTE chunk will contain all the RGB triples in the same
-        sequence; the tRNS chunk will contain the alpha channel for
+        before all the 3-tuples.  A ``PLTE`` chunk is created; if there
+        are 4-tuples then a ``tRNS`` chunk is created as well.  The
+        ``PLTE`` chunk will contain all the RGB triples in the same
+        sequence; the ``tRNS`` chunk will contain the alpha channel for
         all the 4-tuples, in the same sequence.  Palette entries
         are always 8-bit.
 
@@ -331,14 +331,14 @@ class Writer:
         a simple integer (or singleton tuple) for a greyscale image.
 
         If specified, the gamma parameter must be a positive number
-        (generally, a float).  A gAMA chunk will be created.  Note that
+        (generally, a float).  A ``gAMA`` chunk will be created.  Note that
         this will not change the values of the pixels as they appear in
         the PNG file, they are assumed to have already been converted
         appropriately for the gamma specified.
 
-        The default for the compression argument is None; this does not
-        mean no compression, rather it means that the default from the zlib
-        module is used (which is generally acceptable).
+        The default for the compression argument is ``None``; this does not
+        mean no compression, rather it means that the default from the
+        ``zlib`` module is used (which is generally acceptable).
 
         If `interlace` is true then an interlaced image is created
         (using PNG's so far only interace method, Adam7).  This does not
@@ -346,13 +346,16 @@ class Writer:
         it changes how they are arranged into the PNG file.  On slow
         connexions interlaced images can be partially decoded by the
         browser to give a rough view of the image that is successively
-        refined as more image data appears.  Caution: enabling this
-        option requires the entire image to be processed in working
-        memory.
+        refined as more image data appears.
+        
+        .. note ::
+        
+          Enabling the `interlace` option requires the entire image
+          to be processed in working memory.
 
         `chunk_limit` is used to limit the amount of memory used whilst
         compressing the image.  In order to avoid using large amounts of
-        memory, multiple IDAT chunks may be created.
+        memory, multiple ``IDAT`` chunks may be created.
         """
 
         def isinteger(x):
@@ -451,9 +454,9 @@ class Writer:
         self.psize = (self.bitdepth/8) * self.planes
 
     def make_palette(self):
-        """Create the byte sequences for a PLTE and if necessary a tRNS
-        chunk.  Returned as a pair (p, t).  t will be None if no tRNS
-        chunk is necessary.
+        """Create the byte sequences for a ``PLTE`` and if necessary a
+        ``tRNS`` chunk.  Returned as a pair (*p*, *t*).  *t* will be
+        ``None`` if no ``tRNS`` chunk is necessary.
         """
 
         p = array('B')
@@ -487,10 +490,11 @@ class Writer:
         """Write a PNG image to the output file.  `rows` should be
         an iterable that yields each row in boxed row flat pixel format.
         The rows should be the rows of the original image, so there
-        should be self.height rows of self.width * self.planes values.
+        should be ``self.height`` rows of ``self.width * self.planes`` values.
         If `interlace` is specified (when creating the instance), then
-        the interlacing is carried out internally.  This will require
-        the entire image to be in working memory.
+        an interlaced PNG file will be written.  Supply the rows in the
+        normal image order; the interlacing is carried out internally.
+        Interlacing will require the entire image to be in working memory.
         """
 
         if self.interlace:
@@ -511,8 +515,9 @@ class Writer:
         For straightlaced images, this is the usual top to bottom
         ordering, but for interlaced images the rows should have already
         been interlaced before passing them to this function.  Most
-        users are expected to find the write() or write_array() method
-        more convenient.  `rows` should be an iterable that yields
+        users are expected to find the :meth:`write` or
+        :meth:`write_array` method more convenient.
+        `rows` should be an iterable that yields
         each row in boxed row flat pixel format.
         """
 
@@ -642,8 +647,8 @@ class Writer:
     def convert_pnm(self, infile, outfile):
         """
         Convert a PNM file containing raw pixel data into a PNG file
-        with the parameters set in the writer object.  Works for PGM and
-        PPM formats.
+        with the parameters set in the writer object.  Works for
+        (binary) PGM, PPM, and PAM formats.
         """
 
         if self.interlace:
@@ -865,9 +870,9 @@ class Reader:
         The constructor expects exactly one keyword argument. If you
         supply a positional argument instead, it will guess the input
         type. You can choose among the following arguments:
-        filename - name of PNG input file
-        file - object with a read() method
-        bytes - array or string with PNG data
+        * `filename` - name of PNG input file
+        * `file` - object with a read() method
+        * `bytes` - array or string with PNG data
 
         """
         if ((_guess is not None and len(kw) != 0) or
@@ -1317,7 +1322,7 @@ class Reader:
 
         May use excessive memory.
 
-        pixels are returned in boxed row flat pixel format.
+        `pixels` are returned in boxed row flat pixel format.
         """
 
         def iteridat():
@@ -1375,13 +1380,15 @@ class Reader:
 
     def read_flat(self):
         """
-        Read a simple PNG file; return width, height, pixels and image
-        metadata.
+        Read a PNG file and decode it into flat row flat pixel format.
+        Returns (*width*, *height*, *pixels*, *metadata*).
 
-        This function is a very early prototype with limited flexibility
-        and excessive use of memory.
+        May use excessive memory.
 
-        pixels are returned in flat row flat pixel format.
+        `pixels` are returned in flat row flat pixel format.
+
+        See also the :meth:`read` method which returns pixels in the
+        more stream-friendly boxed row flat pixel format.
         """
 
         self.preamble()
@@ -1473,8 +1480,8 @@ class Reader:
           bit depth does not change.  This results in pixel data which
           is 2-channel (greyscale+alpha) but bit depth < 8.  Whilst this
           is perfectly sensible, it is not a pixel format supported by
-          PNG so you cannot write it out unmodified is to another PNG file.
-          This is not regarded as a bug is this method, it is not the
+          PNG so you cannot write it out unmodified to another PNG file.
+          This is not regarded as a bug in this method.  It is not the
           job of this method to rescale pixel values.
         """
 
@@ -2760,7 +2767,7 @@ def _main(argv):
                       help="create an interlaced PNG file (Adam7)")
     parser.add_option("-t", "--transparent",
                       action="store", type="string", metavar="color",
-                      help="mark the specified color as transparent")
+                      help="mark the specified color (#RRGGBB) as transparent")
     parser.add_option("-b", "--background",
                       action="store", type="string", metavar="color",
                       help="save the specified background color")
