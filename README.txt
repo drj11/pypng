@@ -30,14 +30,24 @@ that you can copy png.py into your application and distribute it.
 GETTING STARTED
 
 "import png" then "help(png)" should be a good place to start.  Also,
-see the example in the man/ex/ directory.
+lickable HTML documentation appears in the html/ directory.  If HTML is
+no good then you could try the ReST sources in the man/ directory.
 
 
 RELEASE NOTES
 
 (For issues see http://code.google.com/p/pypng/issues/list )
 
-Release 0.0.2 (This release)
+Release 0.0.3 (This release)
+
+The following issues have been fixed:
+
+  Issue 14:  Does not read PAM files.
+  Issue 15:  Does not write PAM files.
+  Issue 26:  asRGBA8 method crashes out for color type 2 images.
+  Issue 27:  Fails on Python 2.3.
+
+Release 0.0.2
 
 The following issues have been fixed:
 
