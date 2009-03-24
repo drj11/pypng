@@ -115,12 +115,24 @@ def char(i):
         return [(0,)]*8
     return map(lambda row: (ord(row),), font[i].decode('hex'))
 
+def texttoraster(m):
+    """Convert string *m* to a raster image (by rendering it using the
+    font in *font*).  A triple of (*width*, *height*, *pixels*) is
+    returned; *pixels* is in boxed row packed pixel format.
+    """
+
+    # Assumes monospaced font.
+    x = 8*len(m)
+    y = 8
+    return x,y,itertools.imap(lambda row: itertools.chain(*row),
+                              zip(*map(char, m)))
+
+
 def render(message, out):
     import png
 
-    pixels = map(lambda row: list(itertools.chain(*row)),
-                 zip(*map(char, message)))
-    w = png.Writer(len(pixels[0])*8, 8, greyscale=True, bitdepth=1)
+    x,y,pixels = texttoraster(message)
+    w = png.Writer(x, y, greyscale=True, bitdepth=1)
     w.write_packed(out, pixels)
     out.flush()
 
