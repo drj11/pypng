@@ -1752,9 +1752,9 @@ def test():
 
 def topngbytes(name, rows, x, y, **k):
     """Convenience function for creating a PNG file "in memory" as a
-    string.  Creates a Writer instance using the keyword arguments, then
-    passes the rows to its write method.  The resulting PNG file
-    is returned as a string.  `name` is used to identify the file for
+    string.  Creates a :class:`Writer` instance using the keyword arguments,
+    then passes `rows` to its :meth:`Writer.write` method.  The resulting
+    PNG file is returned as a string.  `name` is used to identify the file for
     debugging.
     """
 
@@ -1953,6 +1953,23 @@ class Test(unittest.TestCase):
         def it():
             Writer(1, 1, greyscale=True, alpha=True, bitdepth=4)
         self.assertRaises(Exception, it)
+    def testLtrns0(self):
+        """Create greyscale image with tRNS chunk."""
+        return self.helperLtrns(0)
+    def testLtrns1(self):
+        """Using 1-tuple for transparent arg."""
+        return self.helperLtrns((0,))
+    def helperLtrns(self, transparent):
+        """Helper used by :meth:`testLtrns*`."""
+        pixels = zip(map(ord, '00384c545c403800'.decode('hex')))
+        o = StringIO()
+        w = Writer(8, 8, greyscale=1, transparent=transparent)
+        w.write_packed(o, pixels)
+        r = Reader(bytes=o.getvalue())
+        x,y,pixels,meta = r.asDirect()
+        self.assert_(meta['alpha'])
+        self.assert_(meta['greyscale'])
+        self.assertEqual(meta['bitdepth'], 1)
 
 # === Command Line Support ===
 
