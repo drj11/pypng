@@ -519,7 +519,10 @@ class Writer:
         If `interlace` is specified (when creating the instance), then
         an interlaced PNG file will be written.  Supply the rows in the
         normal image order; the interlacing is carried out internally.
-        Interlacing will require the entire image to be in working memory.
+        
+        .. note ::
+
+          Interlacing will require the entire image to be in working memory.
         """
 
         if self.interlace:
@@ -533,17 +536,24 @@ class Writer:
                   "rows supplied (%d) does not match height (%d)" %
                   (nrows, self.height))
 
-    def write_passes(self, outfile, rows):
+    def write_passes(self, outfile, rows, packed=False):
         """
-        Write a PNG image to the output file.  The rows should be given
-        to this method in the order that they appear in the output file.
-        For straightlaced images, this is the usual top to bottom
-        ordering, but for interlaced images the rows should have already
-        been interlaced before passing them to this function.  Most
-        users are expected to find the :meth:`write` or
-        :meth:`write_array` method more convenient.
-        `rows` should be an iterable that yields
-        each row in boxed row flat pixel format.
+        Write a PNG image to the output file.
+
+	Most users are expected to find the :meth:`write` or
+	:meth:`write_array` method more convenient.
+        
+	The rows should be given to this method in the order that
+	they appear in the output file.  For straightlaced images,
+	this is the usual top to bottom ordering, but for interlaced
+	images the rows should have already been interlaced before
+	passing them to this function.
+
+	`rows` should be an iterable that yields each row.  When
+        `packed` is ``False`` the rows should be in boxed row flat pixel
+        format; when `packed` is ``True`` each row should be a packed
+        sequence of bytes.
+
         """
 
         # http://www.w3.org/TR/PNG/#5PNG-file-signature
@@ -600,7 +610,7 @@ class Writer:
         # function packs/decomposes the pixel values into bytes and
         # stuffs them onto the data array.
         data = array('B')
-        if self.bitdepth == 8:
+        if self.bitdepth == 8 or packed:
             extend = data.extend
         elif self.bitdepth == 16:
             # Decompose into bytes
@@ -661,13 +671,26 @@ class Writer:
     def write_array(self, outfile, pixels):
         """
         Write an array in flat row flat pixel format as a PNG file on
-        the output file.
+        the output file.  See also :meth:`write` method.
         """
 
         if self.interlace:
             self.write_passes(outfile, self.array_scanlines_interlace(pixels))
         else:
             self.write_passes(outfile, self.array_scanlines(pixels))
+
+    def write_packed(self, outfile, rows):
+        """
+        Write PNG file to `outfile`.  The pixel data comes from `rows`
+        which should be in boxed row packed format.  Each row should be
+        a sequence of packed bytes.
+
+        Technically, this method does work for interlaced images but it
+        is best avoided.  For interlaced images, the rows should be
+        presented in the order that they appear in the file.
+        """
+
+        return self.write_passes(outfile, rows, packed=True)
 
     def convert_pnm(self, infile, outfile):
         """
