@@ -383,11 +383,44 @@ class Writer:
         memory, multiple ``IDAT`` chunks may be created.
         """
 
+        # A couple of helper functions come first.  Best skipped if you
+        # are reading through.
+
         def isinteger(x):
             try:
                 return int(x) == x
             except:
                 return False
+
+        def check_color(c, which):
+            """Checks that a colour argument for transparent or
+            background options is the right form.  Also "corrects" bare
+            integers to 1-tuples.
+            """
+
+            if c is None:
+                return c
+            if greyscale:
+                try:
+                    l = len(c)
+                except TypeError:
+                    c = (c,)
+                if len(c) != 1:
+                    raise ValueError("%s for greyscale must be 1-tuple" %
+                        which)
+                if not isinteger(c[0]):
+                    raise ValueError(
+                        "%s colour for greyscale must be integer" %
+                        which)
+            else:
+                if not (len(c) == 3 and
+                        isinteger(c[0]) and
+                        isinteger(c[1]) and
+                        isinteger(c[2])):
+                    raise ValueError(
+                        "%s colour must be a triple of integers" %
+                        which)
+            return c
 
         if width <= 0 or height <= 0:
             raise ValueError("width and height must be greater than zero")
@@ -427,31 +460,8 @@ class Writer:
             if greyscale:
                 raise ValueError("greyscale and palette not compatible")
 
-        if transparent is not None:
-            if greyscale:
-                if not isinteger(transparent):
-                    raise ValueError(
-                        "transparent colour for greyscale must be integer")
-            else:
-                if not (len(transparent) == 3 and
-                        isinteger(transparent[0]) and
-                        isinteger(transparent[1]) and
-                        isinteger(transparent[2])):
-                    raise ValueError(
-                        "transparent colour must be a triple of integers")
-
-        if background is not None:
-            if greyscale:
-                if not isinteger(background):
-                    raise ValueError(
-                        "background colour for greyscale must be integer")
-            else:
-                if not (len(background) == 3 and
-                        isinteger(background[0]) and
-                        isinteger(background[1]) and
-                        isinteger(background[2])):
-                    raise ValueError(
-                        "background colour must be a triple of integers")
+        transparent = check_color(transparent, 'transparent')
+        background = check_color(background, 'background')
 
         # It's important that the true boolean values (greyscale, alpha,
         # colormap, interlace) are converted to bool because Iverson's
@@ -1963,7 +1973,7 @@ class Test(unittest.TestCase):
         """Helper used by :meth:`testLtrns*`."""
         pixels = zip(map(ord, '00384c545c403800'.decode('hex')))
         o = StringIO()
-        w = Writer(8, 8, greyscale=1, transparent=transparent)
+        w = Writer(8, 8, greyscale=True, bitdepth=1, transparent=transparent)
         w.write_packed(o, pixels)
         r = Reader(bytes=o.getvalue())
         x,y,pixels,meta = r.asDirect()
