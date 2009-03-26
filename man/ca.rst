@@ -28,7 +28,7 @@ motivating factors for PyPNG.  So PyPNG will always be easy to install.
 
 PyPNG can read and write all PNG formats.  PNG supports a generous
 variety of image formats: RGB or greyscale, with or without an alpha
-channel; and a choice of bit depths from 1,2, or 4 (as long as your want
+channel; and a choice of bit depths from 1,2, or 4 (as long as you want
 greyscale or a pallete), 8, and 16 (but 16 bits is not allowed for
 palettes).  A pixel can vary in size from 1 to 64 bits:
 1/2/4/8/16/24/32/48/64.  In addition a PNG file can be `interlaced` or
@@ -71,8 +71,8 @@ greyscale--alpha, RGB, RGBA.  When writing a PAM file is created for
 those PNG formats with an alpha channel, otherwise a compatible PGM or
 PPM file is created.
 
-Netpbm's support for PAM to PNG conversion is more limited that PyPNG's.
-Netpbm will only convert a source PAM that has 4 channels (so it does
+Netpbm's support for PAM to PNG conversion is more limited than PyPNG's.
+Netpbm will only convert a source PAM that has 4 channels (for example it does
 not create greyscale--alpha PNG files from ``GRAYSCALE_ALPHA`` PAM files).
 Netpbm's usual tool for create PNG files, ``pnmtopng``, requires an alpha
 channel to be specified in a separate file.
