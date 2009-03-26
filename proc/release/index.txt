@@ -34,8 +34,16 @@ The ``-f`` option is essential, it prevents ``sdist`` from copying the wrong
 set of files.  Without ``-f`` ``sdist`` will examine the ``MANIFEST`` file
 which may be out of date.
 
+It's possible at this point that you might want to smoke-test the actual
+release binary.  Let's assume that the release binary is good to go.
+
 Make a record in ``release/index.txt``
 
 Upload ``dist/pypng-X.Y.Z.tar.gz`` to google code.
 
-Register release with PyPI (and upload it?).
+Upload to PyPI:
+
+  python setup.py sdist upload
+
+(You can register releases on PyPI without uploading them:
+"python setup.py register")
