@@ -297,6 +297,7 @@ class Writer:
                  compression=None,
                  interlace=False,
                  bytes_per_sample=None, # deprecated
+                 planes=None,
                  chunk_limit=2**20):
         """
         Create a PNG encoder object.
@@ -1440,6 +1441,7 @@ class Reader:
         meta = dict()
         for attr in 'greyscale alpha planes bitdepth interlace'.split():
             meta[attr] = getattr(self, attr)
+        meta['size'] = (self.width, self.height)
         for attr in 'gamma transparent background'.split():
             a = getattr(self, attr, None)
             if a is not None:
