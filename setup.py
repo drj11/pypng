@@ -17,6 +17,16 @@ conf = dict(
     name='pypng',
     version='0.0.4',
     description='Pure Python PNG encoder/decoder',
+    long_description="""
+PyPNG allows PNG image files to be read and written using pure Python.
+
+It's available from Google code:
+http://code.google.com/p/pypng/downloads/list
+
+Documentation is kindly hosted at python.org:
+http://packages.python.org/pypng/
+(and also available in the download tarball).
+""",
     author='David Jones',
     author_email='drj@pobox.com',
     url='http://code.google.com/p/pypng/',
