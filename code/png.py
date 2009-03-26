@@ -204,7 +204,7 @@ except:
                 if not isinstance(extension, (list, str)):
                     # Convert to list.  Allows iterators to work.
                     extension = list(extension)
-                return super_extend(self.true_array('B', extension))
+                return super_extend(self.true_array(self.typecode, extension))
         array = _array_shim
     except:
         # Expect to get here on Python 2.2
