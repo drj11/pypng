@@ -152,10 +152,16 @@ And now, my famous members
 --------------------------
 """
 
+# http://www.python.org/doc/2.2.3/whatsnew/node5.html
+from __future__ import generators
+
 __version__ = "$URL$ $Rev$"
 
 from array import array
-import itertools
+try:
+    import itertools
+except:
+    pass
 import math
 # http://www.python.org/doc/2.4.4/lib/module-operator.html
 import operator
@@ -171,28 +177,76 @@ import warnings
 # Both of those are repeated issues in the code.  Whilst I would not
 # normally tolerate this sort of behaviour, here we "shim" a replacement
 # for array into place (and hope no-ones notices).  You never read this.
+#
+# In an amusing case of warty hacks on top of warty hacks... the array
+# shimming we try and do only works on Python 2.3 and above (you can't
+# subclass array.array in Python 2.2).  So to get it working on Python
+# 2.2 we go for something much simpler and way slower.
 try:
     array('B').extend([])
     array('B', array('B'))
 except:
-    class _array_shim(array):
-        true_array = array
-        def __new__(cls, typecode, init=None):
-            super_new = super(_array_shim, cls).__new__
-            it = super_new(cls, typecode)
-            if init is None:
+    # Expect to get here on Python 2.3
+    try:
+        class _array_shim(array):
+            true_array = array
+            def __new__(cls, typecode, init=None):
+                super_new = super(_array_shim, cls).__new__
+                it = super_new(cls, typecode)
+                if init is None:
+                    return it
+                it.extend(init)
                 return it
-            it.extend(init)
-            return it
-        def extend(self, extension):
-            super_extend = super(_array_shim, self).extend
-            if isinstance(extension, self.true_array):
-                return super_extend(extension)
-            if not isinstance(extension, (list, str)):
-                # Convert to list.  Allows iterators to work.
-                extension = list(extension)
-            return super_extend(self.true_array('B', extension))
-    array = _array_shim
+            def extend(self, extension):
+                super_extend = super(_array_shim, self).extend
+                if isinstance(extension, self.true_array):
+                    return super_extend(extension)
+                if not isinstance(extension, (list, str)):
+                    # Convert to list.  Allows iterators to work.
+                    extension = list(extension)
+                return super_extend(self.true_array('B', extension))
+        array = _array_shim
+    except:
+        # Expect to get here on Python 2.2
+        def array(typecode, init=()):
+            if type(init) == str:
+                return map(ord, init)
+            return list(init)
+
+# Further hacks to get it limping along on Python 2.2
+try:
+    enumerate
+except:
+    def enumerate(seq):
+        i=0
+        for x in seq:
+            yield i,x
+            i += 1
+try:
+    reversed
+except:
+    def reversed(l):
+        l = list(l)
+        l.reverse()
+        for x in l:
+            yield x
+
+try:
+    itertoools
+except:
+    class _dummy_itertools:
+        pass
+    itertools = _dummy_itertools()
+    def _itertools_imap(f, seq):
+        for x in seq:
+            yield f(x)
+    itertools.imap = _itertools_imap
+    def _itertools_chain(*iterables):
+        for it in iterables:
+            for element in it:
+                yield element
+    itertools.chain = _itertools_chain
+
 
 __all__ = ['Reader', 'Writer']
 
@@ -213,6 +267,30 @@ def group(s, n):
     # See
     # http://www.python.org/doc/2.6/library/functions.html#zip
     return zip(*[iter(s)]*n)
+
+def isarray(x):
+    """Same as ``isinstance(x, array)`` except on Python 2.2, where it
+    always returns ``False``.  This helps PyPNG work on Python 2.2.
+    """
+
+    try:
+        return isinstance(x, array)
+    except:
+        return False
+
+try:
+    array.tostring
+except:
+    def tostring(row):
+        l = len(row)
+        return struct.pack('%dB' % l, *row)
+else:
+    def tostring(row):
+        """Convert row of bytes to string.  Expects `row` to be an
+        ``array``.
+        """
+        return row.tostring()
+        
 
 def interleave_planes(ipixels, apixels, ipsize, apsize):
     """
@@ -501,8 +579,8 @@ class Writer:
             p.extend(x[0:3])
             if len(x) > 3:
                 t.append(x[3])
-        p = p.tostring()
-        t = t.tostring()
+        p = tostring(p)
+        t = tostring(t)
         if t:
             return p,t
         return p,None
@@ -657,7 +735,7 @@ class Writer:
             data.append(0)
             extend(row)
             if len(data) > self.chunk_limit:
-                compressed = compressor.compress(data.tostring())
+                compressed = compressor.compress(tostring(data))
                 if len(compressed):
                     # print >> sys.stderr, len(data), len(compressed)
                     self.write_chunk(outfile, 'IDAT', compressed)
@@ -667,7 +745,7 @@ class Writer:
                 # fresh one (which would be my natural FP instinct).
                 del data[:]
         if len(data):
-            compressed = compressor.compress(data.tostring())
+            compressed = compressor.compress(tostring(data))
         else:
             compressed = ''
         flushed = compressor.flush()
@@ -910,7 +988,7 @@ class _readable:
 
     def read(self, n):
         r = self.buf[self.offset:self.offset+n]
-        if isinstance(r, array):
+        if isarray(r):
             r = r.tostring()
         self.offset += n
         return r
@@ -951,7 +1029,7 @@ class Reader:
         self.atchunk = None
 
         if _guess is not None:
-            if isinstance(_guess, array):
+            if isarray(_guess):
                 kw["bytes"] = _guess
             elif isinstance(_guess, str):
                 kw["filename"] = _guess
@@ -1178,7 +1256,7 @@ class Reader:
             if self.bitdepth == 8:
                 return raw
             if self.bitdepth == 16:
-                raw = raw.tostring()
+                raw = tostring(raw)
                 return array('H', struct.unpack('!%dH' % (len(raw)//2), raw))
             assert self.bitdepth < 8
             width = self.width
@@ -1201,7 +1279,7 @@ class Reader:
         if self.bitdepth == 8:
             return bytes
         if self.bitdepth == 16:
-            bytes = bytes.tostring()
+            bytes = tostring(bytes)
             return array('H',
               struct.unpack('!%dH' % (len(bytes)//2), bytes))
         assert self.bitdepth < 8
@@ -1930,7 +2008,7 @@ class Test(unittest.TestCase):
             return _main(['testPGMin'])
         s = StringIO()
         s.write('P5 2 2 3\n')
-        s.write(array('B', range(4)).tostring())
+        s.write('\x00\x01\x02\x03')
         s.flush()
         s.seek(0)
         o = StringIO()
@@ -1948,7 +2026,7 @@ class Test(unittest.TestCase):
                 'TUPLTYPE RGB_ALPHA\nENDHDR\n')
         # The pixels in flat row flat pixel format
         flat =  [255,0,0,255, 0,255,0,120, 0,0,255,30]
-        s.write(array('B', flat).tostring())
+        s.write(''.join(map(chr, flat)))
         s.flush()
         s.seek(0)
         o = StringIO()
@@ -1994,8 +2072,8 @@ def _dehex(s):
 # Copies of PngSuite test files taken
 # from http://www.schaik.com/pngsuite/pngsuite_bas_png.html
 # on 2009-02-19 by drj and converted to hex.
-_pngsuite = dict(
-  basi0g01=_dehex("""
+_pngsuite = {
+  'basi0g01': _dehex("""
 89504e470d0a1a0a0000000d49484452000000200000002001000000012c0677
 cf0000000467414d41000186a031e8965f0000009049444154789c2d8d310ec2
 300c45dfc682c415187a00a42e197ab81e83b127e00c5639001363a580d8582c
@@ -2004,14 +2082,14 @@ d92aaf4c9fd927ea449e6487df5b9c36e799b91bdf082b4d4bd4014fe4014b01
 ab7a17aee694d28d328a2d63837a70451e1648702d9a9ff4a11d2f7a51aa21e5
 a18c7ffd0094e3511d661822f20000000049454e44ae426082
 """),
-  basi0g02=_dehex("""
+  'basi0g02': _dehex("""
 89504e470d0a1a0a0000000d49484452000000200000002002000000016ba60d
 1f0000000467414d41000186a031e8965f0000005149444154789c635062e860
 00e17286bb609c93c370ec189494960631366e4467b3ae675dcf10f521ea0303
 90c1ca006444e11643482064114a4852c710baea3f18c31918020c30410403a6
 0ac1a09239009c52804d85b6d97d0000000049454e44ae426082
 """),
-  basi0g04=_dehex("""
+  'basi0g04': _dehex("""
 89504e470d0a1a0a0000000d4948445200000020000000200400000001e4e6f8
 bf0000000467414d41000186a031e8965f000000ae49444154789c658e5111c2
 301044171c141c141c041c843a287510ea20d441c041c141c141c04191102454
@@ -2021,7 +2099,7 @@ bf0000000467414d41000186a031e8965f000000ae49444154789c658e5111c2
 a5b4ae6b63ac6520ad730ca4ed7b06d20e030369bd6720ed383290360406d24e
 13811f2781eba9d34d07160000000049454e44ae426082
 """),
-  basi0g08=_dehex("""
+  'basi0g08': _dehex("""
 89504e470d0a1a0a0000000d4948445200000020000000200800000001211615
 be0000000467414d41000186a031e8965f000000b549444154789cb5905d0ac2
 3010849dbac81c42c47bf843cf253e8878b0aa17110f214bdca6be240f5d21a5
@@ -2031,7 +2109,7 @@ be0000000467414d41000186a031e8965f000000b549444154789cb5905d0ac2
 f1f4e03bbec7ce832dca927aea005e431b625796345307b019c845e6bfc3bb98
 769d84f9efb02ea6c00f9bb9ff45e81f9f280000000049454e44ae426082
 """),
-  basi0g16=_dehex("""
+  'basi0g16': _dehex("""
 89504e470d0a1a0a0000000d49484452000000200000002010000000017186c9
 fd0000000467414d41000186a031e8965f000000e249444154789cb5913b0ec2
 301044c7490aa8f85d81c3e4301c8f53a4ca0da8902c8144b3920b4043111282
@@ -2043,7 +2121,7 @@ c60d5c81edcf6c58c535e252839e93801b15c0a70d810ae0d306b205dc32b187
 b606771a05626b401a05f1f589827cf0fe44c1f0bae0055698ee8914fffffe00
 00000049454e44ae426082
 """),
-  basi2c08=_dehex("""
+  'basi2c08': _dehex("""
 89504e470d0a1a0a0000000d49484452000000200000002008020000018b1fdd
 350000000467414d41000186a031e8965f000000f249444154789cd59341aa04
 210c44abc07b78133d59d37333bd89d76868b566d10cf4675af8596431a11662
@@ -2055,7 +2133,7 @@ a07f8bdaf5b40feed2d33e025e2ff4fe2d4a63e1a16d91180b736d8bc45854c5
 26cffbafeffcd30654f46d119be4793f827387fc0d189d5bc4d69a3c23d45a7f
 db803146578337df4d0a3121fc3d330000000049454e44ae426082
 """),
-  basi2c16=_dehex("""
+  'basi2c16': _dehex("""
 89504e470d0a1a0a0000000d4948445200000020000000201002000001db8f01
 760000000467414d41000186a031e8965f0000020a49444154789cd5962173e3
 3010853fcf1838cc61a1818185a53e56787fa13fa130852e3b5878b4b0b03081
@@ -2076,7 +2154,7 @@ c413ede267fd1fbab46880c90f80eccf0013185eb48b47ba03df2bdaadef3181
 cb8976f18e13188768170f98c0f844bb78cb04c62ddac59d09fc3fa25dfc1da4
 14deb3df1344f70000000049454e44ae426082
 """),
-  basi3p08=_dehex("""
+  'basi3p08': _dehex("""
 89504e470d0a1a0a0000000d494844520000002000000020080300000133a3ba
 500000000467414d41000186a031e8965f00000300504c5445224400f5ffed77
 ff77cbffff110a003a77002222ffff11ff110000222200ffac5566ff66ff6666
@@ -2126,7 +2204,7 @@ e5301baec06a580677600ddc05ba0f13e120bc81a770133ec355a017300d4ec2
 f7f017f6c10aa0d1300a0ec374780943e1382c06fa0a9b60238c83473016cec0
 02f80f73fefe1072afc1e50000000049454e44ae426082
 """),
-  basi6a08=_dehex("""
+  'basi6a08': _dehex("""
 89504e470d0a1a0a0000000d4948445200000020000000200806000001047d4a
 620000000467414d41000186a031e8965f0000012049444154789cc595414ec3
 3010459fa541b8bbb26641b8069b861e8b4d12c1c112c1452a710a2a65d840d5
@@ -2140,7 +2218,7 @@ b7337b9f988cc67f5f0e186d20e808042f1c97054e1309da40d02d7e27f92e03
 200314cf801faab200ea752803a8d7a90c503a039f824a53f4694e7342000000
 0049454e44ae426082
 """),
-  basn0g01=_dehex("""
+  'basn0g01': _dehex("""
 89504e470d0a1a0a0000000d49484452000000200000002001000000005b0147
 590000000467414d41000186a031e8965f0000005b49444154789c2dccb10903
 300c05d1ebd204b24a200b7a346f90153c82c18d0a61450751f1e08a2faaead2
@@ -2148,27 +2226,27 @@ a4846ccea9255306e753345712e211b221bf4b263d1b427325255e8bdab29e6f
 6aca30692e9d29616ee96f3065f0bf1f1087492fd02f14c90000000049454e44
 ae426082
 """),
-  basn0g02=_dehex("""
+  'basn0g02': _dehex("""
 89504e470d0a1a0a0000000d49484452000000200000002002000000001ca13d
 890000000467414d41000186a031e8965f0000001f49444154789c6360085df5
 1f8cf1308850c20053868f0133091f6390b90700bd497f818b0989a900000000
 49454e44ae426082
 """),
-  basn0g04=_dehex("""
+  'basn0g04': _dehex("""
 89504e470d0a1a0a0000000d494844520000002000000020040000000093e1c8
 290000000467414d41000186a031e8965f0000004849444154789c6360601014
 545232367671090d4d4b2b2f6720430095dbd1418e002a77e64c720450b9ab56
 912380caddbd9b1c0154ee9933e408a072efde25470095fbee1d1902001f14ee
 01eaff41fa0000000049454e44ae426082
 """),
-  basn0g08=_dehex("""
+  'basn0g08': _dehex("""
 89504e470d0a1a0a0000000d4948445200000020000000200800000000561125
 280000000467414d41000186a031e8965f0000004149444154789c6364602400
 1408c8b30c05058c0f0829f8f71f3f6079301c1430ca11906764a2795c0c0605
 8c8ff0cafeffcff887e67131181430cae0956564040050e5fe7135e2d8590000
 000049454e44ae426082
 """),
-  basn0g16=_dehex("""
+  'basn0g16': _dehex("""
 89504e470d0a1a0a0000000d49484452000000200000002010000000000681f9
 6b0000000467414d41000186a031e8965f0000005e49444154789cd5d2310ac0
 300c4351395bef7fc6dca093c0287b32d52a04a3d98f3f3880a7b857131363a0
@@ -2176,14 +2254,14 @@ ae426082
 d02d680fa44c603f6f07ec4ff41938cf7f0016d84bd85fae2b9fd70000000049
 454e44ae426082
 """),
-  basn2c08=_dehex("""
+  'basn2c08': _dehex("""
 89504e470d0a1a0a0000000d4948445200000020000000200802000000fc18ed
 a30000000467414d41000186a031e8965f0000004849444154789cedd5c10900
 300c024085ec91fdb772133b442bf4a1f8cee12bb40d043b800a14f81ca0ede4
 7d4c784081020f4a871fc284071428f0a0743823a94081bb7077a3c00182b1f9
 5e0f40cf4b0000000049454e44ae426082
 """),
-  basn2c16=_dehex("""
+  'basn2c16': _dehex("""
 89504e470d0a1a0a0000000d4948445200000020000000201002000000ac8831
 e00000000467414d41000186a031e8965f000000e549444154789cd596c10a83
 301044a7e0417fcb7eb7fdadf6961e06039286266693cc7a188645e43dd6a08f
@@ -2195,7 +2273,7 @@ fb8d3630039dbd59601e7ab3c06cf428507f0634d039afdc80123a7bb1801e7a
 b1802a7a14c89f016d74ce331bf080ce9e08f8414f04bca133bfe642fe5e07bb
 c4ec0000000049454e44ae426082
 """),
-  basn6a08=_dehex("""
+  'basn6a08': _dehex("""
 89504e470d0a1a0a0000000d4948445200000020000000200806000000737a7a
 f40000000467414d41000186a031e8965f0000006f49444154789cedd6310a80
 300c46e12764684fa1f73f55048f21c4ddc545781d52e85028fc1f4d28d98a01
@@ -2203,14 +2281,14 @@ f40000000467414d41000186a031e8965f0000006f49444154789cedd6310a80
 1bb0420f5cdc2e0079208892ffe2a00136a07b4007943c1004d900195036407f
 011bf00052201a9c160fb84c0000000049454e44ae426082
 """),
-  s09n3p02=_dehex("""
+  's09n3p02': _dehex("""
 89504e470d0a1a0a0000000d49484452000000090000000902030000009dffee
 830000000467414d41000186a031e8965f000000037342495404040477f8b5a3
 0000000c504c544500ff000077ffff00ffff7700ff5600640000001f49444154
 789c63600002fbff0c0c56ab19182ca381581a4283f82071200000696505c36a
 437f230000000049454e44ae426082
 """),
-  tbgn3p08=_dehex("""
+  'tbgn3p08': _dehex("""
 89504e470d0a1a0a0000000d494844520000002000000020080300000044a48a
 c60000000467414d41000186a031e8965f00000207504c54457f7f7fafafafab
 abab110000222200737300999999510d00444400959500959595e6e600919191
@@ -2249,7 +2327,7 @@ e898260c07fca80a24c076cc864b777131a00190cdfa3069035eccbc038c30e1
 49454e44ae426082
 """),
   # tp2n3p08 is not actually in PngSuite (yet)
-  tp2n3p08=_dehex("""
+  'tp2n3p08': _dehex("""
 89504e470d0a1a0a0000000d494844520000002000000020080300000044a48a
 c60000000467414d41000186a031e8965f00000300504c544502ffff80ff05ff
 7f0703ff7f0180ff04ff00ffff06ff000880ff05ff7f07ffff06ff000804ff00
@@ -2296,7 +2374,7 @@ c0e96bf79ebdfafc971e0a587885e515f58cad5d7d43a2d2720aeadaba26cf5a
 bc62fbcea3272fde7efafac37f3a28000087c0fe101bc2f85f0000000049454e
 44ae426082
 """),
-  tbbn1g04=_dehex("""
+  'tbbn1g04': _dehex("""
 89504e470d0a1a0a0000000d494844520000002000000020040000000093e1c8
 290000000467414d41000186a031e8965f0000000274524e530007e8f7589b00
 000002624b47440000aa8d23320000013e49444154789c55d1cd4b024118c7f1
@@ -2312,7 +2390,7 @@ b692d190b718d159f4c0a45c4435915a243c58a7a4312a7a57913f05747594c6
 7a601bd2710caceba6158797285b7f2084a2f82c57c01a0000000049454e44ae
 426082
 """),
-  tbrn2c08=_dehex("""
+  'tbrn2c08': _dehex("""
 89504e470d0a1a0a0000000d4948445200000020000000200802000000fc18ed
 a30000000467414d41000186a031e8965f0000000674524e53007f007f007f8a
 33334f00000006624b474400ff0000000033277cf3000004d649444154789cad
@@ -2357,7 +2435,7 @@ c0f8f878ad69341a33994ced2969c0d0d0502412f9f8f163f3a7fd654b474787
 9e3d7bf6d3a74f3b3b3b47c80efc05ff7af28fefb70d9b0000000049454e44ae
 426082
 """),
-  basn6a16=_dehex("""
+  'basn6a16': _dehex("""
 89504e470d0a1a0a0000000d494844520000002000000020100600000023eaa6
 b70000000467414d41000186a031e8965f00000d2249444154789cdd995f6c1c
 d775c67ff38fb34b724d2ee55a8e4b04a0ac87049100cab4dbd8c6528902cb4d
@@ -2467,7 +2545,7 @@ acf0c6211c036f14a239703741740adc7da227edd7e56b833d0ae92549b4d357
 9964b6f92e64b689196ec6c604646fd3fe4771ff1bf03f65d8ecc3addbb5f300
 00000049454e44ae426082
 """),
-)
+}
 
 def test_suite(options, args):
     """
@@ -2501,29 +2579,29 @@ def test_suite(options, args):
     def test_zero(x, y): return 0
     def test_one(x, y): return 1
 
-    test_patterns = dict(
-        GLR=test_gradient_horizontal_lr,
-        GRL=test_gradient_horizontal_rl,
-        GTB=test_gradient_vertical_tb,
-        GBT=test_gradient_vertical_bt,
-        RTL=test_radial_tl,
-        RTR=test_radial_tr,
-        RBL=test_radial_bl,
-        RBR=test_radial_br,
-        RCTR=test_radial_center,
-        HS2=test_stripe_h_2,
-        HS4=test_stripe_h_4,
-        HS10=test_stripe_h_10,
-        VS2=test_stripe_v_2,
-        VS4=test_stripe_v_4,
-        VS10=test_stripe_v_10,
-        LRS=test_stripe_lr_10,
-        RLS=test_stripe_rl_10,
-        CK8=test_checker_8,
-        CK15=test_checker_15,
-        ZERO=test_zero,
-        ONE=test_one,
-        )
+    test_patterns = {
+        'GLR': test_gradient_horizontal_lr,
+        'GRL': test_gradient_horizontal_rl,
+        'GTB': test_gradient_vertical_tb,
+        'GBT': test_gradient_vertical_bt,
+        'RTL': test_radial_tl,
+        'RTR': test_radial_tr,
+        'RBL': test_radial_bl,
+        'RBR': test_radial_br,
+        'RCTR': test_radial_center,
+        'HS2': test_stripe_h_2,
+        'HS4': test_stripe_h_4,
+        'HS10': test_stripe_h_10,
+        'VS2': test_stripe_v_2,
+        'VS4': test_stripe_v_4,
+        'VS10': test_stripe_v_10,
+        'LRS': test_stripe_lr_10,
+        'RLS': test_stripe_rl_10,
+        'CK8': test_checker_8,
+        'CK15': test_checker_15,
+        'ZERO': test_zero,
+        'ONE': test_one,
+        }
 
     def test_pattern(width, height, bitdepth, pattern):
         """Create a single plane (monochrome) test pattern.  Returns a
