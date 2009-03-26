@@ -12,7 +12,8 @@ particular png.py is a Python module written entirely in Python.
 INSTALLATION
 
 PyPNG requires Python version 2.3 (and that's all), or any compatible
-higher version.
+higher version.  It works best on Python 2.4 and above.  It can be used
+on Python 2.2, but some things do not work.
 
 PyPNG comes with a setup.py script to use with distutils.  After
 unpacking the distribution, cd into the directory and execute the
