@@ -39,7 +39,16 @@ RELEASE NOTES
 
 (For issues see http://code.google.com/p/pypng/issues/list )
 
-Release 0.0.3 (This release)
+Release 0.0.4 (This release)
+
+The following issues have been fixed:
+
+  Issue 16:  Source and doc uses 'K' where it should use 'L'.
+  Issue 32:  Does not accept packed data.
+  Issue 33:  Cannot create greyscale PNG with transparency.
+  Issue 35:  Does not work on Python 2.2.
+
+Release 0.0.3
 
 The following issues have been fixed:
 
