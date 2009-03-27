@@ -314,7 +314,7 @@ class Writer:
         alpha
           Input data has alpha channel (RGBA or LA).
         bitdepth
-          Bit depth: 1, 2, 4, 8, or 16.
+          Bit depth: from 1 to 16.
         palette
           Create a palette for a colour mapped image (colour type 3).
         transparent
@@ -339,19 +339,36 @@ class Writer:
         an image is greyscale (or colour), and whether it has an
         alpha channel (or not).
 
-        `bitdepth` specifies the bit depth of the PNG image.  This is the
-        number of bits used to specify the value of each colour channel
-        (or index, in the case of a palette).  PNG allows this to be
-        1,2,4,8, or 16, but there are some restrictions on some values.
+        `bitdepth` specifies the bit depth of the source pixel values.
+        Each source pixel values must be an integer between 0 and
+        ``2**bitdepth-1``.  For example, 8-bit images have values
+        between 0 and 255.  PNG only stores images with bit depths of
+        1,2,4,8, or 16.  When `bitdepth` is not one of these values,
+        the next highest valid bit depth is selected, and an ``sBIT``
+        (significant bits) chunk is generated that specifies the original
+        precision of the source image.  In this case the pixel values will
+        be rescaled to fit the range of the selected bit depth.
 
-        For greyscale and palette images the PNG specification allows
-        the bit depth to be less than 8.  For other types (including
-        greyscale+alpha), bit depths less than 8 are rejected.
+        The details of which bit depths are allowed are somewhat arcane
+        (refer to the PNG specification for full details).  Briefly:
+        "small" bit depths (1,2,4) are only allowed with greyscale and
+        colour mapped images; colour mapped images cannot have bit depth
+        16.
+
+        For colour mapped images (in other words, when the `palette`
+        argument is specified) the `bitdepth` argument must match one of
+        the valid PNG bit depths: 1, 2, 4, or 8.  (It is valid to have a
+        PNG image with a palette and an ``sBIT`` chunk, but the meaning
+        is slightly different; it would be awkward to press the
+        `bitdepth` argument into service for this.)
 
         The `palette` option, when specified, causes a colour mapped image
 	to be created: the PNG colour type is set to 3; greyscale
 	must not be set; alpha must not be set; transparent must
-	not be set; the bit depth must be 1,2,4, or 8.
+	not be set; the bit depth must be 1,2,4, or 8.  When a colour
+        mapped image is created, the pixel values are palette indexes
+        and the `bitdepth` argument specifies the size of these indexes
+        (not the size of the colour values in the palette).
 
         The palette argument value should be a sequence of 3- or
         4-tuples.  3-tuples specify RGB palette entries; 4-tuples
@@ -478,8 +495,41 @@ class Writer:
                     "bytes per sample must be .125, .25, .5, 1, or 2")
             bitdepth = int(8*bytes_per_sample)
         del bytes_per_sample
-        if bitdepth not in (1,2,4,8,16):
-            raise ValueError("bitdepth must be 1, 2, 4, 8, or 16")
+        if not isinteger(bitdepth) or bitdepth < 1 or 16 < bitdepth:
+            raise ValueError("bitdepth must be a postive integer <= 16")
+
+        self.rescale = None
+        if palette:
+            if bitdepth not in (1,2,4,8):
+                raise ValueError("with palette, bitdepth must be 1, 2, 4, or 8")
+            if transparent is not None:
+                raise ValueError("transparent and palette not compatible")
+            if alpha:
+                raise ValueError("alpha and palette not compatible")
+            if greyscale:
+                raise ValueError("greyscale and palette not compatible")
+        else:
+            # No palette, check for sBIT chunk generation.
+            if alpha or not greyscale:
+                if bitdepth not in (8,16):
+                    targetbitdepth = (8,16)[bitdepth > 8]
+                    self.rescale = (bitdepth, targetbitdepth)
+                    bitdepth = targetbitdepth
+                    del targetbitdepth
+            else:
+                assert greyscale
+                assert not alpha
+                if bitdepth not in (1,2,4,8,16):
+                    if bitdepth > 8:
+                        targetbitdepth = 16
+                    elif bitdepth == 3:
+                        targetbitdepth = 4
+                    else:
+                        assert bitdepth in (5,6,7)
+                        targetbitdepth = 8
+                    self.rescale = (bitdepth, targetbitdepth)
+                    bitdepth = targetbitdepth
+                    del targetbitdepth
 
         if bitdepth < 8 and (alpha or not greyscale and not palette):
             raise ValueError(
@@ -487,14 +537,6 @@ class Writer:
         if bitdepth > 8 and palette:
             raise ValueError(
                 "bit depth must be 8 or less for images with palette")
-
-        if palette:
-            if transparent is not None:
-                raise ValueError("transparent and palette not compatible")
-            if alpha:
-                raise ValueError("alpha and palette not compatible")
-            if greyscale:
-                raise ValueError("greyscale and palette not compatible")
 
         transparent = check_color(transparent, 'transparent')
         background = check_color(background, 'background')
@@ -611,14 +653,22 @@ class Writer:
                                      self.bitdepth, self.color_type,
                                      0, 0, self.interlace))
 
+        # See :chunk:order
         # http://www.w3.org/TR/PNG/#11gAMA
         if self.gamma is not None:
             self.write_chunk(outfile, 'gAMA',
                              struct.pack("!L", int(round(self.gamma*1e5))))
+
+        # See :chunk:order
+        # http://www.w3.org/TR/PNG/#11sBIT
+        if self.rescale:
+            self.write_chunk(outfile, 'sBIT',
+                struct.pack('%dB' % self.planes,
+                            *[self.rescale[0]]*self.planes))
         
-        # Without a palette (PLTE chunk), ordering is relatively
-        # relaxed.  With one, gAMA chunk must precede PLTE chunk which
-        # must precede tRNS and bKGD.
+        # :chunk:order: Without a palette (PLTE chunk), ordering is
+        # relatively relaxed.  With one, gAMA chunk must precede PLTE
+        # chunk which must precede tRNS and bKGD.
         # See http://www.w3.org/TR/PNG/#5ChunkOrdering
         if self.palette:
             p,t = self.make_palette()
@@ -680,6 +730,12 @@ class Writer:
                 l = map(lambda e: reduce(lambda x,y:
                                            (x << self.bitdepth) + y, e), l)
                 data.extend(l)
+        if self.rescale:
+            oldextend = extend
+            factor = \
+              float(2**self.rescale[1]-1) / float(2**self.rescale[0]-1)
+            def extend(sl):
+                oldextend(map(lambda x: int(round(factor*x)), sl))
 
         # Hack to make the row count and the error message correct in the
         # case where caller supplies no data.
@@ -734,8 +790,15 @@ class Writer:
         Technically, this method does work for interlaced images but it
         is best avoided.  For interlaced images, the rows should be
         presented in the order that they appear in the file.
+
+        This method should not be used when the source image bit depth
+        is not one naturally supported by PNG; the bit depth should be
+        1, 2, 4, 8, or 16.
         """
 
+        if self.rescale:
+            raise Error("write_packed method not suitable for bit depth %d" %
+              self.rescale[0])
         return self.write_passes(outfile, rows, packed=True)
 
     def convert_pnm(self, infile, outfile):
@@ -2090,10 +2153,11 @@ class Test(unittest.TestCase):
         self.assert_(not r.greyscale)
         self.assertEqual(list(itertools.chain(*pixels)), flat)
     def testLA4(self):
-        """Attempting to create an LA file with bitdepth 4 should fail."""
-        def it():
-            Writer(1, 1, greyscale=True, alpha=True, bitdepth=4)
-        self.assertRaises(Exception, it)
+        """Create an LA image with bitdepth 4."""
+        bytes = topngbytes('la4.png', [[5, 12]], 1, 1,
+          greyscale=True, alpha=True, bitdepth=4)
+        sbit = Reader(bytes=bytes).chunk('sBIT')[1]
+        self.assertEqual(sbit, '\x04\x04')
     def testLtrns0(self):
         """Create greyscale image with tRNS chunk."""
         return self.helperLtrns(0)
