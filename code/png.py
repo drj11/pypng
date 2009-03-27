@@ -496,7 +496,8 @@ class Writer:
             bitdepth = int(8*bytes_per_sample)
         del bytes_per_sample
         if not isinteger(bitdepth) or bitdepth < 1 or 16 < bitdepth:
-            raise ValueError("bitdepth must be a postive integer <= 16")
+            raise ValueError("bitdepth (%r) must be a postive integer <= 16" %
+              bitdepth)
 
         self.rescale = None
         if palette:
@@ -2158,6 +2159,21 @@ class Test(unittest.TestCase):
           greyscale=True, alpha=True, bitdepth=4)
         sbit = Reader(bytes=bytes).chunk('sBIT')[1]
         self.assertEqual(sbit, '\x04\x04')
+    def testPNMsbit(self):
+        """Test that PNM files can generates sBIT chunk."""
+        def do():
+            return _main(['testPNMsbit'])
+        s = StringIO()
+        s.write('P6 8 1 1\n')
+        for pixel in range(8):
+            s.write(struct.pack('<I', (0x4081*pixel)&0x10101)[:3])
+        s.flush()
+        s.seek(0)
+        o = StringIO()
+        testWithIO(s, o, do)
+        r = Reader(bytes=o.getvalue())
+        sbit = r.chunk('sBIT')[1]
+        self.assertEqual(sbit, '\x01\x01\x01')
     def testLtrns0(self):
         """Create greyscale image with tRNS chunk."""
         return self.helperLtrns(0)
@@ -3116,17 +3132,14 @@ def _main(argv):
         # care about TUPLTYPE.
         greyscale = depth <= 2
         pamalpha = depth in (2,4)
-        supported = [1, 3, 15, 255, 65535]
+        supported = map(lambda x: 2**x-1, range(1,17))
         try:
             mi = supported.index(maxval)
         except ValueError:
             raise NotImplementedError(
               'your maxval (%s) not in supported list %s' %
               (maxval, str(supported)))
-        bitdepth = 2**mi
-        if bitdepth < 8 and (pamalpha or options.alpha or not greyscale):
-            raise ValueError('bit depth %d must be greyscale only' %
-              bitdepth)
+        bitdepth = mi+1
         writer = Writer(width, height,
                         greyscale=greyscale,
                         bitdepth=bitdepth,
