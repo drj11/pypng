@@ -1377,7 +1377,7 @@ class Reader:
     def process_chunk(self):
         """Process the next chunk and its data.  This only processes the
         following chunk types, all others are ignored: ``IHDR``,
-        ``PLTE``, ``bKGD``, ``tRNS``, ``gAMA``.
+        ``PLTE``, ``bKGD``, ``tRNS``, ``gAMA``, ``sBIT``.
         """
 
         type, data = self.chunk()
@@ -1430,6 +1430,8 @@ class Reader:
             # Stores tRNS chunk if present, and is used to check chunk
             # ordering constraints.
             self.trns = None
+            # Stores sbit chunk if present.
+            self.sbit = None
         elif type == 'PLTE':
             # http://www.w3.org/TR/PNG/#11PLTE
             if self.plte:
@@ -1476,6 +1478,11 @@ class Reader:
                 self.gamma = struct.unpack("!L", data)[0] / 100000.0
             except struct.error:
                 raise ValueError("gAMA chunk has incorrect length")
+        elif type == 'sBIT':
+            self.sbit = data
+            if (self.colormap and len(data) != 3 or
+                len(data) != self.planes):
+                raise ValueError("sBIT chunk has incorrect length")
 
     def read(self):
         """
@@ -1638,9 +1645,20 @@ class Reader:
         """
 
         self.preamble()
+        targetbitdepth = None
+        if self.sbit:
+            sbit = struct.unpack('%dB' % len(self.sbit), self.sbit)
+            targetbitdepth = max(*sbit)
+            if targetbitdepth > self.bitdepth:
+                raise Error('sBIT chunk %r exceeds bitdepth %d' %
+                    (sbit,self.bitdepth))
+            if min(*sbit) <= 0:
+                raise Error('sBIT chunk %r has a 0-entry' % sbit)
+            if targetbitdepth == self.bitdepth:
+                targetbitdepth = None
 
         # Simple case, no conversion necessary.
-        if not self.colormap and not self.trns:
+        if not self.colormap and not self.trns and not targetbitdepth:
             return self.read()
 
         x,y,pixels,meta = self.read()
@@ -1651,37 +1669,44 @@ class Reader:
             meta['bitdepth'] = 8
             meta['planes'] = 3 + bool(self.trns)
             plte = self.palette()
-            def iterpal():
+            def iterpal(pixels):
                 for row in pixels:
                     row = map(plte.__getitem__, row)
                     yield array('B', itertools.chain(*row))
-            return x,y,iterpal(),meta
-
-        assert self.trns
-        # It would be nice if there was some reasonable way of doing
-        # this without generating a whole load of intermediate tuples.
-        # But tuples does seem like the easiest way, with no other way
-        # clearly much simpler or much faster.  (Actually, the L to LA
-        # conversion could perhaps go faster (all those 1-tuples!), but
-        # I still wonder whether the code proliferation is worth it)
-        it = self.transparent
-        maxval = 2**meta['bitdepth']-1
-        planes = meta['planes']
-        meta['alpha'] = True
-        meta['planes'] += 1
-        def itertrns():
-            for row in pixels:
-                # For each row we group it into pixels, then form a
-                # characterisation vector that says whether each pixel
-                # is opaque or not.  Then we convert True/False to
-                # 0/maxval (by multiplication), and add it as the extra
-                # channel.
-                row = group(row, planes)
-                opa = map(it.__ne__, row)
-                opa = map(maxval.__mul__, opa)
-                opa = zip(opa) # convert to 1-tuples
-                yield itertools.chain(*map(operator.add, row, opa))
-        return x,y,itertrns(),meta
+            pixels = iterpal(pixels)
+        elif self.trns:
+            # It would be nice if there was some reasonable way of doing
+            # this without generating a whole load of intermediate tuples.
+            # But tuples does seem like the easiest way, with no other way
+            # clearly much simpler or much faster.  (Actually, the L to LA
+            # conversion could perhaps go faster (all those 1-tuples!), but
+            # I still wonder whether the code proliferation is worth it)
+            it = self.transparent
+            maxval = 2**meta['bitdepth']-1
+            planes = meta['planes']
+            meta['alpha'] = True
+            meta['planes'] += 1
+            def itertrns(pixels):
+                for row in pixels:
+                    # For each row we group it into pixels, then form a
+                    # characterisation vector that says whether each pixel
+                    # is opaque or not.  Then we convert True/False to
+                    # 0/maxval (by multiplication), and add it as the extra
+                    # channel.
+                    row = group(row, planes)
+                    opa = map(it.__ne__, row)
+                    opa = map(maxval.__mul__, opa)
+                    opa = zip(opa) # convert to 1-tuples
+                    yield itertools.chain(*map(operator.add, row, opa))
+            pixels = itertrns(pixels)
+        if targetbitdepth:
+            shift = meta['bitdepth'] - targetbitdepth
+            meta['bitdepth'] = targetbitdepth
+            def itershift(pixels):
+                for row in pixels:
+                    yield map(shift.__rrshift__, row)
+            pixels = itershift(pixels)
+        return x,y,pixels,meta
 
     def _as_rescale(self, get, targetbitdepth):
         """Helper used by :meth:`asRGB8` and :meth:`asRGBA8`."""
