@@ -298,6 +298,7 @@ class Writer:
                  interlace=False,
                  bytes_per_sample=None, # deprecated
                  planes=None,
+                 size=None,
                  chunk_limit=2**20):
         """
         Create a PNG encoder object.
@@ -390,6 +391,11 @@ class Writer:
         compressing the image.  In order to avoid using large amounts of
         memory, multiple ``IDAT`` chunks may be created.
         """
+
+        # At the moment the `planes` and `size` argument are ignored;
+        # their purpose is to act as dummies so that
+        # ``Writer(x, y, **info)`` works, where `info` is a dictionary
+        # returned by Reader.read and friends.
 
         # A couple of helper functions come first.  Best skipped if you
         # are reading through.
