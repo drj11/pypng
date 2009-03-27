@@ -1635,17 +1635,6 @@ class Reader:
 
         All the other aspects of the image data (bit depth for example)
         are not changed.
-
-        .. note::
-
-          When the source image is greyscale, has bit depth < 8, and has
-          a ``tRNS`` chunk, then an alpha channel will be added, but the
-          bit depth does not change.  This results in pixel data which
-          is 2-channel (greyscale+alpha) but bit depth < 8.  Whilst this
-          is perfectly sensible, it is not a pixel format supported by
-          PNG so you cannot write it out unmodified to another PNG file.
-          This is not regarded as a bug in this method.  It is not the
-          job of this method to rescale pixel values.
         """
 
         self.preamble()
@@ -1752,14 +1741,6 @@ class Reader:
         except that the *metadata* reflect the returned pixels, not the
         source image.  In particular, for this method
         ``metadata['greyscale']`` will be ``False``.
-
-        .. note ::
-
-          Like the :meth:`asDirect` method, this method can return pixels
-          in "non PNG" formats.  For example, a greyscale image of
-          bit depth 4 will be returned as a colour image with bit depth
-          4 by this method.  That format is not supported by PNG (but
-          makes sense in other formats).
         """
 
         width,height,pixels,meta = self.asDirect()
@@ -1785,14 +1766,6 @@ class Reader:
         source image.  In particular, for this method
         ``metadata['greyscale']`` will be ``False``, and
         ``metadata['alpha']`` will be ``True``.
-
-        .. note ::
-        
-          Like the :meth:`asDirect` method, this method can return
-          pixels in "non PNG" formats.  For example, a greyscale image
-          of bit depth 4 will be returned as an RGBA image with bit
-          depth 4.  That format is not supported by PNG (but makes sense
-          in other formats).
         """
 
         width,height,pixels,meta = self.asDirect()
