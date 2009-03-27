@@ -286,7 +286,8 @@ class Writer:
     PNG encoder in pure Python.
     """
 
-    def __init__(self, width, height,
+    def __init__(self, width=None, height=None,
+                 size=None,
                  greyscale=False,
                  alpha=False,
                  bitdepth=8,
@@ -298,7 +299,6 @@ class Writer:
                  interlace=False,
                  bytes_per_sample=None, # deprecated
                  planes=None,
-                 size=None,
                  chunk_limit=2**20):
         """
         Create a PNG encoder object.
@@ -306,7 +306,9 @@ class Writer:
         Arguments:
 
         width, height
-          Size of the image in pixels.
+          Image size in pixels, as two separate arguments.
+        size
+          Image size (w,h) in pixels, as single argument.
         greyscale
           Input data is greyscale, not RGB.
         alpha
@@ -327,6 +329,11 @@ class Writer:
           Create an interlaced image.
         chunk_limit
           Write multiple ``IDAT`` chunks to save memory.
+
+        The image size (in pixels) can be specified either by using the
+        `width` and `height` arguments, or with the single `size`
+        argument.  If `size` is used it should be a pair (*width*,
+        *height*).
 
         `greyscale` and `alpha` are booleans that specify whether
         an image is greyscale (or colour), and whether it has an
@@ -392,8 +399,8 @@ class Writer:
         memory, multiple ``IDAT`` chunks may be created.
         """
 
-        # At the moment the `planes` and `size` argument are ignored;
-        # their purpose is to act as dummies so that
+        # At the moment the `planes` argument is ignored;
+        # its purpose is to act as a dummy so that
         # ``Writer(x, y, **info)`` works, where `info` is a dictionary
         # returned by Reader.read and friends.
 
@@ -435,6 +442,21 @@ class Writer:
                         "%s colour must be a triple of integers" %
                         which)
             return c
+
+        if size:
+            if len(size) != 2:
+                raise ValueError(
+                  "size argument should be a pair (width, height)")
+            if width is not None and width != size[0]:
+                raise ValueError(
+                  "size[0] (%r) and width (%r) should match when both are used."
+                    % (size[0], width))
+            if height is not None and height != size[1]:
+                raise ValueError(
+                  "size[1] (%r) and height (%r) should match when both are used."
+                    % (size[1], height))
+            width,height = size
+        del size
 
         if width <= 0 or height <= 0:
             raise ValueError("width and height must be greater than zero")
@@ -2089,6 +2111,13 @@ class Test(unittest.TestCase):
         self.assert_(meta['alpha'])
         self.assert_(meta['greyscale'])
         self.assertEqual(meta['bitdepth'], 1)
+    def testWinfo(self):
+        """Test the dictionary returned by a `read` method can be used
+        as args for :meth:`Writer`.
+        """
+        r = Reader(bytes=_pngsuite['basn2c16'])
+        info = r.read()[3]
+        w = Writer(**info)
 
 # === Command Line Support ===
 

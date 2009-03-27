@@ -12,11 +12,19 @@ import png
 
 def rescale(inp, out, xf, yf):
     r = png.Reader(file=inp)
-    x,y,pixels,meta = r.asDirect()
+    _,_,pixels,meta = r.asDirect()
     typecode = 'BH'[meta['bitdepth'] > 8]
     planes = meta['planes']
-    # Values per row, new row.
-    vpr = x * planes * xf
+    # We are going to use meta in the call to Writer, so expand the
+    # size.
+    x,y = meta['size']
+    x *= xf
+    y *= yf
+    meta['size'] = (x,y)
+    del x
+    del y
+    # Values per row, target row.
+    vpr = meta['size'][0] * planes
     def iterscale():
         for row in pixels:
             bigrow = array(typecode, [0]*vpr)
@@ -26,8 +34,7 @@ def rescale(inp, out, xf, yf):
                     bigrow[i*planes+c::xf*planes] = channel
             for _ in range(yf):
                 yield bigrow
-    w = png.Writer(x*xf, y*yf, greyscale=meta['greyscale'],
-    alpha=meta['alpha'], bitdepth=meta['bitdepth'])
+    w = png.Writer(**meta)
     w.write(out, iterscale())
 
 
