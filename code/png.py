@@ -1625,9 +1625,18 @@ class Reader:
         colour value directly without needing to refer to palettes or
         transparency information.
 
-        As for the :meth:`read` method this method returns a 4-tuple:
+        Like the :meth:`read` method this method returns a 4-tuple:
 
-        (*x*, *y*, *pixels*, *meta*)
+        (*width*, *height*, *pixels*, *meta*)
+
+        This method normally returns pixel values with the bit depth
+        they have in the source image, but when the source PNG has an
+        ``sBIT`` chunk it is inspected and can reduce the bit depth of
+        the result pixels; pixel values will be reduced according to
+        the bit depth specified in the ``sBIT`` chunk (PNG nerds should
+        note a single result bit depth is used for all channels; the
+        maximum of the ones specified in the ``sBIT`` chunk.  An RGB565
+        image will be rescaled to 6-bit RGB666).
 
         The *meta* dictionary that is returned reflects the `direct`
         format and not the original source image.  For example, an RGB
@@ -1640,8 +1649,7 @@ class Reader:
         *pixels* is the pixel data in boxed row flat pixel format (just
         like the :meth:`read` method).
 
-        All the other aspects of the image data (bit depth for example)
-        are not changed.
+        All the other aspects of the image data are not changed.
         """
 
         self.preamble()
@@ -1737,10 +1745,6 @@ class Reader:
         *width*, *height*, *metadata* are as per the :meth:`read` method.
         
         *pixels* is the pixel data in boxed row flat pixel format.
-
-        Note that unlike :meth:`asRGB` this method always returns pixels
-        in a format that can be represented in a PNG; that's because it
-        forces data to be 8-bit.
         """
 
         return self._as_rescale(self.asRGB, 8)
@@ -1751,10 +1755,6 @@ class Reader:
         :meth:`asRGBA`:  The result pixels have an alpha channel, _and_
         values are rescale to the range 0 to 255.  The alpha channel is
         synthesized if necessary.
-
-        Note that unlike :meth:`asRGBA` this method always returns pixels
-        in a format that can be represented in a PNG; that's because it
-        forces data to be 8-bit.
         """
 
         return self._as_rescale(self.asRGBA, 8)
