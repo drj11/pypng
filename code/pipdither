@@ -1,0 +1,68 @@
+#!/usr/bin/env python
+# $URL$
+# $Rev$
+
+# pipdither
+# Error Diffusing image dithering.
+
+# See http://www.efg2.com/Lab/Library/ImageProcessing/DHALF.TXT
+
+import png
+
+def dither(out, inp):
+    # The dithering alforithm is not completely general; it
+    # can only do bit depth reduction, not arbitrary palette changes.
+    import operator
+    bitdepth = 1
+    maxval = 2**bitdepth - 1
+    r = png.Reader(file=inp)
+    _,_,pixels,info = r.asFloat(maxval)
+    planes = info['planes']
+    assert planes == 1
+    width = info['size'][0]
+    def iterdither():
+        ed = [0.0]*width
+        for row in pixels:
+            row = map(operator.add, ed, row)
+            targetrow = [0] * width
+            for i,v in enumerate(row):
+                # Clamp.  Necessary because previously added errors may take
+                # v out of range.
+                v = max(0, min(v, maxval))
+                # t is the chosen target value, as an int.
+                t = int(round(v))
+                targetrow[i] = t
+                # err is the error that needs distributing.
+                err = v - t
+                # Sierra "Filter Lite" distributes          * 2
+                # as per this diagram.                    1 1
+                ef = err/2.0
+                # :todo: consider making rows one wider at each end and
+                # removing "if"s
+                if i+1 < width:
+                    row[i+1] += ef
+                ef /= 2.0
+                ed[i] = ef
+                if i:
+                    ed[i-1] += ef
+            yield targetrow
+    info['bitdepth'] = bitdepth
+    w = png.Writer(**info)
+    w.write(out, iterdither())
+
+
+def main(argv=None):
+    import sys
+    if argv is None:
+        argv = sys.argv
+
+    if len(argv) > 1:
+        f = open(argv[1], 'rb')
+    else:
+        f = sys.stdin
+
+    return dither(sys.stdout, f)
+
+
+if __name__ == '__main__':
+    main()
