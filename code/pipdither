@@ -4,6 +4,7 @@
 
 # pipdither
 # Error Diffusing image dithering.
+# Now with serpentine scanning.
 
 # See http://www.efg2.com/Lab/Library/ImageProcessing/DHALF.TXT
 
@@ -22,8 +23,11 @@ def dither(out, inp):
     width = info['size'][0]
     def iterdither():
         ed = [0.0]*width
+        flipped = False
         for row in pixels:
             row = map(operator.add, ed, row)
+            if flipped:
+                row = row[::-1]
             targetrow = [0] * width
             for i,v in enumerate(row):
                 # Clamp.  Necessary because previously added errors may take
@@ -45,7 +49,11 @@ def dither(out, inp):
                 ed[i] = ef
                 if i:
                     ed[i-1] += ef
+            if flipped:
+                ed = ed[::-1]
+                targetrow = targetrow[::-1]
             yield targetrow
+            flipped = not flipped
     info['bitdepth'] = bitdepth
     w = png.Writer(**info)
     w.write(out, iterdither())
