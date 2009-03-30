@@ -1482,7 +1482,7 @@ class Reader:
         elif type == 'sBIT':
             self.sbit = data
             if (self.colormap and len(data) != 3 or
-                len(data) != self.planes):
+                not self.colormap and len(data) != self.planes):
                 raise ValueError("sBIT chunk has incorrect length")
 
     def read(self):
