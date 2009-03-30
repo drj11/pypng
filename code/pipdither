@@ -10,11 +10,10 @@
 
 import png
 
-def dither(out, inp):
+def dither(out, inp, bitdepth=1):
     # The dithering alforithm is not completely general; it
     # can only do bit depth reduction, not arbitrary palette changes.
     import operator
-    bitdepth = 1
     maxval = 2**bitdepth - 1
     r = png.Reader(file=inp)
     _,_,pixels,info = r.asFloat(maxval)
@@ -60,16 +59,25 @@ def dither(out, inp):
 
 
 def main(argv=None):
+    # http://www.python.org/doc/2.4.4/lib/module-getopt.html
+    from getopt import getopt
     import sys
     if argv is None:
         argv = sys.argv
+    opt,argv = getopt(argv[1:], 'b:')
+    k = {}
+    for o,v in opt:
+        if o == '-b':
+            k['bitdepth'] = int(v)
+        if o == '-?':
+            print >>sys.stderr, "pipdither [-b bits] [in.png]"
 
-    if len(argv) > 1:
-        f = open(argv[1], 'rb')
+    if len(argv) > 0:
+        f = open(argv[0], 'rb')
     else:
         f = sys.stdin
 
-    return dither(sys.stdout, f)
+    return dither(sys.stdout, f, **k)
 
 
 if __name__ == '__main__':
