@@ -1654,20 +1654,9 @@ class Reader:
         """
 
         self.preamble()
-        targetbitdepth = None
-        if self.sbit:
-            sbit = struct.unpack('%dB' % len(self.sbit), self.sbit)
-            targetbitdepth = max(*sbit)
-            if targetbitdepth > self.bitdepth:
-                raise Error('sBIT chunk %r exceeds bitdepth %d' %
-                    (sbit,self.bitdepth))
-            if min(*sbit) <= 0:
-                raise Error('sBIT chunk %r has a 0-entry' % sbit)
-            if targetbitdepth == self.bitdepth:
-                targetbitdepth = None
 
         # Simple case, no conversion necessary.
-        if not self.colormap and not self.trns and not targetbitdepth:
+        if not self.colormap and not self.trns and not self.sbit:
             return self.read()
 
         x,y,pixels,meta = self.read()
@@ -1708,6 +1697,17 @@ class Reader:
                     opa = zip(opa) # convert to 1-tuples
                     yield itertools.chain(*map(operator.add, row, opa))
             pixels = itertrns(pixels)
+        targetbitdepth = None
+        if self.sbit:
+            sbit = struct.unpack('%dB' % len(self.sbit), self.sbit)
+            targetbitdepth = max(*sbit)
+            if targetbitdepth > meta['bitdepth']:
+                raise Error('sBIT chunk %r exceeds bitdepth %d' %
+                    (sbit,self.bitdepth))
+            if min(*sbit) <= 0:
+                raise Error('sBIT chunk %r has a 0-entry' % sbit)
+            if targetbitdepth == meta['bitdepth']:
+                targetbitdepth = None
         if targetbitdepth:
             shift = meta['bitdepth'] - targetbitdepth
             meta['bitdepth'] = targetbitdepth
