@@ -1700,11 +1700,11 @@ class Reader:
         targetbitdepth = None
         if self.sbit:
             sbit = struct.unpack('%dB' % len(self.sbit), self.sbit)
-            targetbitdepth = max(*sbit)
+            targetbitdepth = max(sbit)
             if targetbitdepth > meta['bitdepth']:
                 raise Error('sBIT chunk %r exceeds bitdepth %d' %
                     (sbit,self.bitdepth))
-            if min(*sbit) <= 0:
+            if min(sbit) <= 0:
                 raise Error('sBIT chunk %r has a 0-entry' % sbit)
             if targetbitdepth == meta['bitdepth']:
                 targetbitdepth = None
