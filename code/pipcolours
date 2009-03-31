@@ -21,8 +21,10 @@ def colours(out, inp):
     col = list(itertools.chain(*col))
     width = len(col)//planes
     greyscale = planes in (1,2)
-    alpha = planes in (1,3)
-    w = png.Writer(width, 1, greyscale=greyscale, alpha=alpha)
+    alpha = planes in (2,4)
+    bitdepth = info['bitdepth']
+    w = png.Writer(width, 1,
+        bitdepth=bitdepth, greyscale=greyscale, alpha=alpha)
     w.write(out, [col])
 
 def channel_reduce(col, planes):
