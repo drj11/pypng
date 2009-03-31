@@ -28,6 +28,7 @@ def rescale(inp, out, xf, yf):
     def iterscale():
         for row in pixels:
             bigrow = array(typecode, [0]*vpr)
+            row = array(typecode, row)
             for c in range(planes):
                 channel = row[c::planes]
                 for i in range(xf):
