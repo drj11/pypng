@@ -2227,6 +2227,9 @@ def _dehex(s):
 # Copies of PngSuite test files taken
 # from http://www.schaik.com/pngsuite/pngsuite_bas_png.html
 # on 2009-02-19 by drj and converted to hex.
+# Some of these are not actually in PngSuite (but maybe they should
+# be?), they use the same naming scheme, but start with a capital
+# letter.
 _pngsuite = {
   'basi0g01': _dehex("""
 89504e470d0a1a0a0000000d49484452000000200000002001000000012c0677
@@ -2506,8 +2509,7 @@ e898260c07fca80a24c076cc864b777131a00190cdfa3069035eccbc038c30e1
 9e854c38e5191878fbe471e749b0112bb18902008dc473b2b2e8e72700000000
 49454e44ae426082
 """),
-  # tp2n3p08 is not actually in PngSuite (yet)
-  'tp2n3p08': _dehex("""
+  'Tp2n3p08': _dehex("""
 89504e470d0a1a0a0000000d494844520000002000000020080300000044a48a
 c60000000467414d41000186a031e8965f00000300504c544502ffff80ff05ff
 7f0703ff7f0180ff04ff00ffff06ff000880ff05ff7f07ffff06ff000804ff00
