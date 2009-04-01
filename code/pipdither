@@ -14,16 +14,29 @@ def dither(out, inp, bitdepth=1):
     # The dithering alforithm is not completely general; it
     # can only do bit depth reduction, not arbitrary palette changes.
     import operator
-    maxval = 2**bitdepth - 1
+    maxval = float(2**bitdepth - 1)
     r = png.Reader(file=inp)
-    _,_,pixels,info = r.asFloat(maxval)
+    # If image gamma is 1 or gamma is not present and we are assuming a
+    # value of 1, then it is faster to pass a maxval parameter to
+    # asFloat (the multiplications get combined).  With gamma, we have
+    # to have the pixel values from 0.0 to 1.0 (as long as we are doing
+    # gamma correction here).
+    _,_,pixels,info = r.asFloat()
     planes = info['planes']
     assert planes == 1
     width = info['size'][0]
+    gamma = info.get('gamma')
+    # Convert gamma from encoding gamma to the required power to convert
+    # from image pixel values to a linear intensity space.
+    if gamma:
+        gamma = 1.0/gamma
     def iterdither():
         ed = [0.0]*width
         flipped = False
         for row in pixels:
+            if gamma:
+                row = map(gamma.__rpow__, row)
+            row = map(maxval.__mul__, row)
             row = map(operator.add, ed, row)
             if flipped:
                 row = row[::-1]
