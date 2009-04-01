@@ -1,0 +1,60 @@
+#!/usr/bin/env python
+# $URL$
+# $Rev$
+
+# pipasgrey
+
+# Convert image to grey (L, or LA), but only if that involves no colour
+# change.
+
+def asgrey(out, inp):
+    """Convert image to greyscale, but only when no colour change."""
+
+    import png
+
+    r = png.Reader(file=inp)
+    _,_,pixels,info = r.asDirect()
+    if info['greyscale']:
+        w = png.Writer(**info)
+        return w.write(out, pixels)
+    planes = info['planes']
+    targetplanes = planes - 2
+    alpha = info['alpha']
+    width = info['size'][0]
+    typecode = 'BH'[info['bitdepth'] > 8]
+    # Values per target row
+    vpr = width * (targetplanes)
+    def iterasgrey():
+        for i,row in enumerate(pixels):
+            row = array(typecode, row)
+            targetrow = array(typecode, [0]*vpr)
+            # Copy R (and possibly A) channel.
+            red = row[0::planes]
+            if alpha:
+                targetrow[0::2] = red
+                targetrow[1::2] = row[3::4]
+            else:
+                targetrow = red
+            # Check G and B channel match.
+            if red != row[1::planes] or red != row[2::planes]:
+                raise ValueError('Row %i contains non-grey pixel.' % i)
+            yield targetrow
+    info['greyscale'] = True
+    del info['planes']
+    w = png.Writer(**info)
+    w.write(out, iterasgrey())
+
+def main(argv=None):
+    import sys
+    if argv is None:
+        argv = sys.argv
+    argv = argv[1:]
+
+    if len(argv) > 0:
+        f = open(argv[0], 'rb')
+    else:
+        f = sys.stdin
+    return asgrey(sys.stdout, f)
+
+if __name__ == '__main__':
+    main()
