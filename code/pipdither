@@ -10,8 +10,18 @@
 
 import png
 
-def dither(out, inp, bitdepth=1):
-    # The dithering alforithm is not completely general; it
+def dither(out, inp, bitdepth=1, linear=False):
+    """Dither the input PNG `inp` into an image with a smaller bit depth
+    and write the result image onto `out`.  `bitdepth` specifies the bit
+    depth of the new image.  Normally the source image gamma is honoured
+    (the image is converted into a linear light space before being
+    dithered), but if the `linear` argument is true then the image is
+    treated as being linear already, no gamma conversion is done (this
+    is quicker, and if you don't care much about accuracy, it won't
+    matter much even when the source image is not linear).
+    """
+
+    # The dithering algorithm is not completely general; it
     # can only do bit depth reduction, not arbitrary palette changes.
     import operator
     maxval = float(2**bitdepth - 1)
@@ -21,11 +31,19 @@ def dither(out, inp, bitdepth=1):
     # asFloat (the multiplications get combined).  With gamma, we have
     # to have the pixel values from 0.0 to 1.0 (as long as we are doing
     # gamma correction here).
+    # Slightly annoyingly, we don't know the image gamma until we've
+    # called asFloat().
     _,_,pixels,info = r.asFloat()
     planes = info['planes']
     assert planes == 1
     width = info['size'][0]
-    gamma = info.get('gamma')
+    if linear:
+        gamma = None
+    else:
+        gamma = info.get('gamma')
+    if gamma == 1:
+        # This is equivalent to the no conversion case.
+        gamma = None
     # Convert gamma from encoding gamma to the required power to convert
     # from image pixel values to a linear intensity space.
     if gamma:
@@ -77,11 +95,13 @@ def main(argv=None):
     import sys
     if argv is None:
         argv = sys.argv
-    opt,argv = getopt(argv[1:], 'b:')
+    opt,argv = getopt(argv[1:], 'b:l')
     k = {}
     for o,v in opt:
         if o == '-b':
             k['bitdepth'] = int(v)
+        if o == '-l':
+            k['linear'] = True
         if o == '-?':
             print >>sys.stderr, "pipdither [-b bits] [in.png]"
 
