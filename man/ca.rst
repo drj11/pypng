@@ -77,6 +77,13 @@ not create greyscale--alpha PNG files from ``GRAYSCALE_ALPHA`` PAM files).
 Netpbm's usual tool for create PNG files, ``pnmtopng``, requires an alpha
 channel to be specified in a separate file.
 
+PyPNG has good support for PNG's ``sBIT`` chunk.  This allows end to end
+processing of files with any bit depth from 1 to 16 (for example a
+10-bit scanner may use the ``sBIT`` chunk to declare that the samples in
+a 16-bit PNG file are rescaled 10-bit samples; in this case, PyPNG
+delivers 10-bit samples).  Netpbm handle's the ``sBIT`` chunk in a
+similar way, but other toolsets may not (PIL?).
+
 ``libpng`` is made by the PNG gods, so if want to get at all that
 goodness, then you may want to interface directly to libpng via
 ``ctypes``.  That could be a good idea for some things.  Installation
