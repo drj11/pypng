@@ -8,7 +8,12 @@
 
 # See http://www.efg2.com/Lab/Library/ImageProcessing/DHALF.TXT
 
+# @@@@
+from bisect import bisect_left
+
 import png
+
+import sys
 
 def dither(out, inp, bitdepth=1, linear=False, defaultgamma=None):
     """Dither the input PNG `inp` into an image with a smaller bit depth
@@ -36,10 +41,14 @@ def dither(out, inp, bitdepth=1, linear=False, defaultgamma=None):
     
     """
 
+    # Encoding is what happened when the PNG was made (and also what
+    # happens when we output the PNG).  Decoding is what we do to the
+    # source PNG in order to process it.
+
     # The dithering algorithm is not completely general; it
     # can only do bit depth reduction, not arbitrary palette changes.
     import operator
-    maxval = float(2**bitdepth - 1)
+    maxval = 2**bitdepth - 1
     r = png.Reader(file=inp)
     # If image gamma is 1 or gamma is not present and we are assuming a
     # value of 1, then it is faster to pass a maxval parameter to
@@ -48,28 +57,44 @@ def dither(out, inp, bitdepth=1, linear=False, defaultgamma=None):
     # gamma correction here).
     # Slightly annoyingly, we don't know the image gamma until we've
     # called asFloat().
-    _,_,pixels,info = r.asFloat()
+    _,_,pixels,info = r.asDirect()
     planes = info['planes']
     assert planes == 1
     width = info['size'][0]
+    sourcemaxval = info['bitdepth']**2 - 1
     if linear:
-        gamma = None
+        gamma = 1
     else:
         gamma = info.get('gamma') or defaultgamma
-    if gamma == 1:
-        # This is equivalent to the no conversion case.
-        gamma = None
-    # Convert gamma from encoding gamma to the required power to convert
-    # from image pixel values to a linear intensity space.
-    if gamma:
-        gamma = 1.0/gamma
+    # Convert gamma from encoding gamma to the required power for
+    # decoding.
+    decode = 1.0/gamma
+    # Build a lookup table for decoding; convert from pixel values to linear
+    # space:
+    sourcef = 1.0/sourcemaxval
+    tolin = map(sourcef.__mul__, range(sourcemaxval+1))
+    if decode != 1.0:
+        tolin = map(decode.__rpow__, tolin)
+    # Could be different, later on.  targetdecode is the assumed gamma
+    # that is going to be used to decoding the target PNG.  It is the
+    # reciprocal of the exponent that we use to encode the target PNG.
+    # This is the value that we need to build our table that we use for
+    # converting from linear to target colour space.
+    targetdecode = decode
+    # The table we use for encoding (creating the target PNG), still
+    # maps from pixel value to linear space, but we use it inverted, by
+    # searching through it with bisect.
+    targetf = 1.0/maxval
+    fromlin = map(targetf.__mul__, range(maxval+1))
+    if targetdecode != 1.0:
+        fromlin = map(targetdecode.__rpow__, fromlin)
+    print >> sys.stderr, targetdecode, fromlin
     def iterdither():
+        # Errors diffused downwards (into next row)
         ed = [0.0]*width
         flipped = False
         for row in pixels:
-            if gamma:
-                row = map(gamma.__rpow__, row)
-            row = map(maxval.__mul__, row)
+            row = map(tolin.__getitem__, row)
             row = map(operator.add, ed, row)
             if flipped:
                 row = row[::-1]
@@ -77,10 +102,22 @@ def dither(out, inp, bitdepth=1, linear=False, defaultgamma=None):
             for i,v in enumerate(row):
                 # Clamp.  Necessary because previously added errors may take
                 # v out of range.
-                v = max(0, min(v, maxval))
-                # t is the chosen target value, as an int.
-                t = int(round(v))
-                targetrow[i] = t
+                v = max(0.0, min(v, 1.0))
+                # `it` will be the index of the chosen target colour;
+                # start by picking the "floor" and testing that and its
+                # higher neighbour to see which is closer.
+                # `t` is the value of that colour
+                it = bisect_left(fromlin, v)
+                if it == maxval:
+                    it -= 1
+                t0 = fromlin[it]
+                t1 = fromlin[it+1]
+                if abs(v-t0) < abs(v-t1):
+                    t = t0
+                else:
+                    it += 1
+                    t = t1
+                targetrow[i] = it
                 # err is the error that needs distributing.
                 err = v - t
                 # Sierra "Filter Lite" distributes          * 2
@@ -100,6 +137,7 @@ def dither(out, inp, bitdepth=1, linear=False, defaultgamma=None):
             yield targetrow
             flipped = not flipped
     info['bitdepth'] = bitdepth
+    info['gamma'] = 1.0/targetdecode
     w = png.Writer(**info)
     w.write(out, iterdither())
 
@@ -110,17 +148,17 @@ def main(argv=None):
     import sys
     if argv is None:
         argv = sys.argv
-    opt,argv = getopt(argv[1:], 'a:b:l')
+    opt,argv = getopt(argv[1:], 'g:b:l')
     k = {}
     for o,v in opt:
-        if o == '-a':
+        if o == '-g':
             k['defaultgamma'] = float(v)
         if o == '-b':
             k['bitdepth'] = int(v)
         if o == '-l':
             k['linear'] = True
         if o == '-?':
-            print >>sys.stderr, "pipdither [-a assumed-gamma] [-b bits] [-l] [in.png]"
+            print >>sys.stderr, "pipdither [-g assumed-gamma] [-b bits] [-l] [in.png]"
 
     if len(argv) > 0:
         f = open(argv[0], 'rb')
