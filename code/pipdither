@@ -13,8 +13,6 @@ from bisect import bisect_left
 
 import png
 
-import sys
-
 def dither(out, inp, bitdepth=1, linear=False, defaultgamma=None):
     """Dither the input PNG `inp` into an image with a smaller bit depth
     and write the result image onto `out`.  `bitdepth` specifies the bit
@@ -85,10 +83,9 @@ def dither(out, inp, bitdepth=1, linear=False, defaultgamma=None):
     # maps from pixel value to linear space, but we use it inverted, by
     # searching through it with bisect.
     targetf = 1.0/maxval
-    fromlin = map(targetf.__mul__, range(maxval+1))
+    outcode = map(targetf.__mul__, range(maxval+1))
     if targetdecode != 1.0:
-        fromlin = map(targetdecode.__rpow__, fromlin)
-    print >> sys.stderr, targetdecode, fromlin
+        outcode = map(targetdecode.__rpow__, outcode)
     def iterdither():
         # Errors diffused downwards (into next row)
         ed = [0.0]*width
@@ -107,11 +104,11 @@ def dither(out, inp, bitdepth=1, linear=False, defaultgamma=None):
                 # start by picking the "floor" and testing that and its
                 # higher neighbour to see which is closer.
                 # `t` is the value of that colour
-                it = bisect_left(fromlin, v)
+                it = bisect_left(outcode, v)
                 if it == maxval:
                     it -= 1
-                t0 = fromlin[it]
-                t1 = fromlin[it+1]
+                t0 = outcode[it]
+                t1 = outcode[it+1]
                 if abs(v-t0) < abs(v-t1):
                     t = t0
                 else:
