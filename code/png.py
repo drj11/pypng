@@ -2272,6 +2272,30 @@ class Test(unittest.TestCase):
         rows = [map(numpy.uint16, range(0,0x10000,0x5555))]
         b = topngbytes('numpyuint16.png', rows, 4, 1,
             greyscale=True, alpha=False, bitdepth=16)
+    def testNumpyuint8(self):
+        """numpy uint8."""
+
+        try:
+            import numpy
+        except ImportError:
+            print >>sys.stderr, "skipping numpy test"
+            return
+
+        rows = [map(numpy.uint8, range(0,0x100,0x55))]
+        b = topngbytes('numpyuint8.png', rows, 4, 1,
+            greyscale=True, alpha=False, bitdepth=8)
+    def testNumpybool(self):
+        """numpy bool."""
+
+        try:
+            import numpy
+        except ImportError:
+            print >>sys.stderr, "skipping numpy test"
+            return
+
+        rows = [map(numpy.bool, [0,1])]
+        b = topngbytes('numpybool.png', rows, 2, 1,
+            greyscale=True, alpha=False, bitdepth=1)
 
 
 # === Command Line Support ===
