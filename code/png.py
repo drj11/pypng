@@ -177,7 +177,7 @@ import zlib
 import warnings
 
 
-__all__ = ['Reader', 'Writer']
+__all__ = ['Reader', 'Writer', 'write_chunks']
 
 
 # The PNG signature.
@@ -587,20 +587,6 @@ class Writer:
             return p,t
         return p,None
 
-    def write_chunk(self, outfile, tag, data=''):
-        """
-        Write a PNG chunk to the output file, including length and
-        checksum.
-        """
-
-        # http://www.w3.org/TR/PNG/#5Chunk-layout
-        outfile.write(struct.pack("!I", len(data)))
-        outfile.write(tag)
-        outfile.write(data)
-        checksum = zlib.crc32(tag)
-        checksum = zlib.crc32(data, checksum)
-        outfile.write(struct.pack("!i", checksum))
-
     def write(self, outfile, rows):
         """Write a PNG image to the output file.  `rows` should be
         an iterable that yields each row in boxed row flat pixel format.
@@ -650,21 +636,21 @@ class Writer:
         outfile.write(_signature)
 
         # http://www.w3.org/TR/PNG/#11IHDR
-        self.write_chunk(outfile, 'IHDR',
-                         struct.pack("!2I5B", self.width, self.height,
-                                     self.bitdepth, self.color_type,
-                                     0, 0, self.interlace))
+        write_chunk(outfile, 'IHDR',
+                    struct.pack("!2I5B", self.width, self.height,
+                                self.bitdepth, self.color_type,
+                                0, 0, self.interlace))
 
         # See :chunk:order
         # http://www.w3.org/TR/PNG/#11gAMA
         if self.gamma is not None:
-            self.write_chunk(outfile, 'gAMA',
-                             struct.pack("!L", int(round(self.gamma*1e5))))
+            write_chunk(outfile, 'gAMA',
+                        struct.pack("!L", int(round(self.gamma*1e5))))
 
         # See :chunk:order
         # http://www.w3.org/TR/PNG/#11sBIT
         if self.rescale:
-            self.write_chunk(outfile, 'sBIT',
+            write_chunk(outfile, 'sBIT',
                 struct.pack('%dB' % self.planes,
                             *[self.rescale[0]]*self.planes))
         
@@ -674,29 +660,29 @@ class Writer:
         # See http://www.w3.org/TR/PNG/#5ChunkOrdering
         if self.palette:
             p,t = self.make_palette()
-            self.write_chunk(outfile, 'PLTE', p)
+            write_chunk(outfile, 'PLTE', p)
             if t:
                 # tRNS chunk is optional.  Only needed if palette entries
                 # have alpha.
-                self.write_chunk(outfile, 'tRNS', t)
+                write_chunk(outfile, 'tRNS', t)
 
         # http://www.w3.org/TR/PNG/#11tRNS
         if self.transparent is not None:
             if self.greyscale:
-                self.write_chunk(outfile, 'tRNS',
-                                 struct.pack("!1H", *self.transparent))
+                write_chunk(outfile, 'tRNS',
+                            struct.pack("!1H", *self.transparent))
             else:
-                self.write_chunk(outfile, 'tRNS',
-                                 struct.pack("!3H", *self.transparent))
+                write_chunk(outfile, 'tRNS',
+                            struct.pack("!3H", *self.transparent))
 
         # http://www.w3.org/TR/PNG/#11bKGD
         if self.background is not None:
             if self.greyscale:
-                self.write_chunk(outfile, 'bKGD',
-                                 struct.pack("!1H", *self.background))
+                write_chunk(outfile, 'bKGD',
+                            struct.pack("!1H", *self.background))
             else:
-                self.write_chunk(outfile, 'bKGD',
-                                 struct.pack("!3H", *self.background))
+                write_chunk(outfile, 'bKGD',
+                            struct.pack("!3H", *self.background))
 
         # http://www.w3.org/TR/PNG/#11IDAT
         if self.compression is not None:
@@ -754,7 +740,7 @@ class Writer:
                 compressed = compressor.compress(tostring(data))
                 if len(compressed):
                     # print >> sys.stderr, len(data), len(compressed)
-                    self.write_chunk(outfile, 'IDAT', compressed)
+                    write_chunk(outfile, 'IDAT', compressed)
                 # Because of our very writty definition of ``extend``,
                 # above, we must re-use the same ``data`` object.  Hence
                 # we use ``del`` to empty this one, rather than create a
@@ -767,9 +753,9 @@ class Writer:
         flushed = compressor.flush()
         if len(compressed) or len(flushed):
             # print >> sys.stderr, len(data), len(compressed), len(flushed)
-            self.write_chunk(outfile, 'IDAT', compressed + flushed)
+            write_chunk(outfile, 'IDAT', compressed + flushed)
         # http://www.w3.org/TR/PNG/#11IEND
-        self.write_chunk(outfile, 'IEND')
+        write_chunk(outfile, 'IEND')
         return i+1
 
     def write_array(self, outfile, pixels):
@@ -915,6 +901,27 @@ class Writer:
                         row[i::self.planes] = \
                             pixels[offset+i:end_offset:skip]
                     yield row
+
+def write_chunk(outfile, tag, data=''):
+    """
+    Write a PNG chunk to the output file, including length and
+    checksum.
+    """
+
+    # http://www.w3.org/TR/PNG/#5Chunk-layout
+    outfile.write(struct.pack("!I", len(data)))
+    outfile.write(tag)
+    outfile.write(data)
+    checksum = zlib.crc32(tag)
+    checksum = zlib.crc32(data, checksum)
+    outfile.write(struct.pack("!i", checksum))
+
+def write_chunks(out, chunks):
+    """Create a PNG file by writing out the chunks."""
+
+    out.write(_signature)
+    for chunk in chunks:
+        write_chunk(out, *chunk)
 
 def filter_scanline(type, line, fo, prev=None):
     """Apply a scanline filter to a scanline.  `type` specifies the
@@ -1105,6 +1112,17 @@ class Reader:
                 raise ValueError("Checksum error in %s chunk: 0x%X != 0x%X"
                                  % (type, a, b))
             return type, data
+
+    def chunks(self):
+        """Return an iterator that will yield each chunk as a
+        (*chunktype*, *content*) pair.
+        """
+
+        while True:
+            t,v = self.chunk()
+            yield t,v
+            if t == 'IEND':
+                break
 
     def undo_filter(self, filter_type, scanline, previous):
         """Undo the filter for a scanline.  `scanline` is a sequence of
