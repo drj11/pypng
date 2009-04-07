@@ -725,6 +725,32 @@ class Writer:
             def extend(sl):
                 oldextend(map(lambda x: int(round(factor*x)), sl))
 
+        # A test mostly to see if numpy integer types cause our
+        # definition of extend to fail.  See
+        # http://code.google.com/p/pypng/issues/detail?id=44
+        try:
+            row = rows[0]
+        except:
+            row = rows.next()
+        try:
+            # If this fails...
+            extend(row)
+        except:
+            # Try a version that converts the values to int first.
+            def wrapmapint(f):
+                return lambda sl: f(map(int, sl))
+            extend = wrapmapint(extend)
+            del wrapmapint
+        # Reset the data array, because we corrupted it with our test
+        # row.
+        del data[:]
+        try:
+            rows[0]
+        except:
+            # Might be more efficient to use itertools.tee, but that would
+            # cause fail on Python 2.2.
+            rows = itertools.chain([row], rows)
+
         # Hack to make the row count and the error message correct in the
         # case where caller supplies no data.
         i = -1
