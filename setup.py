@@ -15,8 +15,8 @@
 
 conf = dict(
     name='pypng',
-    version='0.0.5',
-    description='Pure Python PNG encoder/decoder',
+    version='0.0.6',
+    description='Pure Python PNG image encoder/decoder',
     long_description="""
 PyPNG allows PNG image files to be read and written using pure Python.
 

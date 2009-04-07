@@ -39,7 +39,15 @@ RELEASE NOTES
 
 (For issues see http://code.google.com/p/pypng/issues/list )
 
-Release 0.0.5 (this release)
+Release 0.0.6
+
+numpy integer types now work.
+
+The following issues have been fixed:
+
+  Issue 44:  Cannot use numpy.uint16 for pixel values.
+
+Release 0.0.5
 
 sBIT chunks are now handled, meaning that PyPNG can handle any (single)
 bit depth from 1 to 16 from end to end.
