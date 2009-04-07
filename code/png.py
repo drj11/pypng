@@ -2232,6 +2232,22 @@ class Test(unittest.TestCase):
         info = r.read()[3]
         w = Writer(**info)
 
+    # numpy dependent tests.  These are skipped (with a message to
+    # sys.stderr) if numpy cannot be imported.
+    def testNumpyuint16(self):
+        """numpy uint16."""
+
+        try:
+            import numpy
+        except ImportError:
+            print >>sys.stderr, "skipping numpy test"
+            return
+
+        rows = [map(numpy.uint16, range(0,0x10000,0x5555))]
+        b = topngbytes('numpyuint16.png', rows, 4, 1,
+            greyscale=True, alpha=False, bitdepth=16)
+
+
 # === Command Line Support ===
 
 def _dehex(s):
