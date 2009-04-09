@@ -1,0 +1,230 @@
+#!/usr/bin/env python
+# $URL$
+# $Rev$
+
+# iccp
+#
+# Tool for extracting an ICC Profile from a PNG image (iCCP chunk) and
+# interpreting it.
+#
+# Non-standard ICCP tags.
+#
+# Apple use some (widespread but) non-standard tags.  These can be
+# displayed in Apple's ColorSync Utility.
+# - 'vcgt' (Video Card Gamma Tag).  Table to load into video
+#    card LUT to apply gamma.
+# - 'ndin' Apple display native information.
+# - 'dscm' Apple multi-localized description strings.
+# - 'mmod' Apple display make and model information.
+# 
+
+# References
+#
+# [ICC 2001] ICC Specification ICC.1:2001-04 (Profile version 2.4.0)
+# [ICC 2004] ICC Specification ICC.1:2004-10 (Profile version 4.2.0.0)
+
+import struct
+
+import png
+
+def iccp(out, inp):
+    return iccpreport(out, *profile(inp))
+
+def profile(inp):
+    """Extract profile from PNG file.  Return (*name*, *profile*)
+    pair."""
+    r = png.Reader(file=inp)
+    _,chunk = r.chunk('iCCP')
+    i = chunk.index('\x00')
+    name = chunk[:i]
+    compression = chunk[i+1]
+    assert compression == chr(0)
+    profile = chunk[i+2:].decode('zlib')
+    return name, profile
+
+def iccpout(out, inp):
+    """Extract ICC Profile from PNG file `inp` and write it to
+    the file `out`."""
+
+    out.write(profile(inp)[1])
+
+def iccpreport(out, name, profile):
+    d = dict()
+    print >>out, 'Name:', name
+    d['name'] = name
+
+    # See [ICC 2004]
+    header = profile[:128]
+    d.update(
+      zip(['size', 'preferredCMM', 'version',
+           'profileclass', 'colourspace', 'pcs'],
+          struct.unpack('>L4sL4s4s4s', header[:24])))
+    d['version'] = '%08x' % d['version']
+    d['created'] = ICCdatetime(header[24:36])
+    d.update(
+      zip(['acsp', 'platform', 'flag', 'manufacturer', 'model'],
+          struct.unpack('>4s4s3L', header[36:56])))
+    d['deviceattributes'] = header[56:64]
+    d['intent'], = struct.unpack('>L', header[64:68])
+    d['pcsilluminant'] = ICCXYZNumber(header[68:80])
+    d['creator'] = header[80:84]
+    d['id'] = header[84:100]
+    ntags, = struct.unpack('>L', profile[128:132])
+    d['ntags'] = ntags
+    fmt = '4s2L' * ntags
+    # tag table
+    tt = struct.unpack('>' + fmt, profile[132:132+12*ntags])
+    tt = group(tt, 3)
+    tag = []
+    for sig,o,s in tt:
+        v = profile[o:o+s]
+        tag.append((sig, v))
+        if sig == 'chad':
+            d['chad'] = ICCsf32(v)
+        if sig in ['cprt', 'wtpt', 'gTRC', 'vcgt']:
+            d[sig] = ICCdecode(v)
+    print >>out, d
+    print map(lambda x: x[0], tag)
+
+
+def ICCdatetime(s):
+    """Convert from 12 byte ICC representation of dateTimeNumber to
+    ISO8601 string. See [ICC 2004] 5.1.1"""
+
+    return '%04d-%02d-%02dT%02d:%02d:%02dZ' % struct.unpack('>6H', s)
+
+def ICCXYZNumber(s):
+    """Convert from 12 byte ICC representation of XYZNumber to (x,y,z)
+    triple of floats.  See [ICC 2004] 5.1.11"""
+
+    return s15f16l(s)
+
+def s15f16l(s):
+    """Convert sequence of ICC s15Fixed16 to list of float."""
+    # Note: As long as float has at least 32 bits of mantissa, all
+    # values are preserved.
+    n = len(s)//4
+    t = struct.unpack('>%dl' % n, s)
+    return map((2**-16).__mul__, t)
+
+# Several types and their byte endcodings are defined by [ICC 2004]
+# section 10.  When encoded, a value begins with a 4 byte type
+# signature.  We use the 4 byte type signature in the names of the
+# Python functions that decode the type into a Pythonic representation.
+
+def ICCdecode(s):
+    """Take an ICC encoded tag, and dispatch on its type signature
+    (first 4 bytes) to decode it into a Python value.  Pair (*sig*,
+    *value*) is returned, where *sig* is a 4 byte string, and *value* is
+    some Python value determined by the content and type.
+    """
+
+    sig = s[0:4].strip()
+    f=dict(text=ICCtext,
+           XYZ=ICCXYZ,
+           curv=ICCcurv,
+           vcgt=ICCvcgt,
+           )
+    return (sig, f[sig](s))
+
+def ICCXYZ(s):
+    """Convert ICC XYZType to rank 1 array of trimulus values."""
+
+    # See [ICC 2001] 6.5.26
+    assert s[0:4] == 'XYZ '
+    return ICCXYZNumber(s[8:])
+
+def ICCsf32(s):
+    """Convert ICC s15Fixed16ArrayType to list of float."""
+    # See [ICC 2004] 10.18
+    assert s[0:4] == 'sf32'
+    return s15f16l(s[8:])
+
+def ICCmluc(s):
+    """Convert ICC multiLocalizedUnicodeType.  This types encodes
+    several strings together with a language/country code for each
+    string.  A list of (*lc*, *string*) pairs is returned where *lc* is
+    the 4 byte language/country code, and *string* is the string
+    corresponding to that code.  It seems unlikely that the same
+    language/country code will appear more than once with different
+    strings, but the ICC standard does not prohibit it."""
+    # See [ICC 2004] 10.13
+    assert s[0:4] == 'mluc'
+    n,sz = struct.unpack('>2L', s[8:16])
+    assert sz == 12
+    record = []
+    for i in range(n):
+        lc,l,o = struct.unpack('4s2L', s[16+12*n:28+12*n])
+        record.append(lc, s[o:o+l])
+    # How are strings encoded?
+    return record
+
+def ICCtext(s):
+    """Convert ICC textType to Python string."""
+    # Note: type not specified or used in [ICC 2004], only in older
+    # [ICC 2001].
+    # See [ICC 2001] 6.5.18
+    assert s[0:4] == 'text'
+    return s[8:-1]
+
+def ICCcurv(s):
+    """Convert ICC curveType."""
+    # See [ICC 2001] 6.5.3
+    assert s[0:4] == 'curv'
+    count, = struct.unpack('>L', s[8:12])
+    if count == 0:
+        return dict(gamma=1)
+    table = struct.unpack('>%dH' % count, s[12:])
+    if count == 1:
+        return dict(gamma=table[0]*2**-8)
+    return table
+
+def ICCvcgt(s):
+    """Convert Apple CMVideoCardGammaType."""
+    # See
+    # http://developer.apple.com/documentation/GraphicsImaging/Reference/ColorSync_Manager/Reference/reference.html#//apple_ref/c/tdef/CMVideoCardGammaType
+    assert s[0:4] == 'vcgt'
+    tagtype, = struct.unpack('>L', s[8:12])
+    if tagtype != 0:
+        return s[8:]
+    if tagtype == 0:
+        # Table.
+        channels,count,size = struct.unpack('>3H', s[12:18])
+        if size == 1:
+            fmt = 'B'
+        elif size == 2:
+            fmt = 'H'
+        else:
+            return s[8:]
+        l = len(s[18:])//size
+        t = struct.unpack('>%d%s' % (l, fmt), s[18:])
+        t = group(t, count)
+        return size, t
+    return s[8:]
+
+def group(s, n):
+    # See
+    # http://www.python.org/doc/2.6/library/functions.html#zip
+    return zip(*[iter(s)]*n)
+
+
+
+def main(argv=None):
+    import sys
+    from getopt import getopt
+    if argv is None:
+        argv = sys.argv
+    argv = argv[1:]
+    opt,arg = getopt(argv, 'o:')
+    if len(arg) > 0:
+        inp = open(arg[0], 'rb')
+    else:
+        inp = sys.stdin
+    for o,v in opt:
+        if o == '-o':
+            f = open(v, 'wb')
+            return iccpout(f, inp)
+    iccp(sys.stdout, inp)
+
+if __name__ == '__main__':
+    main()
