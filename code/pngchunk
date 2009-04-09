@@ -17,7 +17,8 @@ def chunk(out, inp, l):
     cannot be modified.  `l` should be a list of (*chunktype*,
     *content*) pairs.  *chunktype* is usually the type of the PNG chunk,
     specified as a 4-byte Python string, and *content* is the chunk's
-    content, also as a string.
+    content, also as a string; if *content* is ``None`` then *all*
+    chunks of that type will be removed.
 
     This function *knows* about certain chunk types and will
     automatically convert from Python friendly representations to
@@ -60,24 +61,27 @@ def chunk(out, inp, l):
         return t[:4],v
 
     l = map(canonical, l)
-    chunktypes,_ = zip(*l)
-    chunktypes = list(chunktypes)
     # Some chunks automagically replace ones that are present in the
     # source PNG.  There can only be one of each of these chunk types.
     # Create a 'replace' dictionary to record these chunks.
-    d = dict(l)
-    replacing = ['gAMA', 'sBIT', 'PLTE', 'tRNS', 'sPLT', 'IHDR']
+    add = []
+    delete = set()
+    replacing = set(['gAMA', 'sBIT', 'PLTE', 'tRNS', 'sPLT', 'IHDR'])
     replace = dict()
-    for t in replacing:
-        if t in d:
-            replace[t] = d[t]
-            del d[t]
-            i = chunktypes.index(t)
-            del l[i]
+    for t,v in l:
+        if v is None:
+            delete.add(t)
+        elif v in replacing:
+            replace[t] = v
+        else:
+            add.append((t,v))
+    del l
     r = png.Reader(file=inp)
     chunks = r.chunks()
     def iterchunks():
         for t,v in chunks:
+            if t in delete:
+                continue
             if t in replace:
                 yield t,replace[t]
                 del replace[t]
@@ -90,29 +94,38 @@ def chunk(out, inp, l):
                 for u,w in replace.items():
                     yield u,w
                     del replace[u]
-            if t == 'IDAT' and l:
-                for item in l:
+            if t == 'IDAT' and add:
+                for item in add:
                     yield item
-                del l[:]
+                del add[:]
             yield t,v
     return png.write_chunks(out, iterchunks())
 
 
 def main(argv=None):
-    import sys
     from getopt import getopt
+    import re
+    import sys
 
     if argv is None:
         argv = sys.argv
 
     argv = argv[1:]
-    opt,arg = getopt(argv, '', ['gamma=', 'sigbit='])
+    opt,arg = getopt(argv, 'c:', ['gamma=', 'sigbit='])
     k = []
     for o,v in opt:
         if o in ['--gamma']:
             k.append(('gamma', float(v)))
         if o in ['--sigbit']:
             k.append(('sigbit', int(v)))
+        if o in ['-c']:
+            type = v[:4]
+            if not re.match('[a-zA-Z]{4}', type):
+                raise SyntaxError('Chunk type must consist of 4 letters.')
+            if v[4] == '!':
+                k.append((type, None))
+            if v[4] == ':':
+                k.append((type, v[5:]))
     if len(arg) > 0:
         f = open(arg[0], 'rb')
     else:
