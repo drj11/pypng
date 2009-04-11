@@ -12,6 +12,7 @@ Contents:
    ca
    ex
    png
+   chunk
 
 Indices and tables
 ==================
