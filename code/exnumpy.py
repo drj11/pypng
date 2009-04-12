@@ -17,13 +17,13 @@ import numpy
 ''' If you have a png file for an RGB image,
     and want to create a numpy array of data from it.
 '''
-pngfile= open("picture.png", 'rb')
-pngReader=png.Reader(file=pngfile)
+pngReader=png.Reader(filename='picture.png')
 pngAsDirect=pngReader.asDirect()
-row_count=pngAsDirect[1]
-column_count=pngAsDirect[0]
-pngdata=pngAsDirect[2]
-meta=pngAsDirect[3]
+# Tuple unpacking, using multiple assignment, is very useful for the
+# result of asDirect (and other methods).
+# See
+# http://docs.python.org/tutorial/introduction.html#first-steps-towards-programming
+row_count, column_count, pngdata, meta = pngAsDirect
 bitdepth=meta['bitdepth']
 plane_count=meta['planes']
 
@@ -35,20 +35,19 @@ assert plane_count == 3
            [R,G,B, R,G,B, R,G,B])
     Array dimensions for this example:  (2,9)
 
-    image_boxed_row_flat_pixels
-        will contain the image as a two-dimensional numpy array
-        mimicking pypng's representatiom
-         and has dimensions (row_count,column_count*plane_count)
+    Create `image_boxed_row_flat_pixels` as a two-dimensional numpy
+    of the right shape, then populate it row-by-row from PyPNG's data.
+    The numpy array mimics PyPNG's representation; it will have
+    dimensions ``(row_count,column_count*plane_count)``.
 '''
 image_boxed_row_flat_pixels=numpy.zeros((row_count,plane_count*column_count),
                                       dtype=numpy.uint16)
-row_index=0
-for one_boxed_row_flat_pixels in pngdata:
-  image_boxed_row_flat_pixels[row_index,:]=one_boxed_row_flat_pixels
-  row_index+=1
+for row_index, one_boxed_row_flat_pixels in enumerate(pngdata):
+    image_boxed_row_flat_pixels[row_index,:]=one_boxed_row_flat_pixels
 
-pngAsDirect=None
-pngfile.close()
+del pngAsDirect
+del pngReader
+del pngdata
 
 
 ''' Reconfigure for easier referencing, similar to
@@ -57,9 +56,8 @@ pngfile.close()
                  [ (R,G,B), (R,G,B), (R,G,B) ])
     Array dimensions for this example:  (2,3,3)
 
-    data  will contain the image as a three-dimensional numpy array
-         and have dimensions (row_count,column_count,plane_count))
-
+    ``data`` will contain the image as a three-dimensional numpy array
+         and have dimensions ``(row_count,column_count,plane_count)``.
 '''
 data = numpy.reshape(image_boxed_row_flat_pixels,
                   (row_count,column_count,plane_count) )
@@ -74,23 +72,24 @@ data = numpy.reshape(image_boxed_row_flat_pixels,
 row_count, column_count, plane_count = data.shape
 assert plane_count==3
 
-pngfile= open('picture_out.png', 'wb')
+pngfile = open('picture_out.png', 'wb')
 try:
-  pngWriter = png.Writer(column_count, row_count,
-                         greyscale=False,
-                         alpha=False,
-                         bitdepth=16)
-  Image_as_list_of_boxed_row_flat_pixel_lists = []
-  for row in xrange(row_count):
-    Image_as_list_of_boxed_row_flat_pixel_lists.append(
-                         numpy.reshape(data[row,:,:],
-                                   (column_count*plane_count,)
-).tolist() )
-  print Image_as_list_of_boxed_row_flat_pixel_lists
-  pngWriter.write(pngfile,
-                  Image_as_list_of_boxed_row_flat_pixel_lists)
+    # This example assumes that you have 16-bit pixel values in the data
+    # array.  If you don't, then the resulting PNG file will likely be
+    # very dark.  Hey, it's only an example.
+    pngWriter = png.Writer(column_count, row_count,
+                           greyscale=False,
+                           alpha=False,
+                           bitdepth=16)
+    Image_as_list_of_boxed_row_flat_pixel_lists = []
+    for row in xrange(row_count):
+        Image_as_list_of_boxed_row_flat_pixel_lists.append(
+            numpy.reshape(data[row,:,:],
+                          (column_count*plane_count,)).tolist() )
+    pngWriter.write(pngfile,
+                    Image_as_list_of_boxed_row_flat_pixel_lists)
 finally:
-  pngfile.close()
+    pngfile.close()
 
 
 
