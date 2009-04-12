@@ -75,22 +75,18 @@ assert plane_count==3
 pngfile = open('picture_out.png', 'wb')
 try:
     # This example assumes that you have 16-bit pixel values in the data
-    # array.  If you don't, then the resulting PNG file will likely be
+    # array (that's what the ``bitdepth=16`` argument is for).
+    # If you don't, then the resulting PNG file will likely be
     # very dark.  Hey, it's only an example.
     pngWriter = png.Writer(column_count, row_count,
                            greyscale=False,
                            alpha=False,
                            bitdepth=16)
     Image_as_list_of_boxed_row_flat_pixel_lists = []
-    for row in xrange(row_count):
-        Image_as_list_of_boxed_row_flat_pixel_lists.append(
-            numpy.reshape(data[row,:,:],
-                          (column_count*plane_count,)).tolist() )
+    for row in numpy.reshape(data, (-1, column_count*plane_count)):
+        Image_as_list_of_boxed_row_flat_pixel_lists.append(row.tolist())
     pngWriter.write(pngfile,
                     Image_as_list_of_boxed_row_flat_pixel_lists)
 finally:
     pngfile.close()
-
-
-
 
