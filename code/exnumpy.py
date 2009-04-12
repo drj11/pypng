@@ -11,13 +11,13 @@
 '''
 
 import png
-import numpy as np
+import numpy
 
 
 ''' If you have a png file for an RGB image,
     and want to create a numpy array of data from it.
 '''
-pngfile= open("/home/user/picture.png", 'rb')
+pngfile= open("picture.png", 'rb')
 pngReader=png.Reader(file=pngfile)
 pngAsDirect=pngReader.asDirect()
 row_count=pngAsDirect[1]
@@ -40,8 +40,8 @@ assert plane_count == 3
         mimicking pypng's representatiom
          and has dimensions (row_count,column_count*plane_count)
 '''
-image_boxed_row_flat_pixels=np.zeros((row_count,plane_count*column_count),
-                                      dtype=np.uint16)
+image_boxed_row_flat_pixels=numpy.zeros((row_count,plane_count*column_count),
+                                      dtype=numpy.uint16)
 row_index=0
 for one_boxed_row_flat_pixels in pngdata:
   image_boxed_row_flat_pixels[row_index,:]=one_boxed_row_flat_pixels
@@ -61,7 +61,7 @@ pngfile.close()
          and have dimensions (row_count,column_count,plane_count))
 
 '''
-data = np.reshape(image_boxed_row_flat_pixels,
+data = numpy.reshape(image_boxed_row_flat_pixels,
                   (row_count,column_count,plane_count) )
 
 
@@ -74,7 +74,7 @@ data = np.reshape(image_boxed_row_flat_pixels,
 row_count, column_count, plane_count = data.shape
 assert plane_count==3
 
-pngfile= open('/home/user/picture_out.png', 'wb')
+pngfile= open('picture_out.png', 'wb')
 try:
   pngWriter = png.Writer(column_count, row_count,
                          greyscale=False,
@@ -83,11 +83,12 @@ try:
   Image_as_list_of_boxed_row_flat_pixel_lists = []
   for row in xrange(row_count):
     Image_as_list_of_boxed_row_flat_pixel_lists.append(
-                         np.reshape(data[row,:,:],
+                         numpy.reshape(data[row,:,:],
                                    (column_count*plane_count,)
 ).tolist() )
-    pngWriter.write(pngfile,
-                    Image_as_list_of_boxed_row_flat_pixel_lists)
+  print Image_as_list_of_boxed_row_flat_pixel_lists
+  pngWriter.write(pngfile,
+                  Image_as_list_of_boxed_row_flat_pixel_lists)
 finally:
   pngfile.close()
 
