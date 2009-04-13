@@ -17,6 +17,9 @@ import numpy
 ''' If you have a png file for an RGB image,
     and want to create a numpy array of data from it.
 '''
+# Read the file "picture.png" from the current directory.  An
+# alternative would be to use urllib to read an image from the internet:
+# png.Reader(file=urllib.urlopen('http://www.libpng.org/pub/png/PngSuite/basn2c16.png'))
 pngReader=png.Reader(filename='picture.png')
 pngAsDirect=pngReader.asDirect()
 # Tuple unpacking, using multiple assignment, is very useful for the
@@ -36,7 +39,7 @@ assert plane_count == 3
     Array dimensions for this example:  (2,9)
 
     Create `image_boxed_row_flat_pixels` as a two-dimensional numpy
-    of the right shape, then populate it row-by-row from PyPNG's data.
+    array of the right shape, then populate it row-by-row from PyPNG's data.
     The numpy array mimics PyPNG's representation; it will have
     dimensions ``(row_count,column_count*plane_count)``.
 '''
@@ -60,13 +63,18 @@ del pngdata
          and have dimensions ``(row_count,column_count,plane_count)``.
 '''
 data = numpy.reshape(image_boxed_row_flat_pixels,
-                  (row_count,column_count,plane_count) )
+                     (row_count,column_count,plane_count))
 
 
 ''' ============= '''
 
-''' If you have a data array for an RGB image, as described above,
-    and you want to create a png image file from it.
+''' Convert numpy data array to PNG image file.
+
+    If the data is three-dimensional, as it is above, the best thing
+    to do is reshape it into a two-dimensional array with a shape of
+    ``(row_count, column_count*plane_count)``.  Because a
+    two-dimensional numpy array is an iterator, it can be passed
+    directly to the ``png.Writer.write`` method.
 '''
 
 row_count, column_count, plane_count = data.shape
@@ -82,11 +90,8 @@ try:
                            greyscale=False,
                            alpha=False,
                            bitdepth=16)
-    Image_as_list_of_boxed_row_flat_pixel_lists = []
-    for row in numpy.reshape(data, (-1, column_count*plane_count)):
-        Image_as_list_of_boxed_row_flat_pixel_lists.append(row.tolist())
     pngWriter.write(pngfile,
-                    Image_as_list_of_boxed_row_flat_pixel_lists)
+                    numpy.reshape(data, (-1, column_count*plane_count)))
 finally:
     pngfile.close()
 
