@@ -17,8 +17,10 @@ import numpy
 ''' If you have a png file for an RGB image,
     and want to create a numpy array of data from it.
 '''
-# Read the file "picture.png" from the current directory.  An
-# alternative would be to use urllib to read an image from the internet:
+# Read the file "picture.png" from the current directory.  The `Reader`
+# class can take a filename, a file-like object, or the byte data
+# directly; this suggests alternatives such as using urllib to read
+# an image from the internet:
 # png.Reader(file=urllib.urlopen('http://www.libpng.org/pub/png/PngSuite/basn2c16.png'))
 pngReader=png.Reader(filename='picture.png')
 pngAsDirect=pngReader.asDirect()
@@ -47,6 +49,22 @@ image_boxed_row_flat_pixels=numpy.zeros((row_count,plane_count*column_count),
                                       dtype=numpy.uint16)
 for row_index, one_boxed_row_flat_pixels in enumerate(pngdata):
     image_boxed_row_flat_pixels[row_index,:]=one_boxed_row_flat_pixels
+# An alternative to the above is to use ``numpy.vstack``.  This is very
+# simple and direct:
+#   numpy.vstack(pngdata)
+# When used like this, numpy will pick the resulting array's data type;
+# in practice it seems to pick ``numpy.int32``, which is large enough to
+# hold any pixel value for any PNG image but uses 4 bytes per value when
+# 1 or 2 would be enough.  If you want to choose the result array's data
+# type, you can convert each row to a numpy array of the chosen type.
+# Here we use the fact that any numpy basic type can be used as a function
+# to convert an ordinary Python sequence to a numpy array.  See
+# http://docs.scipy.org/doc/numpy/user/basics.types.html for more
+# details.
+#   numpy.vstack(itertools.imap(numpy.uint16, pngdata))
+# Do not be tempted to use ``numpy.asarray``; when passed an iterator
+# (`pngdata` is often an iterator) it will attempt to create a size 1
+# array with the iterator as its only element.
 
 del pngAsDirect
 del pngReader
