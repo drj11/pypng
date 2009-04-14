@@ -90,6 +90,12 @@ try:
                            greyscale=False,
                            alpha=False,
                            bitdepth=16)
+    # As of 2009-04-13 passing a numpy array that has an element type
+    # that is a numpy integer type (for example, the `data` array has an
+    # element type of ``numpy.uint16``) generates a deprecation warning.
+    # This is probably a bug in numpy; it may go away in the future.
+    # The code still works despite the warning.
+    # See http://code.google.com/p/pypng/issues/detail?id=44
     pngWriter.write(pngfile,
                     numpy.reshape(data, (-1, column_count*plane_count)))
 finally:
