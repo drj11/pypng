@@ -181,3 +181,65 @@ We have extracted the top row of the image.  Note that the row itself is
 an ``array`` (see module ``array``), but in general any suitable sequence
 type may be returned by :meth:`read`.  The values in the row are all
 integers less than 4, because the image has a bit depth of 2.
+
+NumPy
+-----
+
+`NumPy <http://numpy.scipy.org/>`_ is a package for scientific computing with Python.  It is not part
+of a standard Python installation, it is
+`downloaded and installed separately <http://sourceforge.net/project/showfiles.php?group_id=1369&package_id=175103>`_
+if needed.  Numpy's array manipulation facilities make it good for doing
+certain type of image processing, and scientific users of NumPy may wish
+to output PNG files for visualisation.
+
+PyPNG does not have any direct integration with NumPy, but the basic
+data format used by PyPNG, an iterator over rows, is fairly easy to get
+into two- or three-dimensional NumPy arrays.
+
+The code in this section is extracted from ``exnumpy.py``, which is a
+complete runnable example in the ``code/`` subdirectory of the source
+distribution. Code was originally written by Mel Raab, but has been
+hacked around since then.
+
+
+PNG to NumPy array (reading)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The best thing to do (I think) is to convert each PyPNG row to a
+1-dimensional numpy array, then stack all of those arrays together to
+make a 2-dimensional array.  A number of features make this surprising
+compact.  Say `pngdata` is the row iterator returned from
+:meth:`png.Reader.asDirect`.  The following code will slurp it into a
+2-dimensional numpy array:
+
+.. literalinclude:: ../code/exnumpy.py
+   :start-after: extract 001 start
+   :end-before: extract 001 end
+
+Note that the use of ``numpy.uint16``, above, means that an array with
+data type ``numpy.uint16`` is created which is suitable for
+bit depth 16 images.  Replace ``numpy.uint16`` with ``numpy.uint8`` to
+create an array with a byte data type (suitable for bit depths up to 8).
+
+Reshaping
+^^^^^^^^^
+
+For some operations it's easier to have the image data in a
+3-dimensional array.  This plays to NumPy's strengths:
+
+.. literalinclude:: ../code/exnumpy.py
+   :start-after: extract 002 start
+   :end-before: extract 002 end
+
+NumPy array to PNG (writing)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Reshape your NumPy data into a 2-dimensional array, then use the fact
+that a NumPy array is an iterator over its rows:
+
+.. literalinclude:: ../code/exnumpy.py
+   :start-after: extract 003 start
+   :end-before: extract 003 end
+
+Currently (writing on 2009-04-16) this generates a warning; this warning
+appears to be a bug/limitation in NumPy, but it is harmless.
