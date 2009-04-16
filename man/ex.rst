@@ -100,7 +100,7 @@ More Colour
 A further colour example illustrates some of the manoeuvres you have to
 perform in Python to get the pixel data in the right format.
 
-Say we want to produce a PNG imag with 1 row of 8 pixels, with all the
+Say we want to produce a PNG image with 1 row of 8 pixels, with all the
 colours from a 3-bit colour system (with 1-bit for each channel;
 such systems were common on 8-bit micros from the 1980s).
 

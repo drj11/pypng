@@ -21,7 +21,7 @@ language going, so PyPNG is cool and sexy too.  By association.
 Because PyPNG is written in Python it's trivial to install into a Python
 installation, or include in your application (as long as it's written in
 Python!).  Just use ``python setup.py install`` or just copy the
-``code/png.py`` file.  You can even curl it straight into wherever you
+``code/png.py`` file.  You can even `curl` it straight into wherever you
 need it: ``curl -O http://pypng.googlecode.com/svn/trunk/code/png.py``.
 In fact, I have never managed to install PIL and that was one of the
 motivating factors for PyPNG.  So PyPNG will always be easy to install.
