@@ -15,16 +15,10 @@ def rgb(out, inp):
 
     r = png.Reader(file=inp)
     r.preamble()
-    if r.greyscale and r.bitdepth < 8:
-        if r.alpha or r.trns:
-            get = r.asRGBA8
-        else:
-            get = r.asRGB8
+    if r.alpha or r.trns:
+        get = r.asRGBA
     else:
-        if r.alpha or r.trns:
-            get = r.asRGBA
-        else:
-            get = r.asRGB
+        get = r.asRGB
     pixels,info = get()[2:4]
     w = png.Writer(**info)
     w.write(out, pixels)
