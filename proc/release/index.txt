@@ -41,6 +41,14 @@ Make a record in ``release/index.txt``
 
 Upload ``dist/pypng-X.Y.Z.tar.gz`` to google code.
 
+Create a zip for the documentation:
+
+  cd html
+  zip -r ../pypng-X.Y.Z-doc.zip .
+
+Login to PyPI and go to "pypng" on the "Your packages" display.  Upload
+documentation zip file. (Often doesn't work, because of buggy server.)
+
 Upload to PyPI:
 
   python setup.py sdist upload
