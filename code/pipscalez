@@ -5,12 +5,10 @@
 # pipscalez
 # Enlarge an image by an integer factor horizontally and vertically.
 
-from array import array
-import sys
-
-import png
-
 def rescale(inp, out, xf, yf):
+    from array import array
+    import png
+
     r = png.Reader(file=inp)
     _,_,pixels,meta = r.asDirect()
     typecode = 'BH'[meta['bitdepth'] > 8]
@@ -39,7 +37,11 @@ def rescale(inp, out, xf, yf):
     w.write(out, iterscale())
 
 
-def main(argv):
+def main(argv=None):
+    import sys
+
+    if argv is None:
+        argv = sys.argv
     xf = int(argv[1])
     if len(argv) > 2:
         yf = int(argv[2])
@@ -48,4 +50,4 @@ def main(argv):
     return rescale(sys.stdin, sys.stdout, xf, yf)
 
 if __name__ == '__main__':
-    main(sys.argv)
+    main()

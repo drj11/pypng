@@ -6,8 +6,6 @@
 # Convert input image to RGB or RGBA format.  Output will be colour type
 # 2 or 6, and will not have a tRNS chunk.
 
-import sys
-
 import png
 
 def rgb(out, inp):
@@ -23,7 +21,11 @@ def rgb(out, inp):
     w = png.Writer(**info)
     w.write(out, pixels)
 
-def main(argv=sys.argv):
+def main(argv=None):
+    import sys
+
+    if argv is None:
+        argv = sys.argv
     if len(argv) > 1:
         f = open(argv[1], 'rb')
     else:
