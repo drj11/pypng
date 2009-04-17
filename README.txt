@@ -39,9 +39,17 @@ RELEASE NOTES
 
 (For issues see http://code.google.com/p/pypng/issues/list )
 
+Release 0.0.7
+
+Better documentation (in html/ex.html mostly) for NumPy integration.
+
+The following issues have been fixed:
+
+  Issue 46:  Unclear how to get PNG pixel data into and out of NumPy.
+
 Release 0.0.6
 
-numpy integer types now work.
+NumPy integer types now work.
 
 The following issues have been fixed:
 
