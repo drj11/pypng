@@ -10,6 +10,8 @@
 def asgrey(out, inp):
     """Convert image to greyscale, but only when no colour change."""
 
+    from array import array
+
     import png
 
     r = png.Reader(file=inp)
