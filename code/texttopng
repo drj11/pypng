@@ -133,7 +133,6 @@ def render(message, out):
 
     x,y,pixels = texttoraster(message)
     w = png.Writer(x, y, greyscale=True, bitdepth=1)
-    print map(list, pixels)
     w.write_packed(out, pixels)
     out.flush()
 
