@@ -2257,6 +2257,21 @@ class Test(unittest.TestCase):
         r = Reader(bytes=_pngsuite['basn2c16'])
         info = r.read()[3]
         w = Writer(**info)
+    def testPackedIter(self):
+        """Test iterator for row when using write_packed.
+
+        Indicative for Issue 47.
+        """
+        w = Writer(16, 2, greyscale=True, alpha=False, bitdepth=1)
+        o = StringIO()
+        w.write_packed(o, [itertools.chain([0x0a], [0xaa]),
+                           itertools.chain([0x0f], [0xff])])
+        open('packed.png', 'wb').write(o.getvalue())
+        r = Reader(bytes=o.getvalue())
+        x,y,pixels,info = r.asDirect()
+        pixels = list(pixels)
+        self.assertEqual(len(pixels), 2)
+        self.assertEqual(len(pixels[0]), 16)
 
     # numpy dependent tests.  These are skipped (with a message to
     # sys.stderr) if numpy cannot be imported.
