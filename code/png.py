@@ -725,36 +725,35 @@ class Writer:
             def extend(sl):
                 oldextend(map(lambda x: int(round(factor*x)), sl))
 
-        # A test mostly to see if numpy integer types cause our
-        # definition of extend to fail.  See
+        # Build the first row, testing mostly to see if we need to
+        # changed the extend function to cope with NumPy integer types
+        # (they cause our ordinary definition of extend to fail, so we
+        # wrap it).  See
         # http://code.google.com/p/pypng/issues/detail?id=44
-        try:
-            row = rows[0]
-        except:
-            row = rows.next()
+        enumrows = enumerate(rows)
+        del rows
+
+        # First row's filter type.
+        data.append(0)
+        # :todo: Certain exceptions in the call to ``.next()`` or the
+        # following try would indicate no row data supplied.
+        # Should catch.
+        i,row = enumrows.next()
         try:
             # If this fails...
             extend(row)
         except:
-            # Try a version that converts the values to int first.
+            # ... try a version that converts the values to int first.
+            # Not only does this work for the (slightly broken) NumPy
+            # types, there are probably lots of other, unknown, "nearly"
+            # int types it works for.
             def wrapmapint(f):
                 return lambda sl: f(map(int, sl))
             extend = wrapmapint(extend)
             del wrapmapint
-        # Reset the data array, because we corrupted it with our test
-        # row.
-        del data[:]
-        try:
-            rows[0]
-        except:
-            # Might be more efficient to use itertools.tee, but that would
-            # cause fail on Python 2.2.
-            rows = itertools.chain([row], rows)
+            extend(row)
 
-        # Hack to make the row count and the error message correct in the
-        # case where caller supplies no data.
-        i = -1
-        for i,row in enumerate(rows):
+        for i,row in enumrows:
             # Add "None" filter type.  Currently, it's essential that
             # this filter type be used for every scanline as we do not
             # mark the first row of a reduced pass image; that means we
@@ -767,7 +766,7 @@ class Writer:
                 if len(compressed):
                     # print >> sys.stderr, len(data), len(compressed)
                     write_chunk(outfile, 'IDAT', compressed)
-                # Because of our very writty definition of ``extend``,
+                # Because of our very witty definition of ``extend``,
                 # above, we must re-use the same ``data`` object.  Hence
                 # we use ``del`` to empty this one, rather than create a
                 # fresh one (which would be my natural FP instinct).
