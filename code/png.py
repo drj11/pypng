@@ -1386,6 +1386,9 @@ class Reader:
                 del a[:rb+1]
                 recon = self.undo_filter(filter_type, scanline, recon)
                 yield recon
+        # :file:format We get here with a file format error: when the
+        # available bytes (after decompressing) do not pack into exact
+        # rows.
         assert len(a) == 0
 
     def validate_signature(self):
