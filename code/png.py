@@ -87,8 +87,8 @@ Generally British English spelling is used in the documentation.  So
 that's "greyscale" and "colour".  This not only matches the author's
 native language, it's also used by the PNG specification.
 
-The major colour formats supported by PNG (and hence by PyPNG) are:
-greyscale, colour, greyscale--alpha, colour--alpha.  These are sometimes
+The major colour models supported by PNG (and hence by PyPNG) are:
+greyscale, RGB, greyscale--alpha, RGB--alpha.  These are sometimes
 referred to using the abbreviations: L, RGB, LA, RGBA.  In this case
 each letter abbreviates a single channel: *L* is for Luminance or Luma or
 Lightness which is the channel used in greyscale images; *R*, *G*, *B* stand
@@ -117,7 +117,7 @@ Boxed row flat pixel::
 Each row appears as its own list, but the pixels are flattened so that
 three values for one pixel simply follow the three values for the previous
 pixel.  This is the most common format used, because it provides a good
-compromise between space and convenience.  The module regards itself as
+compromise between space and convenience.  PyPNG regards itself as
 at liberty to replace any sequence type with any sufficiently compatible
 other sequence type; in practice each row is an array (from the array
 module), and the outer list is sometimes an iterator rather than an
@@ -143,15 +143,20 @@ In all cases the top row comes first, and for each row the pixels are
 ordered from left-to-right.  Within a pixel the values appear in the
 order, R-G-B-A (or L-A for greyscale--alpha).
 
-There is a fourth format, mentioned because it is used internally, is
-close to what lies inside a PNG file itself, and may one day have a
-public API exposed for it.  This format is called serialised.  When
-serialised an image is a sequence of bytes (integers from 0 to 255).
-Each row is packed into bytes (if bit depth < 8) or decomposed into
-bytes (big-endian, if bit depth is 16).  This isn't a particularly
-convenient format, but it is produced (in part) as a necessary step for
-decoding and encoding PNG files.  There are some sorts of PNG to PNG
-recoding where this might be the most efficient format to use.
+There is a fourth format, mentioned because it is used internally,
+is close to what lies inside a PNG file itself, and has some support
+from the public API.  This format is called packed.  When packed,
+each row is a sequence of bytes (integers from 0 to 255), just as
+it is before PNG scanline filtering is applied.  When the bit depth
+is 8 this is essentially the same as boxed row flat pixel; when the
+bit depth is less than 8, several pixels are packed into each byte;
+when the bit depth is 16 (the only value more than 8 that is supported
+by the PNG image format) each pixel value is decomposed into 2 bytes
+(and `packed` is a misnomer).  This format is used by the
+:meth:`Writer.write_packed` method.  It isn't usually a convenient
+format, but may be just right if the source data for the PNG image
+comes from something that uses a similar format (for example, 1-bit
+BMPs, or another PNG file).
 
 And now, my famous members
 --------------------------
@@ -225,13 +230,14 @@ def interleave_planes(ipixels, apixels, ipsize, apsize):
     """
     Interleave (colour) planes, e.g. RGB + A = RGBA.
 
-    Return an array of pixels consisting of the ipsize elements of data
-    from each pixel in ipixels followed by the apsize elements of data
-    from each pixel in apixels.  Conventionally ipixels and apixels are
-    byte arrays so the sizes are bytes, but it actually works with any
-    arrays of the same type.  The output array is the same type as the
-    input arrays which should be the same type as each other.
+    Return an array of pixels consisting of the `ipsize` elements of data
+    from each pixel in `ipixels` followed by the `apsize` elements of data
+    from each pixel in `apixels`.  Conventionally `ipixels` and
+    `apixels` are byte arrays so the sizes are bytes, but it actually
+    works with any arrays of the same type.  The returned array is the
+    same type as the input arrays which should be the same type as each other.
     """
+
     itotal = len(ipixels)
     atotal = len(apixels)
     newtotal = itotal + atotal
@@ -250,7 +256,7 @@ def interleave_planes(ipixels, apixels, ipsize, apsize):
     return out
 
 def check_palette(palette):
-    """Check a palette argument (to the Writer class) for validity.
+    """Check a palette argument (to the :class:`Writer` class) for validity.
     Returns the palette as a list if okay; raises an exception otherwise.
     """
 
@@ -260,7 +266,7 @@ def check_palette(palette):
 
     p = list(palette)
     if not (0 < len(p) <= 256):
-        raise ValueError("a palette must have between 1 and 255 entries")
+        raise ValueError("a palette must have between 1 and 256 entries")
     seen_triple = False
     for i,t in enumerate(p):
         if len(t) not in (3,4):
@@ -347,10 +353,11 @@ class Writer:
         1,2,4,8, or 16.  When `bitdepth` is not one of these values,
         the next highest valid bit depth is selected, and an ``sBIT``
         (significant bits) chunk is generated that specifies the original
-        precision of the source image.  In this case the pixel values will
-        be rescaled to fit the range of the selected bit depth.
+        precision of the source image.  In this case the supplied pixel
+        values will be rescaled to fit the range of the selected bit depth.
 
-        The details of which bit depths are allowed are somewhat arcane
+        The details of which bit depth / colour model combinations the
+        PNG file format supports directly, are allowed are somewhat arcane
         (refer to the PNG specification for full details).  Briefly:
         "small" bit depths (1,2,4) are only allowed with greyscale and
         colour mapped images; colour mapped images cannot have bit depth
@@ -400,7 +407,7 @@ class Writer:
 	``zlib`` module is used (which is generally acceptable).
 
         If `interlace` is true then an interlaced image is created
-        (using PNG's so far only interace method, Adam7).  This does not
+        (using PNG's so far only interace method, *Adam7*).  This does not
         affect how the pixels should be presented to the encoder, rather
         it changes how they are arranged into the PNG file.  On slow
         connexions interlaced images can be partially decoded by the
@@ -1914,7 +1921,7 @@ class Reader:
 # Instead we simply declare that features that are implemented using
 # extended slices will not work on Python 2.2.
 #
-# In order work on Python 2.3 we fix up a recurring annoyance involving
+# In order to work on Python 2.3 we fix up a recurring annoyance involving
 # the array type.  In Python 2.3 an array cannot be initialised with an
 # array, and it cannot be extended with a list (or other sequence).
 # Both of those are repeated issues in the code.  Whilst I would not
@@ -1924,7 +1931,7 @@ class Reader:
 # In an amusing case of warty hacks on top of warty hacks... the array
 # shimming we try and do only works on Python 2.3 and above (you can't
 # subclass array.array in Python 2.2).  So to get it working on Python
-# 2.2 we go for something much simpler and way slower.
+# 2.2 we go for something much simpler and (probably) way slower.
 try:
     array('B').extend([])
     array('B', array('B'))
