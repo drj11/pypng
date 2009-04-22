@@ -1428,12 +1428,27 @@ class Reader:
         while True:
             if not self.atchunk:
                 self.atchunk = self.chunklentype()
+                if self.atchunk is None:
+                    raise FormatError(
+                      'This PNG file does not contain IDAT chunk.')
             if self.atchunk[1] == 'IDAT':
                 return
             self.process_chunk()
 
     def chunklentype(self):
-        return struct.unpack('!I4s', self.file.read(8))
+        """Reads just enough of the input to determine the next
+        chunk's length and type, returned as a (*length*, *type*) pair
+        where *type* is a string.  If there are no more chunks, ``None``
+        is returned.
+        """
+
+        x = self.file.read(8)
+        if not x:
+            return None
+        if len(x) != 8:
+            raise FormatError(
+              'End of file whilst reading chunk length and type.')
+        return struct.unpack('!I4s', x)
 
     def process_chunk(self):
         """Process the next chunk and its data.  This only processes the
@@ -2297,6 +2312,11 @@ class Test(unittest.TestCase):
         """Test empty file."""
 
         r = Reader(bytes='')
+        self.assertRaises(FormatError, r.asDirect)
+    def testSigOnly(self):
+        """Test file containing just signature bytes."""
+
+        r = Reader(bytes=_signature)
         self.assertRaises(FormatError, r.asDirect)
 
     # numpy dependent tests.  These are skipped (with a message to
