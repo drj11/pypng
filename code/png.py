@@ -286,6 +286,13 @@ def check_palette(palette):
 class Error(Exception):
     pass
 
+class FormatError(Exception):
+    """Problem with input file format.  In other words, PNG file does
+    not conform to the specification in some way and is invalid.
+    """
+
+    pass
+
 
 class Writer:
     """
@@ -2281,6 +2288,16 @@ class Test(unittest.TestCase):
         pixels = list(pixels)
         self.assertEqual(len(pixels), 2)
         self.assertEqual(len(pixels[0]), 16)
+
+    # Invalid file format tests.  These construct various badly
+    # formatted PNG files, then feed them into a Reader.  When
+    # everything is working properly, we should get FormatError
+    # exceptions raised.
+    def testEmpty(self):
+        """Test empty file."""
+
+        r = Reader(bytes='')
+        self.assertRaises(FormatError, r.asDirect)
 
     # numpy dependent tests.  These are skipped (with a message to
     # sys.stderr) if numpy cannot be imported.
