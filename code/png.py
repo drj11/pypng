@@ -1413,7 +1413,7 @@ class Reader:
             return
         self.signature = self.file.read(8)
         if self.signature != _signature:
-            raise Error("PNG file has invalid signature")
+            raise FormatError("PNG file has invalid signature")
 
     def preamble(self):
         """
