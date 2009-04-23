@@ -2080,6 +2080,14 @@ def testWithIO(inp, out, f):
     return x
 
 class Test(unittest.TestCase):
+    # This member is used by the superclass.  If we don't define a new
+    # class here then when we use self.assertRaises() and the PyPNG code
+    # raises an assertion then we get no proper traceback.  I can't work
+    # out why, but defining a new class here means we get a proper
+    # traceback.
+    class failureException(Exception):
+        pass
+
     def helperLN(self, n):
         mask = (1 << n) - 1
         # Use small chunk_limit so that multiple chunk writing is
@@ -2318,6 +2326,46 @@ class Test(unittest.TestCase):
 
         r = Reader(bytes=_signature)
         self.assertRaises(FormatError, r.asDirect)
+    def testExtraPixels(self):
+        """Test file that contains too many pixels."""
+
+        # Construct a broken file by taking a good PNG file, and adding
+        # some more pixels to its (uncompressed) IDAT chunk.
+        r = Reader(bytes=_pngsuite['basn0g01'])
+        o = StringIO()
+        def newchunks():
+            for chunk in r.chunks():
+                if chunk[0] == 'IDAT':
+                    data = chunk[1].decode('zip')
+                    data += '\x00garbage'
+                    data = data.encode('zip')
+                    chunk = (chunk[0], data)
+                    del data
+                yield chunk
+        write_chunks(o, newchunks())
+        open('extra.png', 'wb').write(o.getvalue())
+        r = Reader(bytes=o.getvalue())
+        def pixels():
+            return list(r.asDirect()[2])
+        self.assertRaises(FormatError, pixels)
+    def testNotEnoughPixels(self):
+        r = Reader(bytes=_pngsuite['basn0g01'])
+        o = StringIO()
+        def newchunks():
+            for chunk in r.chunks():
+                if chunk[0] == 'IDAT':
+                    data = chunk[1].decode('zip')
+                    data = data[:-1]
+                    data = data.encode('zip')
+                    chunk = (chunk[0], data)
+                    del data
+                yield chunk
+        write_chunks(o, newchunks())
+        open('notenough.png', 'wb').write(o.getvalue())
+        r = Reader(bytes=o.getvalue())
+        def pixels():
+            return list(r.asDirect()[2])
+        self.assertRaises(FormatError, pixels)
 
     # numpy dependent tests.  These are skipped (with a message to
     # sys.stderr) if numpy cannot be imported.
