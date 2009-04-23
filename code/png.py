@@ -1192,6 +1192,10 @@ class Reader:
             # above.
             return result
 
+        if filter_type not in (1,2,3,4):
+            raise FormatError('Invalid PNG Filter Type.'
+              '  See http://www.w3.org/TR/2003/REC-PNG-20031110/#9Filters')
+
         # Filter unit.  The stride from one pixel to the corresponding
         # byte from the previous previous.  Normally this is the pixel
         # size in bytes, but when this is smaller than 1, the previous
@@ -1267,7 +1271,7 @@ class Reader:
                 ai += 1
 
         # Call appropriate filter algorithm.  Note that 0 has already
-        # been dealth with.
+        # been dealt with.
         (None, sub, up, average, paeth)[filter_type]()
         return result
 
