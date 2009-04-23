@@ -2332,41 +2332,44 @@ class Test(unittest.TestCase):
     def testExtraPixels(self):
         """Test file that contains too many pixels."""
 
-        # Construct a broken file by taking a good PNG file, and adding
-        # some more pixels to its (uncompressed) IDAT chunk.
-        r = Reader(bytes=_pngsuite['basn0g01'])
-        o = StringIO()
-        def newchunks():
-            for chunk in r.chunks():
-                if chunk[0] == 'IDAT':
-                    data = chunk[1].decode('zip')
-                    data += '\x00garbage'
-                    data = data.encode('zip')
-                    chunk = (chunk[0], data)
-                    del data
-                yield chunk
-        write_chunks(o, newchunks())
-        r = Reader(bytes=o.getvalue())
-        def pixels():
-            return list(r.asDirect()[2])
-        self.assertRaises(FormatError, pixels)
+        def eachchunk(chunk):
+            if chunk[0] != 'IDAT':
+                return chunk
+            data = chunk[1].decode('zip')
+            data += '\x00garbage'
+            data = data.encode('zip')
+            chunk = (chunk[0], data)
+            return chunk
+        self.assertRaises(FormatError, self.helperFormat, eachchunk)
     def testNotEnoughPixels(self):
+        def eachchunk(chunk):
+            if chunk[0] != 'IDAT':
+                return chunk
+            # Remove last byte.
+            data = chunk[1].decode('zip')
+            data = data[:-1]
+            data = data.encode('zip')
+            return (chunk[0], data)
+        self.assertRaises(FormatError, self.helperFormat, eachchunk)
+    def helperFormat(self, f):
         r = Reader(bytes=_pngsuite['basn0g01'])
         o = StringIO()
         def newchunks():
             for chunk in r.chunks():
-                if chunk[0] == 'IDAT':
-                    data = chunk[1].decode('zip')
-                    data = data[:-1]
-                    data = data.encode('zip')
-                    chunk = (chunk[0], data)
-                    del data
-                yield chunk
+                yield f(chunk)
         write_chunks(o, newchunks())
         r = Reader(bytes=o.getvalue())
-        def pixels():
-            return list(r.asDirect()[2])
-        self.assertRaises(FormatError, pixels)
+        return list(r.asDirect()[2])
+    def testBadFilter(self):
+        def eachchunk(chunk):
+            if chunk[0] != 'IDAT':
+                return chunk
+            data = chunk[1].decode('zip')
+            # Corrupt the first filter byte
+            data = '\x99' + data[1:]
+            data = data.encode('zip')
+            return (chunk[0], data)
+        self.assertRaises(FormatError, self.helperFormat, eachchunk)
 
     # numpy dependent tests.  These are skipped (with a message to
     # sys.stderr) if numpy cannot be imported.
