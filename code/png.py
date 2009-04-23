@@ -1399,9 +1399,13 @@ class Reader:
                 del a[:rb+1]
                 recon = self.undo_filter(filter_type, scanline, recon)
                 yield recon
-        # :file:format We get here with a file format error: when the
-        # available bytes (after decompressing) do not pack into exact
-        # rows.
+        if len(a) != 0:
+            # :file:format We get here with a file format error: when the
+            # available bytes (after decompressing) do not pack into exact
+            # rows.
+            raise FormatError(
+              'Remaining bytes in decompressed IDAT chunk do not'
+              ' exactly fill a row of pixels')
         assert len(a) == 0
 
     def validate_signature(self):
@@ -2305,7 +2309,6 @@ class Test(unittest.TestCase):
         o = StringIO()
         w.write_packed(o, [itertools.chain([0x0a], [0xaa]),
                            itertools.chain([0x0f], [0xff])])
-        open('packed.png', 'wb').write(o.getvalue())
         r = Reader(bytes=o.getvalue())
         x,y,pixels,info = r.asDirect()
         pixels = list(pixels)
@@ -2343,7 +2346,6 @@ class Test(unittest.TestCase):
                     del data
                 yield chunk
         write_chunks(o, newchunks())
-        open('extra.png', 'wb').write(o.getvalue())
         r = Reader(bytes=o.getvalue())
         def pixels():
             return list(r.asDirect()[2])
@@ -2361,7 +2363,6 @@ class Test(unittest.TestCase):
                     del data
                 yield chunk
         write_chunks(o, newchunks())
-        open('notenough.png', 'wb').write(o.getvalue())
         r = Reader(bytes=o.getvalue())
         def pixels():
             return list(r.asDirect()[2])
