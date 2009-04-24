@@ -101,9 +101,11 @@ def chunk(out, inp, l):
             yield t,v
     return png.write_chunks(out, iterchunks())
 
+class Usage(Exception):
+    pass
 
 def main(argv=None):
-    from getopt import getopt
+    import getopt
     import re
     import sys
 
@@ -111,21 +113,32 @@ def main(argv=None):
         argv = sys.argv
 
     argv = argv[1:]
-    opt,arg = getopt(argv, 'c:', ['gamma=', 'sigbit='])
-    k = []
-    for o,v in opt:
-        if o in ['--gamma']:
-            k.append(('gamma', float(v)))
-        if o in ['--sigbit']:
-            k.append(('sigbit', int(v)))
-        if o in ['-c']:
-            type = v[:4]
-            if not re.match('[a-zA-Z]{4}', type):
-                raise SyntaxError('Chunk type must consist of 4 letters.')
-            if v[4] == '!':
-                k.append((type, None))
-            if v[4] == ':':
-                k.append((type, v[5:]))
+
+    try:
+        try:
+            opt,arg = getopt.getopt(argv, 'c:', ['gamma=', 'sigbit='])
+        except getopt.error, msg:
+            raise Usage(msg)
+        k = []
+        for o,v in opt:
+            if o in ['--gamma']:
+                k.append(('gamma', float(v)))
+            if o in ['--sigbit']:
+                k.append(('sigbit', int(v)))
+            if o in ['-c']:
+                type = v[:4]
+                if not re.match('[a-zA-Z]{4}', type):
+                    raise Usage('Chunk type must consist of 4 letters.')
+                if v[4] == '!':
+                    k.append((type, None))
+                if v[4] == ':':
+                    k.append((type, v[5:]))
+    except Usage, err:
+        print >>sys.stderr, (
+          "usage: pngchunk [--gamma d.dd] [--sigbit b] [-c cHNK! | -c cHNK:text-string]")
+        print >>sys.stderr, err.message
+        return 2
+
     if len(arg) > 0:
         f = open(arg[0], 'rb')
     else:
