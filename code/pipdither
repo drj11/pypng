@@ -59,7 +59,7 @@ def dither(out, inp, bitdepth=1, linear=False, defaultgamma=1.0):
     planes = info['planes']
     assert planes == 1
     width = info['size'][0]
-    sourcemaxval = info['bitdepth']**2 - 1
+    sourcemaxval = 2**info['bitdepth'] - 1
     if linear:
         gamma = 1
     else:
