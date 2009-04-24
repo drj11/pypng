@@ -13,7 +13,7 @@ from bisect import bisect_left
 
 import png
 
-def dither(out, inp, bitdepth=1, linear=False, defaultgamma=None):
+def dither(out, inp, bitdepth=1, linear=False, defaultgamma=1.0):
     """Dither the input PNG `inp` into an image with a smaller bit depth
     and write the result image onto `out`.  `bitdepth` specifies the bit
     depth of the new image.
