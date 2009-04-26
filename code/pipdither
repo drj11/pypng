@@ -13,7 +13,8 @@ from bisect import bisect_left
 
 import png
 
-def dither(out, inp, bitdepth=1, linear=False, defaultgamma=1.0):
+def dither(out, inp,
+  bitdepth=1, linear=False, defaultgamma=1.0, targetgamma=None):
     """Dither the input PNG `inp` into an image with a smaller bit depth
     and write the result image onto `out`.  `bitdepth` specifies the bit
     depth of the new image.
@@ -23,20 +24,29 @@ def dither(out, inp, bitdepth=1, linear=False, defaultgamma=1.0):
     if the `linear` argument is true then the image is treated as
     being linear already: no gamma conversion is done (this is
     quicker, and if you don't care much about accuracy, it won't
-    matter much).  Normally images with no gamma indication (no
-    ``gAMA`` chunk) are treated as linear (gamma = 1.0), but often
-    it can be better to assume a different gamma value: For example
-    continuous tone photographs intended for presentation on the
-    web often carry an implicity assumption of being encoded with
-    a gamma of about 0.45 (because that's what you get if you just
-    "blat the pixels" onto a PC framebuffer), so ``defaultgamma=0.45``
-    might be a good idea.  `defaultgamma` does not override a gamma
-    value specified in the file itself: It is only used when the
-    file does not specify a gamma.
+    matter much).
     
+    Images with no gamma indication (no ``gAMA`` chunk) are normally
+    treated as linear (gamma = 1.0), but often it can be better
+    to assume a different gamma value: For example continuous tone
+    photographs intended for presentation on the web often carry
+    an implicit assumption of being encoded with a gamma of about
+    0.45 (because that's what you get if you just "blat the pixels"
+    onto a PC framebuffer), so ``defaultgamma=0.45`` might be a
+    good idea.  `defaultgamma` does not override a gamma value
+    specified in the file itself: It is only used when the file
+    does not specify a gamma.
+
     If you (pointlessly) specify both `linear` and `defaultgamma`,
     `linear` wins.
-    
+
+    The gamma of the output image is, by default, the same as the input
+    image.  The `targetgamma` argument can be used to specify a
+    different gamma for the output image.  This effectively recodes the
+    image to a different gamma, dithering as we go.  The gamma specified
+    is the exponent used to encode the output file (and appears in the
+    output PNG's ``gAMA`` chunk); it is usually less than 1.
+
     """
 
     # Encoding is what happened when the PNG was made (and also what
@@ -78,7 +88,10 @@ def dither(out, inp, bitdepth=1, linear=False, defaultgamma=1.0):
     # reciprocal of the exponent that we use to encode the target PNG.
     # This is the value that we need to build our table that we use for
     # converting from linear to target colour space.
-    targetdecode = decode
+    if targetgamma is None:
+        targetdecode = decode
+    else:
+        targetdecode = 1.0/targetgamma
     # The table we use for encoding (creating the target PNG), still
     # maps from pixel value to linear space, but we use it inverted, by
     # searching through it with bisect.
@@ -139,7 +152,7 @@ def main(argv=None):
     import sys
     if argv is None:
         argv = sys.argv
-    opt,argv = getopt(argv[1:], 'g:b:l')
+    opt,argv = getopt(argv[1:], 'b:g:lo:')
     k = {}
     for o,v in opt:
         if o == '-g':
@@ -148,6 +161,8 @@ def main(argv=None):
             k['bitdepth'] = int(v)
         if o == '-l':
             k['linear'] = True
+        if o == '-o':
+            k['targetgamma'] = float(v)
         if o == '-?':
             print >>sys.stderr, "pipdither [-g assumed-gamma] [-b bits] [-l] [in.png]"
 
