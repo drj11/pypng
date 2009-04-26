@@ -71,7 +71,7 @@ def chunk(out, inp, l):
     for t,v in l:
         if v is None:
             delete.add(t)
-        elif v in replacing:
+        elif t in replacing:
             replace[t] = v
         else:
             add.append((t,v))
