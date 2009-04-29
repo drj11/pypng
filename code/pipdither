@@ -14,7 +14,8 @@ from bisect import bisect_left
 import png
 
 def dither(out, inp,
-  bitdepth=1, linear=False, defaultgamma=1.0, targetgamma=None):
+  bitdepth=1, linear=False, defaultgamma=1.0, targetgamma=None,
+  cutoff=0.75):
     """Dither the input PNG `inp` into an image with a smaller bit depth
     and write the result image onto `out`.  `bitdepth` specifies the bit
     depth of the new image.
@@ -102,7 +103,7 @@ def dither(out, inp,
     # The table used for choosing output codes.  These values represent
     # the cutoff points between two adjacent output codes.
     choosecode = zip(outcode[1:], outcode)
-    p = 0.75
+    p = cutoff
     choosecode = map(lambda x: x[0]*p+x[1]*(1.0-p), choosecode)
     def iterdither():
         # Errors diffused downwards (into next row)
@@ -152,19 +153,21 @@ def main(argv=None):
     import sys
     if argv is None:
         argv = sys.argv
-    opt,argv = getopt(argv[1:], 'b:g:lo:')
+    opt,argv = getopt(argv[1:], 'b:c:g:lo:')
     k = {}
     for o,v in opt:
-        if o == '-g':
-            k['defaultgamma'] = float(v)
         if o == '-b':
             k['bitdepth'] = int(v)
+        if o == '-c':
+            k['cutoff'] = float(v)
+        if o == '-g':
+            k['defaultgamma'] = float(v)
         if o == '-l':
             k['linear'] = True
         if o == '-o':
             k['targetgamma'] = float(v)
         if o == '-?':
-            print >>sys.stderr, "pipdither [-g assumed-gamma] [-b bits] [-l] [in.png]"
+            print >>sys.stderr, "pipdither [-b bits] [-c cutoff] [-g assumed-gamma] [-l] [in.png]"
 
     if len(argv) > 0:
         f = open(argv[0], 'rb')
