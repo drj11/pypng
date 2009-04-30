@@ -312,6 +312,7 @@ class Writer:
                  interlace=False,
                  bytes_per_sample=None, # deprecated
                  planes=None,
+                 colormap=None,
                  maxval=None,
                  chunk_limit=2**20):
         """
@@ -435,6 +436,7 @@ class Writer:
         # its purpose is to act as a dummy so that
         # ``Writer(x, y, **info)`` works, where `info` is a dictionary
         # returned by Reader.read and friends.
+        # Ditto for `colormap`.
 
         # A couple of helper functions come first.  Best skipped if you
         # are reading through.
