@@ -39,6 +39,16 @@ RELEASE NOTES
 
 (For issues see http://code.google.com/p/pypng/issues/list )
 
+Release 0.0.8
+
+The following issues have been fixed:
+
+  Issue 47:  Leading blanks when using write_packed.
+  Issue 48:  pipdither fails when input has no gamma chunk.
+  Issue 49:  pipdither fail with 1-bit input.
+  Issue 50:  pipchunk adds second gamma chunk.
+  Issue 51:  piprgb and pipasgrey fail for color mapped images.
+
 Release 0.0.7
 
 Better documentation (in html/ex.html mostly) for NumPy integration.
