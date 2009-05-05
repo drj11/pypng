@@ -107,9 +107,9 @@ def s15f16l(s):
     t = struct.unpack('>%dl' % n, s)
     return map((2**-16).__mul__, t)
 
-# Several types and their byte endcodings are defined by [ICC 2004]
+# Several types and their byte encodings are defined by [ICC 2004]
 # section 10.  When encoded, a value begins with a 4 byte type
-# signature.  We use the 4 byte type signature in the names of the
+# signature.  We use the same 4 byte type signature in the names of the
 # Python functions that decode the type into a Pythonic representation.
 
 def ICCdecode(s):
@@ -224,7 +224,7 @@ def main(argv=None):
         if o == '-o':
             f = open(v, 'wb')
             return iccpout(f, inp)
-    iccp(sys.stdout, inp)
+    return iccp(sys.stdout, inp)
 
 if __name__ == '__main__':
     main()
