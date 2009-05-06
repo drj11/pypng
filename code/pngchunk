@@ -10,6 +10,19 @@ import warnings
 # Local module.
 import png
 
+"""
+pngchunk [--gamma g] [--iccprofile file] [--sigbit b] [-c cHNK!] [-c cHNK:foo] [-c cHNK<file]
+
+The ``-c`` option is used to add or remove chunks.  A chunk is specified
+by its 4 byte chunk type.  If this is followed by a ``!`` then that
+chunk is removed from the PNG file.  If the chunk type is followed by a
+``:`` then the chunk is replaced with the contents of the rest of the
+argument (this is probably only useful if the content is mostly ASCII,
+otherwise it's a pain to quote the contents, otherwise see...).  A ``<``
+can be used to take the contents of the chunk from the named file.
+"""
+
+
 def chunk(out, inp, l):
     """Process the input PNG file to the output, chunk by chunk.  Chunks
     can be inserted, removed, replaced, or sometimes edited.  Generally, 
@@ -56,6 +69,10 @@ def chunk(out, inp, l):
             except TypeError:
                 v = (v,)
             v = struct.pack('%dB' % len(v), *v)
+        elif t == 'iccprofile':
+            t = 'iCCP'
+            # http://www.w3.org/TR/PNG/#11iCCP
+            v = 'a color profile\x00\x00' + v.encode('zip')
         else:
             warnings.warn('Unknown chunk type %r' % t)
         return t[:4],v
@@ -116,7 +133,8 @@ def main(argv=None):
 
     try:
         try:
-            opt,arg = getopt.getopt(argv, 'c:', ['gamma=', 'sigbit='])
+            opt,arg = getopt.getopt(argv, 'c:',
+                                    ['gamma=', 'iccprofile=', 'sigbit='])
         except getopt.error, msg:
             raise Usage(msg)
         k = []
@@ -125,6 +143,8 @@ def main(argv=None):
                 k.append(('gamma', float(v)))
             if o in ['--sigbit']:
                 k.append(('sigbit', int(v)))
+            if o in ['--iccprofile']:
+                k.append(('iccprofile', open(v, 'rb').read()))
             if o in ['-c']:
                 type = v[:4]
                 if not re.match('[a-zA-Z]{4}', type):
@@ -133,6 +153,8 @@ def main(argv=None):
                     k.append((type, None))
                 if v[4] == ':':
                     k.append((type, v[5:]))
+                if v[4] == '<':
+                    k.append((type, open(v[5:], 'rb').read()))
     except Usage, err:
         print >>sys.stderr, (
           "usage: pngchunk [--gamma d.dd] [--sigbit b] [-c cHNK! | -c cHNK:text-string]")
