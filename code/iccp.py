@@ -4,8 +4,12 @@
 
 # iccp
 #
-# Tool for extracting an ICC Profile from a PNG image (iCCP chunk) and
-# interpreting it.
+# International Color Consortium Profile
+#
+# Tools for manipulating ICC profiles.
+#
+# An ICC profile can be extracted from a PNG image (iCCP chunk).
+#
 #
 # Non-standard ICCP tags.
 #
@@ -27,11 +31,85 @@ import struct
 
 import png
 
-def iccp(out, inp):
-    return iccpreport(out, *profile(inp))
+class FormatError(Exception):
+    pass
 
-def profile(inp):
-    """Extract profile from PNG file.  Return (*name*, *profile*)
+class Profile:
+    """An International Color Consortium Profile (ICC Profile)."""
+
+    def __init__(self):
+        pass
+
+    def fromFile(self, inp, name='<unknown>'):
+
+        # See [ICC 2004]
+        profile = inp.read(128)
+        if len(profile) < 128:
+            raise FormatError("ICC Profile is too short.")
+        size, = struct.unpack('>L', profile[:4])
+        profile += inp.read(d['size'] - len(profile))
+        return self.fromString(profile, name)
+
+    def fromString(self, profile, name='<unknown>'):
+        self.d = dict()
+        d = self.d
+        if len(profile) < 128:
+            raise FormatError("ICC Profile is too short.")
+        d.update(
+          zip(['size', 'preferredCMM', 'version',
+               'profileclass', 'colourspace', 'pcs'],
+              struct.unpack('>L4sL4s4s4s', profile[:24])))
+        if len(profile) < d['size']:
+            warnings.warn(
+              'Profile size declared to be %d, but only got %d bytes' %
+                (d['size'], len(profile)))
+        d['version'] = '%08x' % d['version']
+        d['created'] = readICCdatetime(profile[24:36])
+        d.update(
+          zip(['acsp', 'platform', 'flag', 'manufacturer', 'model'],
+              struct.unpack('>4s4s3L', profile[36:56])))
+        if d['acsp'] != 'acsp':
+            warnings.warn('acsp field not present (not an ICC Profile?).')
+        d['deviceattributes'] = profile[56:64]
+        d['intent'], = struct.unpack('>L', profile[64:68])
+        d['pcsilluminant'] = readICCXYZNumber(profile[68:80])
+        d['creator'] = profile[80:84]
+        d['id'] = profile[84:100]
+        ntags, = struct.unpack('>L', profile[128:132])
+        d['ntags'] = ntags
+        fmt = '4s2L' * ntags
+        # tag table
+        tt = struct.unpack('>' + fmt, profile[132:132+12*ntags])
+        tt = group(tt, 3)
+
+        # Could (should) detect 2 or more tags having the same sig.  But
+        # we don't.  Two or more tags with the same sig is illegal per
+        # the ICC spec.
+        
+        # Convert (sig,offset,size) triples into (sig,value) pairs.
+        rawtag = map(lambda x: (x[0], profile[x[1]:x[1]+x[2]]), tt)
+        self.rawtagtable = rawtag
+        self.rawtagdict = dict(rawtag)
+        tag = dict()
+        # Interpret the tags whose types we know about
+        for sig, v in rawtag:
+            if sig in tag:
+                warnings.warn("Duplicate tag %r found.  Ignoring." % sig)
+                continue
+            v = ICCdecode(v)
+            if v is not None:
+                tag[sig] = v
+        self.tag = tag
+        return self
+            
+def iccp(out, inp):
+    profile = Profile().fromString(*profileFromPNG(inp))
+    print >>out, profile.d
+    print >>out, map(lambda x: x[0], profile.rawtagtable)
+    print >>out, profile.tag
+
+def profileFromPNG(inp):
+    """Extract profile from PNG file.  Return (*profile*, *name*)
     pair."""
     r = png.Reader(file=inp)
     _,chunk = r.chunk('iCCP')
@@ -40,60 +118,22 @@ def profile(inp):
     compression = chunk[i+1]
     assert compression == chr(0)
     profile = chunk[i+2:].decode('zlib')
-    return name, profile
+    return profile, name
 
 def iccpout(out, inp):
     """Extract ICC Profile from PNG file `inp` and write it to
     the file `out`."""
 
-    out.write(profile(inp)[1])
-
-def iccpreport(out, name, profile):
-    d = dict()
-    print >>out, 'Name:', name
-    d['name'] = name
-
-    # See [ICC 2004]
-    header = profile[:128]
-    d.update(
-      zip(['size', 'preferredCMM', 'version',
-           'profileclass', 'colourspace', 'pcs'],
-          struct.unpack('>L4sL4s4s4s', header[:24])))
-    d['version'] = '%08x' % d['version']
-    d['created'] = ICCdatetime(header[24:36])
-    d.update(
-      zip(['acsp', 'platform', 'flag', 'manufacturer', 'model'],
-          struct.unpack('>4s4s3L', header[36:56])))
-    d['deviceattributes'] = header[56:64]
-    d['intent'], = struct.unpack('>L', header[64:68])
-    d['pcsilluminant'] = ICCXYZNumber(header[68:80])
-    d['creator'] = header[80:84]
-    d['id'] = header[84:100]
-    ntags, = struct.unpack('>L', profile[128:132])
-    d['ntags'] = ntags
-    fmt = '4s2L' * ntags
-    # tag table
-    tt = struct.unpack('>' + fmt, profile[132:132+12*ntags])
-    tt = group(tt, 3)
-    tag = []
-    for sig,o,s in tt:
-        v = profile[o:o+s]
-        tag.append((sig, v))
-        if sig == 'chad':
-            d['chad'] = ICCsf32(v)
-        if sig in ['cprt', 'wtpt', 'gTRC', 'vcgt']:
-            d[sig] = ICCdecode(v)
-    print >>out, d
-    print map(lambda x: x[0], tag)
+    out.write(profile(inp)[0])
 
 
-def ICCdatetime(s):
+def readICCdatetime(s):
     """Convert from 12 byte ICC representation of dateTimeNumber to
     ISO8601 string. See [ICC 2004] 5.1.1"""
 
     return '%04d-%02d-%02dT%02d:%02d:%02dZ' % struct.unpack('>6H', s)
 
-def ICCXYZNumber(s):
+def readICCXYZNumber(s):
     """Convert from 12 byte ICC representation of XYZNumber to (x,y,z)
     triple of floats.  See [ICC 2004] 5.1.11"""
 
@@ -124,7 +164,10 @@ def ICCdecode(s):
            XYZ=ICCXYZ,
            curv=ICCcurv,
            vcgt=ICCvcgt,
+           sf32=ICCsf32,
            )
+    if sig not in f:
+        return None
     return (sig, f[sig](s))
 
 def ICCXYZ(s):
@@ -132,7 +175,7 @@ def ICCXYZ(s):
 
     # See [ICC 2001] 6.5.26
     assert s[0:4] == 'XYZ '
-    return ICCXYZNumber(s[8:])
+    return readICCXYZNumber(s[8:])
 
 def ICCsf32(s):
     """Convert ICC s15Fixed16ArrayType to list of float."""
