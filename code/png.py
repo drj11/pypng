@@ -284,14 +284,19 @@ def check_palette(palette):
     return p
 
 class Error(Exception):
-    pass
+    prefix = 'Error'
+    def __str__(self):
+        return self.prefix + ': ' + ' '.join(self.args)
 
-class FormatError(Exception):
+class FormatError(Error):
     """Problem with input file format.  In other words, PNG file does
     not conform to the specification in some way and is invalid.
     """
 
-    pass
+    prefix = 'FormatError'
+
+class ChunkError(FormatError):
+    prefix = 'ChunkError'
 
 
 class Writer:
@@ -1586,7 +1591,7 @@ class Reader:
                 try:
                     type, data = self.chunk()
                 except ValueError, e:
-                    raise Error('Chunk error: ' + e.args[0])
+                    raise ChunkError(e.args[0])
                 if type == 'IEND':
                     # http://www.w3.org/TR/PNG/#11IEND
                     break
@@ -1653,7 +1658,7 @@ class Reader:
             try:
                 type, data = self.chunk()
             except ValueError, e:
-                raise Error('Chunk error: ' + e.args[0])
+                raise ChunkError(e.args[0])
 
             # print >> sys.stderr, type, len(data)
             if type == 'IDAT':
@@ -3412,4 +3417,7 @@ def _main(argv):
 
 
 if __name__ == '__main__':
-    _main(sys.argv)
+    try:
+        _main(sys.argv)
+    except Error, e:
+        print >>sys.stderr, e
