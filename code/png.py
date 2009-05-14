@@ -1141,8 +1141,8 @@ class Reader:
             self.atchunk = None
             data = self.file.read(length)
             if len(data) != length:
-                raise ValueError('Chunk %s too short for required %i octets'
-                                 % (type, length))
+                raise ChunkError('Chunk %s too short for required %i octets'
+                  % (type, length))
             checksum = self.file.read(4)
             if len(checksum) != 4:
                 raise ValueError('Chunk %s too short for checksum', tag)
@@ -1155,8 +1155,9 @@ class Reader:
                 # print repr(checksum)
                 (a, ) = struct.unpack('!I', checksum)
                 (b, ) = struct.unpack('!I', verify)
-                raise ValueError("Checksum error in %s chunk: 0x%X != 0x%X"
-                                 % (type, a, b))
+                raise ChunkError(
+                  "Checksum error in %s chunk: 0x%08X != 0x%08X" %
+                  (type, a, b))
             return type, data
 
     def chunks(self):
@@ -1545,7 +1546,7 @@ class Reader:
                     self.background = struct.unpack("!%dH" % self.color_planes,
                       data)
             except struct.error:
-                raise ValueError("bKGD chunk has incorrect length")
+                raise FormatError("bKGD chunk has incorrect length")
         elif type == 'tRNS':
             # http://www.w3.org/TR/PNG/#11tRNS
             self.trns = data
