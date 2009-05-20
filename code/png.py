@@ -1571,17 +1571,17 @@ class Reader:
                     self.transparent = \
                         struct.unpack("!%dH" % self.color_planes, data)
                 except struct.error:
-                    raise ValueError("tRNS chunk has incorrect length")
+                    raise FormatError("tRNS chunk has incorrect length")
         elif type == 'gAMA':
             try:
                 self.gamma = struct.unpack("!L", data)[0] / 100000.0
             except struct.error:
-                raise ValueError("gAMA chunk has incorrect length")
+                raise FormatError("gAMA chunk has incorrect length")
         elif type == 'sBIT':
             self.sbit = data
             if (self.colormap and len(data) != 3 or
                 not self.colormap and len(data) != self.planes):
-                raise ValueError("sBIT chunk has incorrect length")
+                raise FormatError("sBIT chunk has incorrect length")
 
     def read(self):
         """
