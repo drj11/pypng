@@ -1613,12 +1613,24 @@ class Reader:
             # routine will do one yield per IDAT chunk.  So not very
             # incremental.
             d = zlib.decompressobj()
+            # The decompression loop:
+            # Decompress an IDAT chunk, then decompress any remaining
+            # unused data until the unused data does not get any
+            # smaller.  Add the unused data to the front of the input
+            # and loop to process the next IDAT chunk.
+            cdata = ''
             for data in idat:
                 # :todo: add a max_length argument here to limit output
                 # size.
-                yield array('B', d.decompress(data))
+                cdata += data
+                yield array('B', d.decompress(cdata))
                 while d.unused_data:
+                    l = len(d.unused_data)
                     yield array('B', d.decompress(d.unused_data))
+                    if len(d.unused_data) >= l:
+                        assert len(d.unused_data) == l
+                        cdata = d.unused_data
+                        break
             yield array('B', d.flush())
 
         self.preamble()
