@@ -1555,7 +1555,9 @@ class Reader:
                     warnings.warn("PLTE chunk is required before tRNS chunk")
                 else:
                     if len(data) > len(self.plte)/3:
-                        warnings.warn("tRNS chunk is too long")
+                        # Was warning, but promoted to Error as it
+                        # would otherwise cause pain later on.
+                        raise FormatError("tRNS chunk is too long")
             else:
                 if self.alpha:
                     raise Error("tRNS chunk is not valid with colour type %d" %
