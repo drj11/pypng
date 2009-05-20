@@ -1530,11 +1530,12 @@ class Reader:
                 warnings.warn("multiple PLTE chunks present")
             self.plte = data
             if len(data) % 3 != 0:
-                warnings.warn("PLTE chunk's length should be a multiple of 3")
+                raise FormatError(
+                  "PLTE chunk's length should be a multiple of 3")
             if len(data) > (2**self.bitdepth)*3:
-                warnings.warn("PLTE chunk is too long")
+                raise FormatError("PLTE chunk is too long")
             if len(data) == 0:
-                warnings.warn("empty PLTE is not allowed")
+                raise FormatError("empty PLTE is not allowed")
         elif type == 'bKGD':
             try:
                 if self.colormap:
