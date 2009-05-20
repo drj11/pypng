@@ -1464,7 +1464,10 @@ class Reader:
         if len(x) != 8:
             raise FormatError(
               'End of file whilst reading chunk length and type.')
-        return struct.unpack('!I4s', x)
+        length,type = struct.unpack('!I4s', x)
+        if length > 2**31-1:
+            raise FormatError('Chunk %s is too large: %d.' % (type,length))
+        return length,type
 
     def process_chunk(self):
         """Process the next chunk and its data.  This only processes the
