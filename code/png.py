@@ -1478,6 +1478,8 @@ class Reader:
         type, data = self.chunk()
         if type == 'IHDR':
             # http://www.w3.org/TR/PNG/#11IHDR
+            if len(data) != 13:
+                raise FormatError('IHDR chunk has incorrect length.')
             (self.width, self.height, self.bitdepth, self.color_type,
              self.compression, self.filter,
              self.interlace) = struct.unpack("!2I5B", data)
