@@ -1560,8 +1560,9 @@ class Reader:
                         raise FormatError("tRNS chunk is too long")
             else:
                 if self.alpha:
-                    raise Error("tRNS chunk is not valid with colour type %d" %
-                                self.colortype)
+                    raise FormatError(
+                      "tRNS chunk is not valid with colour type %d" %
+                      self.color_type)
                 try:
                     self.transparent = \
                         struct.unpack("!%dH" % self.color_planes, data)
