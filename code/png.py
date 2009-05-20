@@ -1624,8 +1624,7 @@ class Reader:
             for data in idat:
                 # :todo: add a max_length argument here to limit output
                 # size.
-                cdata += data
-                yield array('B', d.decompress(cdata))
+                yield array('B', d.decompress(cdata + data))
                 while d.unused_data:
                     l = len(d.unused_data)
                     yield array('B', d.decompress(d.unused_data))
