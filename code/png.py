@@ -1141,11 +1141,11 @@ class Reader:
             self.atchunk = None
             data = self.file.read(length)
             if len(data) != length:
-                raise ChunkError('Chunk %s too short for required %i octets'
+                raise ChunkError('Chunk %s too short for required %i octets.'
                   % (type, length))
             checksum = self.file.read(4)
             if len(checksum) != 4:
-                raise ValueError('Chunk %s too short for checksum', tag)
+                raise ValueError('Chunk %s too short for checksum.', tag)
             if seek and type != seek:
                 continue
             verify = zlib.crc32(type)
@@ -1156,7 +1156,7 @@ class Reader:
                 (a, ) = struct.unpack('!I', checksum)
                 (b, ) = struct.unpack('!I', verify)
                 raise ChunkError(
-                  "Checksum error in %s chunk: 0x%08X != 0x%08X" %
+                  "Checksum error in %s chunk: 0x%08X != 0x%08X." %
                   (type, a, b))
             return type, data
 
@@ -1202,7 +1202,7 @@ class Reader:
 
         if filter_type not in (1,2,3,4):
             raise FormatError('Invalid PNG Filter Type.'
-              '  See http://www.w3.org/TR/2003/REC-PNG-20031110/#9Filters')
+              '  See http://www.w3.org/TR/2003/REC-PNG-20031110/#9Filters .')
 
         # Filter unit.  The stride from one pixel to the corresponding
         # byte from the previous previous.  Normally this is the pixel
@@ -1416,8 +1416,7 @@ class Reader:
             # available bytes (after decompressing) do not pack into exact
             # rows.
             raise FormatError(
-              'Remaining bytes in decompressed IDAT chunk do not'
-              ' exactly fill a row of pixels')
+              'Wrong size for decompressed IDAT chunk.')
         assert len(a) == 0
 
     def validate_signature(self):
@@ -1429,7 +1428,7 @@ class Reader:
             return
         self.signature = self.file.read(8)
         if self.signature != _signature:
-            raise FormatError("PNG file has invalid signature")
+            raise FormatError("PNG file has invalid signature.")
 
     def preamble(self):
         """
@@ -1446,7 +1445,7 @@ class Reader:
                 self.atchunk = self.chunklentype()
                 if self.atchunk is None:
                     raise FormatError(
-                      'This PNG file does not contain IDAT chunk.')
+                      'This PNG file has no IDAT chunks.')
             if self.atchunk[1] == 'IDAT':
                 return
             self.process_chunk()
@@ -1494,15 +1493,20 @@ class Reader:
             # fewer than 8 bits per pixel.
             if ((self.color_type & 1 and self.bitdepth > 8) or
                 (self.bitdepth < 8 and self.color_type not in (0,3))):
-                raise Error("illegal combination of bit depth (%d)"
-                            " and colour type (%d)"
+                raise FormatError("Illegal combination of bit depth (%d)"
+                  " and colour type (%d)."
+                  " See http://www.w3.org/TR/2003/REC-PNG-20031110/#table111 ."
                   % (self.bitdepth, self.color_type))
             if self.compression != 0:
                 raise Error("unknown compression method %d" % self.compression)
             if self.filter != 0:
-                raise Error("unknown filter method %d" % self.filter)
+                raise FormatError("Unknown filter method %d,"
+                  " see http://www.w3.org/TR/2003/REC-PNG-20031110/#9Filters ."
+                  % self.filter)
             if self.interlace not in (0,1):
-                raise Error("illegal interlace method, %d" % self.interlace)
+                raise FormatError("Unknown interlace method %d,"
+                  " see http://www.w3.org/TR/2003/REC-PNG-20031110/#8InterlaceMethods ."
+                  % self.interlace)
 
             # Derived values
             # http://www.w3.org/TR/PNG/#6Colour-values
@@ -1532,58 +1536,58 @@ class Reader:
         elif type == 'PLTE':
             # http://www.w3.org/TR/PNG/#11PLTE
             if self.plte:
-                warnings.warn("multiple PLTE chunks present")
+                warnings.warn("Multiple PLTE chunks present.")
             self.plte = data
             if len(data) % 3 != 0:
                 raise FormatError(
-                  "PLTE chunk's length should be a multiple of 3")
+                  "PLTE chunk's length should be a multiple of 3.")
             if len(data) > (2**self.bitdepth)*3:
-                raise FormatError("PLTE chunk is too long")
+                raise FormatError("PLTE chunk is too long.")
             if len(data) == 0:
-                raise FormatError("empty PLTE is not allowed")
+                raise FormatError("Empty PLTE is not allowed.")
         elif type == 'bKGD':
             try:
                 if self.colormap:
                     if not self.plte:
                         warnings.warn(
-                          "PLTE chunk is required before bKGD chunk")
+                          "PLTE chunk is required before bKGD chunk.")
                     self.background = struct.unpack('B', data)
                 else:
                     self.background = struct.unpack("!%dH" % self.color_planes,
                       data)
             except struct.error:
-                raise FormatError("bKGD chunk has incorrect length")
+                raise FormatError("bKGD chunk has incorrect length.")
         elif type == 'tRNS':
             # http://www.w3.org/TR/PNG/#11tRNS
             self.trns = data
             if self.colormap:
                 if not self.plte:
-                    warnings.warn("PLTE chunk is required before tRNS chunk")
+                    warnings.warn("PLTE chunk is required before tRNS chunk.")
                 else:
                     if len(data) > len(self.plte)/3:
                         # Was warning, but promoted to Error as it
                         # would otherwise cause pain later on.
-                        raise FormatError("tRNS chunk is too long")
+                        raise FormatError("tRNS chunk is too long.")
             else:
                 if self.alpha:
                     raise FormatError(
-                      "tRNS chunk is not valid with colour type %d" %
+                      "tRNS chunk is not valid with colour type %d." %
                       self.color_type)
                 try:
                     self.transparent = \
                         struct.unpack("!%dH" % self.color_planes, data)
                 except struct.error:
-                    raise FormatError("tRNS chunk has incorrect length")
+                    raise FormatError("tRNS chunk has incorrect length.")
         elif type == 'gAMA':
             try:
                 self.gamma = struct.unpack("!L", data)[0] / 100000.0
             except struct.error:
-                raise FormatError("gAMA chunk has incorrect length")
+                raise FormatError("gAMA chunk has incorrect length.")
         elif type == 'sBIT':
             self.sbit = data
             if (self.colormap and len(data) != 3 or
                 not self.colormap and len(data) != self.planes):
-                raise FormatError("sBIT chunk has incorrect length")
+                raise FormatError("sBIT chunk has incorrect length.")
 
     def read(self):
         """
@@ -1717,8 +1721,8 @@ class Reader:
         """
 
         if not self.plte:
-            raise Error(
-                "required PLTE chunk is missing in colour type 3 image")
+            raise FormatError(
+                "Required PLTE chunk is missing in colour type 3 image.")
         plte = group(array('B', self.plte), 3)
         if self.trns or alpha == 'force':
             trns = array('B', self.trns or '')
