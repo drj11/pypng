@@ -24,9 +24,9 @@ def window(tl, br, inp, out):
     r = png.Reader(file=inp)
     x,y,pixels,meta = r.asDirect()
     if not (0 <= tl[0] < br[0] <= x):
-        raise Exception()
+        raise NotImplementedError()
     if not (0 <= tl[1] < br[1] <= y):
-        raise Exception()
+        raise NotImplementedError()
     # Compute left and right bounds for each row
     l = tl[0] * meta['planes']
     r = br[0] * meta['planes']
