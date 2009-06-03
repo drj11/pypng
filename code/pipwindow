@@ -53,6 +53,9 @@ def main(argv=None):
 
     tl = (0,0)
     br = tuple(map(int, argv[:2]))
+    if len(argv) >= 4:
+        tl = br
+        br = tuple(map(int, argv[2:4]))
     if len(argv) in (2, 4):
         f = sys.stdin
     else:
