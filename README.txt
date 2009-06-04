@@ -41,6 +41,10 @@ RELEASE NOTES
 
 Release 0.0.8
 
+Mostly more robust to dodgy input PNGs, as a result of testing with
+brokensuite.  One fixed bug was a critical: an infinite loop for a least
+one input (Issue 52 below).
+
 The following issues have been fixed:
 
   Issue 47:  Leading blanks when using write_packed.
@@ -48,6 +52,7 @@ The following issues have been fixed:
   Issue 49:  pipdither fail with 1-bit input.
   Issue 50:  pipchunk adds second gamma chunk.
   Issue 51:  piprgb and pipasgrey fail for color mapped images.
+  Issue 52:  Some inputs cause infinite loop.
 
 Release 0.0.7
 
