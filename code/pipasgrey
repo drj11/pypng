@@ -7,8 +7,13 @@
 # Convert image to grey (L, or LA), but only if that involves no colour
 # change.
 
-def asgrey(out, inp):
-    """Convert image to greyscale, but only when no colour change."""
+def asgrey(out, inp, quiet=False):
+    """Convert image to greyscale, but only when no colour change.  This
+    works by using the input G channel (green) as the output L channel
+    (luminance) and check that every pixel is grey as we go.  A non-grey
+    pixel will raise an error, but f `quiet` is true then the grey pixel
+    check is suppressed.
+    """
 
     from array import array
 
@@ -30,15 +35,16 @@ def asgrey(out, inp):
         for i,row in enumerate(pixels):
             row = array(typecode, row)
             targetrow = array(typecode, [0]*vpr)
-            # Copy R (and possibly A) channel.
-            red = row[0::planes]
+            # Copy G (and possibly A) channel.
+            green = row[0::planes]
             if alpha:
-                targetrow[0::2] = red
+                targetrow[0::2] = green
                 targetrow[1::2] = row[3::4]
             else:
-                targetrow = red
-            # Check G and B channel match.
-            if red != row[1::planes] or red != row[2::planes]:
+                targetrow = green
+            # Check R and B channel match.
+            if not quiet and (
+              green != row[0::planes] or green != row[2::planes]):
                 raise ValueError('Row %i contains non-grey pixel.' % i)
             yield targetrow
     info['greyscale'] = True
@@ -47,16 +53,21 @@ def asgrey(out, inp):
     w.write(out, iterasgrey())
 
 def main(argv=None):
+    from getopt import getopt
     import sys
     if argv is None:
         argv = sys.argv
     argv = argv[1:]
-
+    opt,argv = getopt(argv, 'q')
+    quiet = False
+    for o,v in opt:
+        if o == '-q':
+            quiet = True
     if len(argv) > 0:
         f = open(argv[0], 'rb')
     else:
         f = sys.stdin
-    return asgrey(sys.stdout, f)
+    return asgrey(sys.stdout, f, quiet)
 
 if __name__ == '__main__':
     main()
