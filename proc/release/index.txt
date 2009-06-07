@@ -18,11 +18,18 @@ Get the latest svn change number::
 
 (this is called *CHANGE* below)
 
-Update our sources to the particular revision::
+Change to a directory where you can checkout a fresh copy of the sources
+into a subdirectory.  You can delete it later if you want.
 
-  svn up -r CHANGE
+Checkout the particular revision of the source::
 
-Buld the documentation::
+  svn co -r CHANGE http://pypng.googlecode.com/svn/trunk/ pypng-X.Y.Z
+
+cd into that subdirectory:
+
+  cd pypng-X.Y.Z
+  
+Build the documentation::
 
   python build.py
 
@@ -37,10 +44,20 @@ which may be out of date.
 It's possible at this point that you might want to smoke-test the actual
 release binary.  Let's assume that the release binary is good to go.
 
+Move the dist binary that ``sdist`` just created, back into your main
+development directory::
+
+  mv dist/pypng-X.Y.Z.tar.gz ../pypng/dist
+
+And also cd back into your main development directory::
+
+  cd ../pypng
+
 Make a record in ``release/index.txt``
 
 Upload ``dist/pypng-X.Y.Z.tar.gz`` to google code.
 
+(back in the pypng-X.Y.Z release-specific directory...)
 Create a zip for the documentation:
 
   cd html
