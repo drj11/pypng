@@ -34,10 +34,7 @@ def black(m):
 
 def agreyprofile(out):
     it = iccp.Profile().greyInput()
-    it.addTags(cprt='For the use of all mankind.',
-      desc='created by $URL$ $Rev$',
-      wtpt=iccp.D50(),
-      kTRC=black(0.07))
+    it.addTags(kTRC=black(0.07))
     it.write(out)
 
 def main():

@@ -114,7 +114,22 @@ class Profile:
           colourspace='GRAY', pcs='XYZ '))
         return self
 
+    def maybeAddDefaults(self):
+        if self.rawtagdict:
+            return
+        self._addTags(
+          cprt='Copyright unknown.',
+          desc='created by $URL$ $Rev$',
+          wtpt=D50(),
+          )
+
     def addTags(self, **k):
+        self.maybeAddDefaults()
+        self._addTags(**k)
+
+    def _addTags(self, **k):
+        """Helper for :meth:`addTags`."""
+
         for tag, thing in k.items():
             if not isinstance(thing, (tuple, list)):
                 thing = (thing,)
