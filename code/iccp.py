@@ -172,6 +172,68 @@ class Profile:
         out.write('\x00' * 44)
         return self
 
+def encodefuns():
+    """Returns a dictionary mapping ICC type signature sig to encoding
+    function.  Each function returns a string comprising the content of
+    the encoded value.  To form the full value, the type sig and the 4
+    zero bytes should be prefixed (8 bytes).
+    """
+
+    def desc(ascii):
+        """Return textDescription type [ICC 2001] 6.5.17.  The ASCII part is
+        filled in with the string `ascii`, the Unicode and ScriptCode parts
+        are empty."""
+
+        ascii += '\x00'
+        l = len(ascii)
+
+        return struct.pack('>L%ds2LHB67s' % l,
+                           l, ascii, 0, 0, 0, 0, '')
+
+    def text(ascii):
+        """Return textType [ICC 2001] 6.5.18."""
+
+        return ascii + '\x00'
+
+    def curv(f=None, n=256):
+        """Return a curveType, [ICC 2001] 6.5.3.  If no arguments are
+        supplied then a TRC for a linear response is generated (no entries).
+        If an argument is supplied and it is a number (for *f* to be a
+        number it  means that ``float(f)==f``) then a TRC for that
+        gamma value is generated.
+        Otherwise `f` is assumed to be a function that maps [0.0, 1.0] to
+        [0.0, 1.0]; an `n` element table is generated for it.
+        """
+
+        if f is None:
+            return struct.pack('>L',  0)
+        try:
+            if float(f) == f:
+                return struct.pack('>LH', 1, int(round(f*2**8)))
+        except (TypeError, ValueError):
+            pass
+        assert n >= 2
+        table = []
+        M = float(n-1)
+        for i in range(n):
+            x = i/M
+            table.append(int(round(f(x) * 65535)))
+        return struct.pack('>L%dH' % n, n, *table)
+
+    return locals()
+
+def encode(tsig, *l):
+    """Encode a Python value as an ICC type.  `tsig` is the type
+    signature to (the first 4 bytes of the encoded value, see [ICC 2004]
+    section 10.
+    """
+
+    fun = encodefuns()
+    if tsig not in fun:
+        raise "No encoder for type %r." % tsig
+    v = fun[tsig](*l)
+    return tsig + '\x00'*4 + v
+
 def tagblock(tag):
     """`tag` should be a list of (*signature*, *element*) pairs, where
     *signature* (the key) is a length 4 string, and *element* is the
