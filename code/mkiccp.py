@@ -33,14 +33,11 @@ def black(m):
 # copyright [ICC 2001] 6.4.13
 
 def agreyprofile(out):
-    tags = dict(cprt=iccp.encode('text', 'For the use of all mankind.'), 
-      desc=iccp.encode('desc', 'an ICC profile'),
-      wtpt=struct.pack('4sL12s', 'XYZ ', 0, iccp.D50()),
-      kTRC=iccp.encode('curv', black(0.07)),
-      )
-
     it = iccp.Profile().greyInput()
-    it.rawtagdict = tags
+    it.addTags(cprt='For the use of all mankind.',
+      desc='created by $URL$ $Rev$',
+      wtpt=iccp.D50(),
+      kTRC=black(0.07))
     it.write(out)
 
 def main():

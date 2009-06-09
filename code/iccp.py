@@ -39,6 +39,7 @@ class Profile:
 
     def __init__(self):
         self.rawtagtable = None
+        self.rawtagdict = {}
         self.d = dict()
 
     def fromFile(self, inp, name='<unknown>'):
@@ -113,6 +114,14 @@ class Profile:
           colourspace='GRAY', pcs='XYZ '))
         return self
 
+    def addTags(self, **k):
+        for tag, thing in k.items():
+            if not isinstance(thing, (tuple, list)):
+                thing = (thing,)
+            typetag = defaulttagtype[tag]
+            self.rawtagdict[tag] = encode(typetag, *thing)
+        return self
+
     def write(self, out):
         """Write ICC Profile to the file."""
 
@@ -154,7 +163,7 @@ class Profile:
                         model=0,
                         deviceattributes=0,
                         intent=0,
-                        pcsilluminant=D50(),
+                        pcsilluminant=encodefuns()['XYZ'](*D50()),
                         creator=z,
                         )
         for k,v in defaults.items():
@@ -220,7 +229,64 @@ def encodefuns():
             table.append(int(round(f(x) * 65535)))
         return struct.pack('>L%dH' % n, n, *table)
 
+    def XYZ(*l):
+        return struct.pack('>3l', *map(fs15f16, l))
+
     return locals()
+
+# Tag type defaults.
+# Most tags can only have one or a few tag types.
+# When encoding, we associate a default tag type with each tag so that
+# the encoding is implicit.
+defaulttagtype=dict(
+  A2B0='mft1',
+  A2B1='mft1',
+  A2B2='mft1',
+  bXYZ='XYZ',
+  bTRC='curv',
+  B2A0='mft1',
+  B2A1='mft1',
+  B2A2='mft1',
+  calt='dtim',
+  targ='text',
+  chad='sf32',
+  chrm='chrm',
+  cprt='desc',
+  crdi='crdi',
+  dmnd='desc',
+  dmdd='desc',
+  devs='',
+  gamt='mft1',
+  kTRC='curv',
+  gXYZ='XYZ',
+  gTRC='curv',
+  lumi='XYZ',
+  meas='',
+  bkpt='XYZ',
+  wtpt='XYZ',
+  ncol='',
+  ncl2='',
+  resp='',
+  pre0='mft1',
+  pre1='mft1',
+  pre2='mft1',
+  desc='desc',
+  pseq='',
+  psd0='data',
+  psd1='data',
+  psd2='data',
+  psd3='data',
+  ps2s='data',
+  ps2i='data',
+  rXYZ='XYZ',
+  rTRC='curv',
+  scrd='desc',
+  scrn='',
+  tech='sig',
+  bfd='',
+  vued='desc',
+  view='view',
+)
 
 def encode(tsig, *l):
     """Encode a Python value as an ICC type.  `tsig` is the type
@@ -232,6 +298,8 @@ def encode(tsig, *l):
     if tsig not in fun:
         raise "No encoder for type %r." % tsig
     v = fun[tsig](*l)
+    # Padd tsig out with spaces.
+    tsig = (tsig + '   ')[:4]
     return tsig + '\x00'*4 + v
 
 def tagblock(tag):
@@ -291,10 +359,10 @@ def fs15f16(x):
     return int(round(x * 2**16))
 
 def D50():
-    """Return D50 illuiminant as an XYZNumber (in a 12 byte string)."""
+    """Return D50 illuminant as an (X,Y,Z) triple."""
 
     # See [ICC 2001] A.1
-    return struct.pack('>3l', *map(fs15f16, [0.9642, 1.0000, 0.8249]))
+    return (0.9642, 1.0000, 0.8249)
 
 
 def writeICCdatetime(t=None):
