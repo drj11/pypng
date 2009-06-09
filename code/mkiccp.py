@@ -13,19 +13,14 @@ import struct
 # Local module.
 import iccp
 
-def encode(tsig, *l):
-    """Encode a Python value as an ICC type.  `tsig` is the type
-    signature to (the first 4 bytes of the encoded value, see [ICC 2004]
-    section 10.
+def encodefuns():
+    """Returns a dictionary mapping ICC type signature sig to encoding
+    function.  Each function returns a string comprising the content of
+    the encoded value.  To form the full value, the type sig and the 4
+    zero bytes should be prefixed (8 bytes).
     """
 
-    # A number of helper functions.  Each one encodes a particular type
-    # (the signature of which matches the last 4 bytes of the functions
-    # name).  Each function returns a string comprising the content of
-    # the encoded value.  To form the full value, the type sig and the 4
-    # zero bytes should be prefixed (8 bytes).
-
-    def ICCdesc(ascii):
+    def desc(ascii):
         """Return textDescription type [ICC 2001] 6.5.17.  The ASCII part is
         filled in with the string `ascii`, the Unicode and ScriptCode parts
         are empty."""
@@ -36,12 +31,12 @@ def encode(tsig, *l):
         return struct.pack('>L%ds2LHB67s' % l,
                            l, ascii, 0, 0, 0, 0, '')
 
-    def ICCtext(ascii):
+    def text(ascii):
         """Return textType [ICC 2001] 6.5.18."""
 
         return ascii + '\x00'
 
-    def ICCcurv(f=None, n=256):
+    def curv(f=None, n=256):
         """Return a curveType, [ICC 2001] 6.5.3.  If no arguments are
         supplied then a TRC for a linear response is generated (no entries).
         If an argument is supplied and it is a number (for *f* to be a
@@ -66,7 +61,17 @@ def encode(tsig, *l):
             table.append(int(round(f(x) * 65535)))
         return struct.pack('>L%dH' % n, n, *table)
 
-    fun = dict(text=ICCtext, desc=ICCdesc, curv=ICCcurv)
+    return locals()
+
+def encode(tsig, *l):
+    """Encode a Python value as an ICC type.  `tsig` is the type
+    signature to (the first 4 bytes of the encoded value, see [ICC 2004]
+    section 10.
+    """
+
+    fun = encodefuns()
+    if tsig not in fun:
+        raise "No encoder for type %r." % tsig
     v = fun[tsig](*l)
     return tsig + '\x00'*4 + v
 
