@@ -1636,13 +1636,6 @@ class Reader:
                 # :todo: add a max_length argument here to limit output
                 # size.
                 yield array('B', d.decompress(cdata + data))
-                while d.unused_data:
-                    l = len(d.unused_data)
-                    yield array('B', d.decompress(d.unused_data))
-                    if len(d.unused_data) >= l:
-                        assert len(d.unused_data) == l
-                        cdata = d.unused_data
-                        break
             yield array('B', d.flush())
 
         self.preamble()
