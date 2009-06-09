@@ -38,7 +38,8 @@ class Profile:
     """An International Color Consortium Profile (ICC Profile)."""
 
     def __init__(self):
-        pass
+        self.rawtagtable = None
+        self.d = dict()
 
     def fromFile(self, inp, name='<unknown>'):
 
@@ -101,7 +102,103 @@ class Profile:
                 tag[sig] = v
         self.tag = tag
         return self
-            
+
+    def greyInput(self):
+        """Adjust ``self.d`` dictionary for greyscale input device.
+        ``profileclass`` is 'scnr', ``colourspace`` is 'GRAY', ``pcs``
+        is 'XYZ '.
+        """
+
+        self.d.update(dict(profileclass='scnr',
+          colourspace='GRAY', pcs='XYZ '))
+        return self
+
+    def write(self, out):
+        """Write ICC Profile to the file."""
+
+        if not self.rawtagtable:
+            self.rawtagtable = self.rawtagdict.items()
+        tags = tagblock(self.rawtagtable)
+        self.writeHeader(out, 128 + len(tags))
+        out.write(tags)
+        out.flush()
+
+        return self
+
+    def writeHeader(self, out, size=999):
+        """Add default values to the instance's `d` dictionary, then
+        write a header out onto the file stream.  The size of the
+        profile must be specified using the `size` argument.
+        """
+
+        def defaultkey(d, key, value):
+            """Add ``[key]==value`` to the dictionary `d`, but only if
+            it does not have that key already.
+            """
+
+            if key in d:
+                return
+            d[key] = value
+
+        z = '\x00' * 4
+        defaults = dict(preferredCMM=z,
+                        version='02000000',
+                        profileclass=z,
+                        colourspace=z,
+                        pcs='XYZ ',
+                        created=writeICCdatetime(),
+                        acsp='acsp',
+                        platform=z,
+                        flag=0,
+                        manufacturer=z,
+                        model=0,
+                        deviceattributes=0,
+                        intent=0,
+                        pcsilluminant=D50(),
+                        creator=z,
+                        )
+        for k,v in defaults.items():
+            defaultkey(self.d, k, v)
+
+        hl = map(self.d.__getitem__,
+                 ['preferredCMM', 'version', 'profileclass', 'colourspace',
+                  'pcs', 'created', 'acsp', 'platform', 'flag',
+                  'manufacturer', 'model', 'deviceattributes', 'intent',
+                  'pcsilluminant', 'creator'])
+        # Convert to struct.pack input
+        hl[1] = int(hl[1], 16)
+
+        out.write(struct.pack('>L4sL4s4s4s12s4s4sL4sLQL12s4s', size, *hl))
+        out.write('\x00' * 44)
+        return self
+
+def tagblock(tag):
+    """`tag` should be a list of (*signature*, *element*) pairs, where
+    *signature* (the key) is a length 4 string, and *element* is the
+    content of the tag element (another string).
+    
+    The entire tag block (consisting of first a table and then the
+    element data) is constructed and returned as a string.
+    """
+
+    n = len(tag)
+    tablelen = 12*n
+
+    # Build the tag table in two parts.  A list of 12-byte tags, and a
+    # string of element data.  Offset is the offset from the start of
+    # the profile to the start of the element data (so the offset for
+    # the next element is this offset plus the length of the element
+    # string so far).
+    offset = 128 + tablelen + 4
+    # The table.  As a string.
+    table = ''
+    # The element data
+    element = ''
+    for k,v in tag:
+        table += struct.pack('>4s2L', k, offset + len(element), len(v))
+        element += v
+    return struct.pack('>L', n) + table + element
+
 def iccp(out, inp):
     profile = Profile().fromString(*profileFromPNG(inp))
     print >>out, profile.d
@@ -124,8 +221,30 @@ def iccpout(out, inp):
     """Extract ICC Profile from PNG file `inp` and write it to
     the file `out`."""
 
-    out.write(profile(inp)[0])
+    out.write(profileFromPNG(inp)[0])
 
+def fs15f16(x):
+    """Convert float to ICC s15Fixed16Number (as a Python ``int``)."""
+
+    return int(round(x * 2**16))
+
+def D50():
+    """Return D50 illuiminant as an XYZNumber (in a 12 byte string)."""
+
+    # See [ICC 2001] A.1
+    return struct.pack('>3l', *map(fs15f16, [0.9642, 1.0000, 0.8249]))
+
+
+def writeICCdatetime(t=None):
+    """`t` should be a gmtime tuple (as returned from
+    ``time.gmtime()``).  If not supplied, the current time will be used.
+    Return an ICC dateTimeNumber in a 12 byte string.
+    """
+
+    import time
+    if t is None:
+        t = time.gmtime()
+    return struct.pack('>6H', *t[:6])
 
 def readICCdatetime(s):
     """Convert from 12 byte ICC representation of dateTimeNumber to
@@ -160,30 +279,30 @@ def ICCdecode(s):
     """
 
     sig = s[0:4].strip()
-    f=dict(text=ICCtext,
-           XYZ=ICCXYZ,
-           curv=ICCcurv,
-           vcgt=ICCvcgt,
-           sf32=ICCsf32,
+    f=dict(text=RDtext,
+           XYZ=RDXYZ,
+           curv=RDcurv,
+           vcgt=RDvcgt,
+           sf32=RDsf32,
            )
     if sig not in f:
         return None
     return (sig, f[sig](s))
 
-def ICCXYZ(s):
+def RDXYZ(s):
     """Convert ICC XYZType to rank 1 array of trimulus values."""
 
     # See [ICC 2001] 6.5.26
     assert s[0:4] == 'XYZ '
     return readICCXYZNumber(s[8:])
 
-def ICCsf32(s):
+def RDsf32(s):
     """Convert ICC s15Fixed16ArrayType to list of float."""
     # See [ICC 2004] 10.18
     assert s[0:4] == 'sf32'
     return s15f16l(s[8:])
 
-def ICCmluc(s):
+def RDmluc(s):
     """Convert ICC multiLocalizedUnicodeType.  This types encodes
     several strings together with a language/country code for each
     string.  A list of (*lc*, *string*) pairs is returned where *lc* is
@@ -202,7 +321,7 @@ def ICCmluc(s):
     # How are strings encoded?
     return record
 
-def ICCtext(s):
+def RDtext(s):
     """Convert ICC textType to Python string."""
     # Note: type not specified or used in [ICC 2004], only in older
     # [ICC 2001].
@@ -210,7 +329,7 @@ def ICCtext(s):
     assert s[0:4] == 'text'
     return s[8:-1]
 
-def ICCcurv(s):
+def RDcurv(s):
     """Convert ICC curveType."""
     # See [ICC 2001] 6.5.3
     assert s[0:4] == 'curv'
@@ -222,7 +341,7 @@ def ICCcurv(s):
         return dict(gamma=table[0]*2**-8)
     return table
 
-def ICCvcgt(s):
+def RDvcgt(s):
     """Convert Apple CMVideoCardGammaType."""
     # See
     # http://developer.apple.com/documentation/GraphicsImaging/Reference/ColorSync_Manager/Reference/reference.html#//apple_ref/c/tdef/CMVideoCardGammaType
@@ -245,11 +364,11 @@ def ICCvcgt(s):
         return size, t
     return s[8:]
 
+
 def group(s, n):
     # See
     # http://www.python.org/doc/2.6/library/functions.html#zip
     return zip(*[iter(s)]*n)
-
 
 
 def main(argv=None):
