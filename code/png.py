@@ -1150,7 +1150,13 @@ class Reader:
                 continue
             verify = zlib.crc32(type)
             verify = zlib.crc32(data, verify)
-            verify = struct.pack('!i', verify)
+            # Whether the output from zlib.crc32 is signed or not varies
+            # according to hideous implementation details, see
+            # http://bugs.python.org/issue1202 .
+            # We coerce it to be positive here (in a way which works on
+            # Python 2.3 and older).
+            verify &= 2**32 - 1
+            verify = struct.pack('!I', verify)
             if checksum != verify:
                 # print repr(checksum)
                 (a, ) = struct.unpack('!I', checksum)
