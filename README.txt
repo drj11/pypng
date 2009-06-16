@@ -39,6 +39,21 @@ RELEASE NOTES
 
 (For issues see http://code.google.com/p/pypng/issues/list )
 
+Release 0.0.9
+
+Tentative fix for a deprecation warning on 64-bit Python 2.5 systems.
+Conversion tool for Plan 9 images.
+
+Issue 54 (below) is tentative.  The PyPNG developers have been unable to
+reproduce the error (as it seems to be on 64-bit Python 2.5 systems);
+any user reports would be most welcome.
+
+The following issues have been fixed:
+
+  Issue 54:  Deprecation warnings when using pypng.
+  Issue 55:  Cannot convert Plan 9 images.
+
+
 Release 0.0.8
 
 Mostly more robust to dodgy input PNGs, as a result of testing with
