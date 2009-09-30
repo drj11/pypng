@@ -10,8 +10,8 @@
 def asgrey(out, inp, quiet=False):
     """Convert image to greyscale, but only when no colour change.  This
     works by using the input G channel (green) as the output L channel
-    (luminance) and check that every pixel is grey as we go.  A non-grey
-    pixel will raise an error, but f `quiet` is true then the grey pixel
+    (luminance) and checking that every pixel is grey as we go.  A non-grey
+    pixel will raise an error, but if `quiet` is true then the grey pixel
     check is suppressed.
     """
 
