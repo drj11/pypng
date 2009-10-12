@@ -39,6 +39,15 @@ RELEASE NOTES
 
 (For issues see http://code.google.com/p/pypng/issues/list )
 
+Release 0.0.10
+
+Fix for read_flat method (broken for ages).
+
+The following issues have been fixed:
+
+  Issue 56:  read_flat broken
+
+
 Release 0.0.9
 
 Tentative fix for a deprecation warning on 64-bit Python 2.5 systems.
