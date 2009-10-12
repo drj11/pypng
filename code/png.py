@@ -1675,35 +1675,10 @@ class Reader:
         more stream-friendly boxed row flat pixel format.
         """
 
-        self.preamble()
-        compressed = []
-        while True:
-            try:
-                type, data = self.chunk()
-            except ValueError, e:
-                raise ChunkError(e.args[0])
-
-            # print >> sys.stderr, type, len(data)
-            if type == 'IDAT':
-            # http://www.w3.org/TR/PNG/#11IDAT
-                if self.colormap and not self.plte:
-                    warnings.warn("PLTE chunk is required before IDAT chunk")
-                compressed.append(data)
-            elif type == 'IEND': # http://www.w3.org/TR/PNG/#11IEND
-                break
-        packedlines = array('B', zlib.decompress(''.join(compressed)))
-        if self.interlace:
-            pixels = self.deinterlace(packedlines)
-        else:
-            pixels = self.serialtoflat(self.straightlaced(packedlines))
-        meta = dict()
-        for attr in 'greyscale alpha bitdepth interlace'.split():
-            meta[attr] = getattr(self, attr)
-        for attr in 'gamma transparent background'.split():
-            a = getattr(self, attr, None)
-            if a is not None:
-                meta[attr] = a
-        return self.width, self.height, pixels, meta
+        x, y, pixel, meta = self.read()
+        arraycode = 'BH'[meta['bitdepth']>8]
+        pixel = array(arraycode, itertools.chain(*pixel))
+        return x, y, pixel, meta
 
     def palette(self, alpha='natural'):
         """Returns a palette that is a sequence of 3-tuples or 4-tuples,
@@ -2404,6 +2379,14 @@ class Test(unittest.TestCase):
             data = data.encode('zip')
             return (chunk[0], data)
         self.assertRaises(FormatError, self.helperFormat, eachchunk)
+    def testFlat(self):
+        """Test read_flat."""
+        import hashlib
+
+        r = Reader(bytes=_pngsuite['basn0g02'])
+        x,y,pixel,meta = r.read_flat()
+        d = hashlib.md5(''.join(map(chr, pixel))).digest()
+        self.assertEqual(d.encode('hex'), '255cd971ab8cd9e7275ff906e5041aa0')
 
     # numpy dependent tests.  These are skipped (with a message to
     # sys.stderr) if numpy cannot be imported.
