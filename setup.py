@@ -2,7 +2,7 @@
 # $Rev$
 
 # PyPNG setup.py
-# This is the setup.py script used by disutils.
+# This is the setup.py script used by distutils.
 
 # You can install the png module into your Python distribution with:
 # python setup.py install
@@ -15,7 +15,7 @@
 
 conf = dict(
     name='pypng',
-    version='0.0.9',
+    version='0.0.10',
     description='Pure Python PNG image encoder/decoder',
     long_description="""
 PyPNG allows PNG image files to be read and written using pure Python.
