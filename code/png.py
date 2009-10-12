@@ -1405,7 +1405,6 @@ class Reader:
         # length of row, in bytes
         rb = self.row_bytes
         a = array('B')
-        source_offset = 0
         # The previous (reconstructed) scanline.  None indicates first
         # line of image.
         recon = None
