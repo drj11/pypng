@@ -49,15 +49,6 @@ development directory::
 
   mv dist/pypng-X.Y.Z.tar.gz ../pypng/dist
 
-And also cd back into your main development directory::
-
-  cd ../pypng
-
-Make a record in ``release/index.txt``
-
-Upload ``dist/pypng-X.Y.Z.tar.gz`` to google code.
-
-(back in the pypng-X.Y.Z release-specific directory...)
 Create a zip for the documentation:
 
   cd html
@@ -72,3 +63,11 @@ Upload to PyPI:
 
 (You can register releases on PyPI without uploading them:
 "python setup.py register")
+
+cd back into your main development directory::
+
+  cd ../pypng
+
+Make a record in ``release/index.txt``
+
+Upload ``dist/pypng-X.Y.Z.tar.gz`` to google code.
