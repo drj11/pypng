@@ -2018,7 +2018,7 @@ except:
             yield x
 
 try:
-    itertoools
+    itertools
 except:
     class _dummy_itertools:
         pass
