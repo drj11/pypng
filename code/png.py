@@ -3227,7 +3227,7 @@ def write_pnm(file, width, height, pixels, meta):
     # Rudely, the number of image planes can be used to determine
     # whether we are L (PGM), LA (PAM), RGB (PPM), or RGBA (PAM).
     planes = meta['planes']
-    # Can be an assert as long as we assumes that pixels and meta came
+    # Can be an assert as long as we assume that pixels and meta came
     # from a PNG file.
     assert planes in (1,2,3,4)
     if planes in (1,3):
