@@ -3221,7 +3221,8 @@ def read_pnm_header(infile, supported=('P5','P6')):
     return header[0], header[1], header[2], depth, header[3]
 
 def write_pnm(file, width, height, pixels, meta):
-    """Write a PNM file."""
+    """Write a Netpbm PNM/PAM file."""
+
     bitdepth = meta['bitdepth']
     maxval = 2**bitdepth - 1
     # Rudely, the number of image planes can be used to determine
