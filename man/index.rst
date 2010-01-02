@@ -12,7 +12,14 @@ Contents:
    ca
    ex
    png
+
+Reports:
+
+.. toctree::
+   :maxdepth: 1
+
    chunk
+   tr20091230
 
 Indices and tables
 ==================
