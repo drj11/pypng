@@ -1776,6 +1776,7 @@ class Reader:
             planes = meta['planes']
             meta['alpha'] = True
             meta['planes'] += 1
+            typecode = 'BH'[meta['bitdepth']>8]
             def itertrns(pixels):
                 for row in pixels:
                     # For each row we group it into pixels, then form a
@@ -1787,7 +1788,8 @@ class Reader:
                     opa = map(it.__ne__, row)
                     opa = map(maxval.__mul__, opa)
                     opa = zip(opa) # convert to 1-tuples
-                    yield itertools.chain(*map(operator.add, row, opa))
+                    yield array(typecode,
+                      itertools.chain(*map(operator.add, row, opa)))
             pixels = itertrns(pixels)
         targetbitdepth = None
         if self.sbit:
@@ -2327,11 +2329,16 @@ class Test(unittest.TestCase):
         pixels = list(pixels)
         self.assertEqual(len(pixels), 2)
         self.assertEqual(len(pixels[0]), 16)
-    def testInterlacedArrayR(self):
+    def testInterlacedArray(self):
         """Test that reading an interlaced PNG yields each row as an
         array."""
         r = Reader(bytes=_pngsuite['basi0g08'])
         list(r.read()[2])[0].tostring
+    def testTrnsArray(self):
+        """Test that reading a type 2 PNG with tRNS chunk yields each
+        row as an array (using asDirect)."""
+        r = Reader(bytes=_pngsuite['tbrn2c08'])
+        list(r.asDirect()[2])[0].tostring
 
     # Invalid file format tests.  These construct various badly
     # formatted PNG files, then feed them into a Reader.  When
