@@ -1648,7 +1648,11 @@ class Reader:
 
         if self.interlace:
             raw = array('B', itertools.chain(*raw))
-            pixels = group(self.deinterlace(raw), self.width*self.planes)
+            arraycode = 'BH'[self.bitdepth>8]
+            # Like :meth:`group` but producing an array.array object for
+            # each row.
+            pixels = itertools.imap(lambda *row: array(arraycode, row),
+                       *[iter(self.deinterlace(raw))]*self.width*self.planes)
         else:
             pixels = self.iterboxed(self.iterstraight(raw))
         meta = dict()
