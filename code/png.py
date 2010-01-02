@@ -2323,6 +2323,11 @@ class Test(unittest.TestCase):
         pixels = list(pixels)
         self.assertEqual(len(pixels), 2)
         self.assertEqual(len(pixels[0]), 16)
+    def testInterlacedArrayR(self):
+        """Test that reading an interlaced PNG yields each row as an
+        array."""
+        r = Reader(bytes=_pngsuite['basi0g08'])
+        list(r.read()[2])[0].tostring
 
     # Invalid file format tests.  These construct various badly
     # formatted PNG files, then feed them into a Reader.  When
