@@ -182,7 +182,7 @@ import zlib
 import warnings
 
 
-__all__ = ['Reader', 'Writer', 'write_chunks']
+__all__ = ['Reader', 'Writer', 'write_chunks', 'from_array']
 
 
 # The PNG signature.
@@ -360,7 +360,7 @@ class Writer:
         alpha channel (or not).
 
         `bitdepth` specifies the bit depth of the source pixel values.
-        Each source pixel values must be an integer between 0 and
+        Each source pixel value must be an integer between 0 and
         ``2**bitdepth-1``.  For example, 8-bit images have values
         between 0 and 255.  PNG only stores images with bit depths of
         1,2,4,8, or 16.  When `bitdepth` is not one of these values,
@@ -370,7 +370,7 @@ class Writer:
         values will be rescaled to fit the range of the selected bit depth.
 
         The details of which bit depth / colour model combinations the
-        PNG file format supports directly, are allowed are somewhat arcane
+        PNG file format supports directly, are somewhat arcane
         (refer to the PNG specification for full details).  Briefly:
         "small" bit depths (1,2,4) are only allowed with greyscale and
         colour mapped images; colour mapped images cannot have bit depth
@@ -1053,6 +1053,205 @@ def filter_scanline(type, line, fo, prev=None):
     return out
 
 
+def from_array(a, mode=None, info={}):
+    """Create a PNG image object from a 2- or 3-dimensional array.  One
+    application of this function is easy PIL-style saving:
+    ``png.from_array(pixels, 'L').save('foo.png')``.
+    
+    Unless they are specified using the *info* parameter, the PNG's
+    height and width are taken from the array size.  For a 3 dimensional
+    array the first axis is the height; the second axis is the width;
+    and the third axis is the channel number.  Thus an RGB image that is
+    16 pixels high and 8 wide will use an array that is 16x8x3.  For 2
+    dimensional arrays the first axis is the height, but the second axis
+    is ``width*channels``, so an RGB image that is 16 pixels high and 8
+    wide will use a 2-dimensional array that is 16x24 (each row will be
+    8*3==24 sample values).
+
+    *mode* is a string that specifies the image colour format in a
+    PIL-style mode.  It can be:
+
+    ``'L'``
+      greyscale (1 channel)
+    ``'LA'``
+      greyscale with alpha (2 channel)
+    ``'RGB'``
+      colour image (3 channel)
+    ``'RGBA'``
+      colour image with alpha (4 channel)
+
+    The mode string can also specify the bit depth (overriding how this
+    function normally derives the bit depth, see below).  Appending
+    ``';16'`` to the mode will cause the PNG to be 16 bits per channel;
+    any decimal from 1 to 16 can be used to specify the bit depth.
+
+    When a 2-dimensional array is used *mode* determines how many
+    channels the image has, and so determines the width from the second
+    array dimension.
+
+    The array is expected to be a ``numpy`` array, but it can be any
+    suitable Python sequence.  For example, a list of lists can be used:
+    ``png.from_array([[0, 255, 0], [255, 0, 255]], 'L')``.  The exact
+    rules are: ``len(a)`` gives the first dimension, height;
+    ``len(a[0])`` gives the second dimension; ``len(a[0][0])`` gives the
+    third dimension, unless an exception is raised in which case a
+    2-dimensional array is assumed.
+
+    The bit depth of the PNG is normally taken from the array element's
+    datatype (but if *mode* specifies a bitdepth then that is used
+    instead).  The array element's datatype is determined in a way which
+    is supposed to work both for ``numpy`` arrays and for Python
+    ``array.array`` objects.  1 byte datatype will give a bit depth of
+    8, a 2 byte datatype will give a bit depth of 16.  If the datatype
+    does not have an implicit size, for example it is a plain Python
+    list of lists, as above, then a default of 8 is used.
+
+    The *info* parameter is a dictionary that can be used to specify
+    metadata (in the same style as the arguments to the
+    :class:``png.Writer`` class).  For this function the keys that are
+    useful are:
+    
+    height
+      overrides the height derived from the array dimensions and allows
+      *a* to be an iterable.
+    width
+      overrides the width derived from the array dimensions.
+    bitdepth
+      overrides the bit depth derived from the element datatype (but
+      must match *mode* if that also specifies a bit depth).
+
+    Generally anything specified in the
+    *info* dictionary will override any implicit choices that this
+    function would otherwise make, but must match any explicit ones.
+    For example, if the *info* dictionary has a ``greyscale`` key then
+    this must be true when mode is ``'L'`` or ``'LA'`` and false when
+    mode is ``'RGB'`` or ``'RGBA'``.
+    """
+
+    # We abuse the *info* parameter by modifying it.  Take a copy here.
+    # (Also typechecks *info* to some extent).
+    info = dict(info)
+
+    # Syntax check mode string.
+    bitdepth = None
+    try:
+        mode = mode.split(';')
+        if len(mode) not in (1,2):
+            raise Error()
+        if mode[0] not in ('L', 'LA', 'RGB', 'RGBA'):
+            raise Error()
+        if len(mode) == 2:
+            try:
+                bitdepth = int(mode[1])
+            except:
+                raise Error()
+    except Error:
+        raise Error("mode string should be 'RGB' or 'L;16' or similar.")
+    mode = mode[0]
+
+    # Get bitdepth from *mode* if possible.
+    if bitdepth:
+        if info.get('bitdepth') and bitdepth != info['bitdepth']:
+            raise Error("mode bitdepth (%d) should match info bitdepth (%d)." %
+              (bitdepth, info['bitdepth']))
+        info['bitdepth'] = bitdepth
+
+    # Fill in and/or check entries in *info*.
+    # Dimensions.
+    if 'size' in info:
+        # Check width, height, size all match where used.
+        for dimension,axis in [('width', 0), ('height', 1)]:
+            if dimension in info:
+                if info[dimension] != info['size'][axis]:
+                    raise Error(
+                      "info[%r] shhould match info['size'][%r]." %
+                      (dimension, axis))
+        info['width'],info['height'] = info['size']
+    if 'height' not in info:
+        try:
+            l = len(a)
+        except:
+            raise Error(
+              "len(a) does not work, supply info['height'] instead.")
+        info['height'] = l
+    # Colour format.
+    if 'greyscale' in info:
+        if bool(info['greyscale']) != ('L' in mode):
+            raise Error("info['greyscale'] should match mode.")
+    info['greyscale'] = 'L' in mode
+    if 'alpha' in info:
+        if bool(info['alpha']) != ('A' in mode):
+            raise Error("info['alpha'] should match mode.")
+    info['alpha'] = 'A' in mode
+
+    planes = len(mode)
+    if 'planes' in info:
+        if info['planes'] != planes:
+            raise Error("info['planes'] should match mode.")
+
+    # In order to work out whether we the array is 2D or 3D we need its
+    # first row, which requires that we take a copy of its iterator.
+    # We may also need the first row to derive width and bitdepth.
+    a,t = itertools.tee(a)
+    row = t.next()
+    del t
+    try:
+        row[0][0]
+        threed = True
+        testelement = row[0]
+    except:
+        threed = False
+        testelement = row
+    if 'width' not in info:
+        if threed:
+            width = len(row)
+        else:
+            width = len(row) // planes
+        info['width'] = width
+
+    # Not implemented yet
+    assert not threed
+
+    if 'bitdepth' not in info:
+        try:
+            dtype = testelement.dtype
+            # goto the "else:" clause.  Sorry.
+        except:
+            try:
+                # Try a Python array.array.
+                bitdepth = 8 * testelement.itemsize
+            except:
+                # We can't determine it from the array element's
+                # datatype, use a default of 8.
+                bitdepth = 8
+
+        else:
+            # If we got here without exception, we now assume that
+            # the array is a numpy array.
+            if dtype.kind == 'b':
+                bitdepth = 1
+            else:
+                bitdepth = 8 * dtype.itemsize
+        info['bitdepth'] = bitdepth
+
+    for thing in 'width height bitdepth greyscale alpha'.split():
+        assert thing in info
+    return Image(a, info)
+
+class Image:
+    def __init__(self, rows, info):
+        """The constructor is not public.  Please do not call me."""
+        self.rows = rows
+        self.info = info
+
+    def save(self, name):
+        w = Writer(**self.info)
+        f = open(name, 'wb')
+        try:
+            w.write(f, self.rows)
+        finally:
+            f.close()
+
 class _readable:
     """
     A simple file-like interface for strings and arrays.
@@ -1123,8 +1322,12 @@ class Reader:
 
     def chunk(self, seek=None):
         """
-        Read the next PNG chunk from the input file; returns type (as a 4
-        character string) and data.  If the optional `seek` argument is
+        Read the next PNG chunk from the input file; returns a
+        (*type*,*data*) tuple.  *type* is the chunk's type as a string
+        (all PNG chunk types are 4 characters long).  *data* is the
+        chunk's data content, as a string.
+
+        If the optional `seek` argument is
         specified then it will keep reading chunks until it either runs
         out of file or finds the type specified by the argument.  Note
         that in general the order of chunks in PNGs is unspecified, so
@@ -1689,7 +1892,7 @@ class Reader:
         synthesizing it from the ``PLTE`` and ``tRNS`` chunks.  These
         chunks should have already been processed (for example, by
         calling the :meth:`preamble` method).  All the tuples are the
-        same size, 3-tuples if there is no ``tRNS`` chunk, 4-tuples when
+        same size: 3-tuples if there is no ``tRNS`` chunk, 4-tuples when
         there is a ``tRNS`` chunk.  Assumes that the image is colour type
         3 and therefore a ``PLTE`` chunk is required.
 
@@ -1863,17 +2066,22 @@ class Reader:
     def asRGBA8(self):
         """Return the image data as RGBA pixels with 8-bits per
         sample.  This method is similar to :meth:`asRGB8` and
-        :meth:`asRGBA`:  The result pixels have an alpha channel, _and_
-        values are rescale to the range 0 to 255.  The alpha channel is
-        synthesized if necessary.
+        :meth:`asRGBA`:  The result pixels have an alpha channel, *and*
+        values are rescaled to the range 0 to 255.  The alpha channel is
+        synthesized if necessary (with a small speed penalty).
         """
 
         return self._as_rescale(self.asRGBA, 8)
 
     def asRGB(self):
-        """Return image as RGB pixels.  Greyscales are expanded into RGB
-        triplets.  An alpha channel in the source image will raise an
-        exception.  The return values are as for the :meth:`read` method
+        """Return image as RGB pixels.  RGB colour images are passed
+        through unchanged; greyscales are expanded into RGB
+        triplets (there is a small speed overhead for doing this).
+
+        An alpha channel in the source image will raise an
+        exception.
+
+        The return values are as for the :meth:`read` method
         except that the *metadata* reflect the returned pixels, not the
         source image.  In particular, for this method
         ``metadata['greyscale']`` will be ``False``.
@@ -2403,6 +2611,9 @@ class Test(unittest.TestCase):
         x,y,pixel,meta = r.read_flat()
         d = hashlib.md5(''.join(map(chr, pixel))).digest()
         self.assertEqual(d.encode('hex'), '255cd971ab8cd9e7275ff906e5041aa0')
+    def testfromarray(self):
+        img = from_array([[0, 0x33, 0x66], [0xff, 0xcc, 0x99]], 'L')
+        img.save('testfromarray.png')
 
     # numpy dependent tests.  These are skipped (with a message to
     # sys.stderr) if numpy cannot be imported.
