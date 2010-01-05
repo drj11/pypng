@@ -3080,9 +3080,7 @@ def test_suite(options, args):
     size = 256
     if options.test_size:
         size = options.test_size
-    options.bitdepth = 8
-    if options.test_deep:
-        options.bitdepth = 16
+    options.bitdepth = options.test_depth
     options.greyscale=bool(options.test_black)
 
     kwargs = {}
@@ -3352,9 +3350,10 @@ def _main(argv):
     parser.add_option("-K", "--test-black",
                       action="store", type="string", metavar="pattern",
                       help="test pattern for greyscale image")
-    parser.add_option("-D", "--test-deep",
-                      default=False, action="store_true",
-                      help="use test patterns with 16 bits per layer")
+    parser.add_option("-d", "--test-depth",
+                      default=8, action="store", type="int",
+                      metavar='NBITS',
+                      help="create test PNGs that are NBITS bits per channel")
     parser.add_option("-S", "--test-size",
                       action="store", type="int", metavar="size",
                       help="width and height of the test image")
