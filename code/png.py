@@ -1244,13 +1244,30 @@ class Image:
         self.rows = rows
         self.info = info
 
-    def save(self, name):
+    def save(self, file):
+        """Save the image to *file*.  If *file* looks like an open file
+        descriptor then it is used, otherwise it is treated as a
+        filename and a fresh file is opened.
+
+        In general, you can only call this method once; after it has
+        been called the first time and the PNG image has been saved, the
+        source data will have been streamed, and cannot be streamed
+        again.
+        """
+
         w = Writer(**self.info)
-        f = open(name, 'wb')
+
         try:
-            w.write(f, self.rows)
+            file.write
+            def close(): pass
+        except:
+            file = open(file, 'wb')
+            def close(): file.close()
+
+        try:
+            w.write(file, self.rows)
         finally:
-            f.close()
+            close()
 
 class _readable:
     """
@@ -2614,6 +2631,23 @@ class Test(unittest.TestCase):
     def testfromarray(self):
         img = from_array([[0, 0x33, 0x66], [0xff, 0xcc, 0x99]], 'L')
         img.save('testfromarray.png')
+    def testfromarrayL16(self):
+        img = from_array(group(range(2**16), 256), 'L;16')
+        img.save('testL16.png')
+    def testfromarrayRGB(self):
+        img = from_array([[0,0,0, 0,0,1, 0,1,0, 0,1,1],
+                          [1,0,0, 1,0,1, 1,1,0, 1,1,1]], 'RGB;1')
+        o = StringIO()
+        img.save(o)
+    def testfromarrayIter(self):
+        import itertools
+
+        i = itertools.islice(itertools.count(10), 20)
+        i = itertools.imap(lambda x: [x, x, x], i)
+        img = from_array(i, 'RGB;5', dict(height=20))
+        f = open('testiter.png', 'wb')
+        img.save(f)
+        f.close()
 
     # numpy dependent tests.  These are skipped (with a message to
     # sys.stderr) if numpy cannot be imported.
@@ -2653,7 +2687,17 @@ class Test(unittest.TestCase):
         rows = [map(numpy.bool, [0,1])]
         b = topngbytes('numpybool.png', rows, 2, 1,
             greyscale=True, alpha=False, bitdepth=1)
+    def testNumpyarray(self):
+        """numpy array."""
+        try:
+            import numpy
+        except ImportError:
+            print >>sys.stderr, "skipping numpy test"
+            return
 
+        pixels = numpy.array([[0,0x5555],[0x5555,0xaaaa]], numpy.uint16)
+        img = from_array(pixels, 'L')
+        img.save('testnumpyL16.png')
 
 # === Command Line Support ===
 
