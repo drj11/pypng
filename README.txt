@@ -39,6 +39,14 @@ RELEASE NOTES
 
 (For issues see http://code.google.com/p/pypng/issues/list )
 
+
+Release 0.0.11
+
+Added the "How Fast is PyPNG" section to the documentation.  Changed it
+so that more PNG formats return their rows as Python array.array
+instances.
+
+
 Release 0.0.10
 
 Fix for read_flat method (broken for ages).
