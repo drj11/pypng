@@ -182,7 +182,7 @@ import zlib
 import warnings
 
 
-__all__ = ['Reader', 'Writer', 'write_chunks', 'from_array']
+__all__ = ['Image', 'Reader', 'Writer', 'write_chunks', 'from_array']
 
 
 # The PNG signature.
@@ -1054,9 +1054,16 @@ def filter_scanline(type, line, fo, prev=None):
 
 
 def from_array(a, mode=None, info={}):
-    """Create a PNG image object from a 2- or 3-dimensional array.  One
-    application of this function is easy PIL-style saving:
+    """Create a PNG :class:`Image` object from a 2- or 3-dimensional array.
+    One application of this function is easy PIL-style saving:
     ``png.from_array(pixels, 'L').save('foo.png')``.
+
+    .. note :
+
+      The use of the term *3-dimensional* is for marketing purposes
+      only.  It doesn't actually work.  Please bear with us.  Meanwhile
+      enjoy the complimentary snacks (on request) and please use a
+      2-dimensional array.
     
     Unless they are specified using the *info* parameter, the PNG's
     height and width are taken from the array size.  For a 3 dimensional
@@ -1086,8 +1093,8 @@ def from_array(a, mode=None, info={}):
     any decimal from 1 to 16 can be used to specify the bit depth.
 
     When a 2-dimensional array is used *mode* determines how many
-    channels the image has, and so determines the width from the second
-    array dimension.
+    channels the image has, and so allows the width to be derived from
+    the second array dimension.
 
     The array is expected to be a ``numpy`` array, but it can be any
     suitable Python sequence.  For example, a list of lists can be used:
@@ -1095,13 +1102,15 @@ def from_array(a, mode=None, info={}):
     rules are: ``len(a)`` gives the first dimension, height;
     ``len(a[0])`` gives the second dimension; ``len(a[0][0])`` gives the
     third dimension, unless an exception is raised in which case a
-    2-dimensional array is assumed.
+    2-dimensional array is assumed.  It's slightly more complicated than
+    that because an iterator of rows can be used, and it all still
+    works.  Using an iterator allows data to be streamed efficiently.
 
     The bit depth of the PNG is normally taken from the array element's
     datatype (but if *mode* specifies a bitdepth then that is used
     instead).  The array element's datatype is determined in a way which
     is supposed to work both for ``numpy`` arrays and for Python
-    ``array.array`` objects.  1 byte datatype will give a bit depth of
+    ``array.array`` objects.  A 1 byte datatype will give a bit depth of
     8, a 2 byte datatype will give a bit depth of 16.  If the datatype
     does not have an implicit size, for example it is a plain Python
     list of lists, as above, then a default of 8 is used.
@@ -1224,7 +1233,6 @@ def from_array(a, mode=None, info={}):
                 # We can't determine it from the array element's
                 # datatype, use a default of 8.
                 bitdepth = 8
-
         else:
             # If we got here without exception, we now assume that
             # the array is a numpy array.
@@ -1238,9 +1246,21 @@ def from_array(a, mode=None, info={}):
         assert thing in info
     return Image(a, info)
 
+# So that refugee's from PIL feel more at home.  Not documented.
+fromarray = from_array
+
 class Image:
+    """A PNG image.
+    You can create an :class:`Image` object from an array of pixels by calling
+    :meth:`png.from_array`.  It can be saved to disk with the
+    :meth:`save` method."""
     def __init__(self, rows, info):
-        """The constructor is not public.  Please do not call me."""
+        """
+        .. note ::
+        
+          The constructor is not public.  Please do not call it.
+        """
+        
         self.rows = rows
         self.info = info
 
