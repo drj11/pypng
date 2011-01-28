@@ -40,6 +40,15 @@ RELEASE NOTES
 (For issues see http://code.google.com/p/pypng/issues/list )
 
 
+Release 0.0.12
+
+Fix for converting grey images to RGBA.
+
+The following issues have been fixed:
+
+  Issue 60: Greyscale images not properly being converted to RGBA
+
+
 Release 0.0.11
 
 Added the "How Fast is PyPNG" section to the documentation.  Changed it
