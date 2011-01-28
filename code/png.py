@@ -2175,7 +2175,7 @@ class Reader:
                     a = newarray()
                     for i in range(3):
                         a[i::4] = row
-                    a[3::4] = array(typecode, maxval) * width
+                    a[3::4] = array(typecode, [maxval]) * width
                     yield a
         else:
             assert not meta['alpha'] and not meta['greyscale']
@@ -2428,7 +2428,7 @@ class Test(unittest.TestCase):
         # Test for Issue 60
         r = Reader(bytes=_pngsuite['basi0g08'])
         x,y,pixels,meta = r.asRGBA()
-        row9 = list(pixels)[9]
+        row9 = list(list(pixels)[9])
         self.assertEqual(row9[0:8],
           [222, 222, 222, 255, 221, 221, 221, 255])
     def testCtrns(self):
