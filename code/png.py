@@ -2423,6 +2423,14 @@ class Test(unittest.TestCase):
         row9 = list(pixels)[9]
         self.assertEqual(row9[0:8],
                          [0xff, 0xdf, 0xff, 0xff, 0xff, 0xde, 0xff, 0xff])
+    def testLtoRGBA(self):
+        "asRGBA() on grey source."""
+        # Test for Issue 60
+        r = Reader(bytes=_pngsuite['basi0g08'])
+        x,y,pixels,meta = r.asRGBA()
+        row9 = list(pixels)[9]
+        self.assertEqual(row9[0:8],
+          [222, 222, 222, 255, 221, 221, 221, 255])
     def testCtrns(self):
         "Test colour type 2 and tRNS chunk."
         # Test for Issue 25
