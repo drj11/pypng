@@ -960,7 +960,8 @@ def write_chunk(outfile, tag, data=''):
     outfile.write(data)
     checksum = zlib.crc32(tag)
     checksum = zlib.crc32(data, checksum)
-    outfile.write(struct.pack("!i", checksum))
+    checksum &= 2**32-1
+    outfile.write(struct.pack("!I", checksum))
 
 def write_chunks(out, chunks):
     """Create a PNG file by writing out the chunks."""
