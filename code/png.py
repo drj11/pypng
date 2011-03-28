@@ -2553,7 +2553,7 @@ class Test(unittest.TestCase):
         return self.helperLtrns((0,))
     def helperLtrns(self, transparent):
         """Helper used by :meth:`testLtrns*`."""
-        pixels = zip(map(ord, '00384c545c403800'.decode('hex')))
+        pixels = zip(map(ord, _dehex('00384c545c403800')))
         o = StringIO()
         w = Writer(8, 8, greyscale=True, bitdepth=1, transparent=transparent)
         w.write_packed(o, pixels)
@@ -2733,10 +2733,20 @@ class Test(unittest.TestCase):
 def _dehex(s):
     """Liberally convert from hex string to binary string."""
     import re
+    import binascii
+
+    # Conditionally convert to bytes.  Works on Python 2 and Python 3.
+    try:
+        bytes('', 'ascii')
+        def mkbytes(x): return bytes(x, 'ascii')
+    except:
+        mkbytes = str
 
     # Remove all non-hexadecimal digits
     s = re.sub(r'[^a-fA-F\d]', '', s)
-    return s.decode('hex')
+    # binscii.unhexlify works in Python 2 and Python 3 (unlike
+    # thing.decode('hex')).
+    return binascii.unhexlify(mkbytes(s))
 
 # Copies of PngSuite test files taken
 # from http://www.schaik.com/pngsuite/pngsuite_bas_png.html
