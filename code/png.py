@@ -2506,8 +2506,8 @@ class Test(unittest.TestCase):
         def do():
             return _main(['testPGMin'])
         s = BytesIO()
-        s.write('P5 2 2 3\n')
-        s.write('\x00\x01\x02\x03')
+        s.write(strtobytes('P5 2 2 3\n'))
+        s.write(strtobytes('\x00\x01\x02\x03'))
         s.flush()
         s.seek(0)
         o = BytesIO()
@@ -2546,7 +2546,7 @@ class Test(unittest.TestCase):
         def do():
             return _main(['testPNMsbit'])
         s = BytesIO()
-        s.write('P6 8 1 1\n')
+        s.write(strtobytes('P6 8 1 1\n'))
         for pixel in range(8):
             s.write(struct.pack('<I', (0x4081*pixel)&0x10101)[:3])
         s.flush()
@@ -3467,6 +3467,8 @@ def read_pnm_header(infile, supported=('P5','P6')):
     # Generally, see http://netpbm.sourceforge.net/doc/ppm.html
     # and http://netpbm.sourceforge.net/doc/pam.html
 
+    supported = [strtobytes(x) for x in supported]
+
     # Technically 'P7' must be followed by a newline, so by using
     # rstrip() we are being liberal in what we accept.  I think this
     # is acceptable.
@@ -3510,7 +3512,7 @@ def read_pnm_header(infile, supported=('P5','P6')):
         # This is bonkers; I've never seen it; and it's a bit awkward to
         # code good lexers in Python (no goto).  So we break on such
         # cases.
-        token = ''
+        token = strtobytes('')
         while c.isdigit():
             token += c
             c = getc()
