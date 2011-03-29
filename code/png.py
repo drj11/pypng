@@ -229,8 +229,10 @@ else:
 try:
     bytes('', 'ascii')
     def strtobytes(x): return bytes(x, 'ascii')
+    def bytestostr(x): return str(x, 'ascii')
 except:
     strtobytes = str
+    bytestostr = str
 
 def interleave_planes(ipixels, apixels, ipsize, apsize):
     """
@@ -1396,7 +1398,7 @@ class Reader:
                 raise ValueError('Chunk %s too short for checksum.', tag)
             if seek and type != seek:
                 continue
-            verify = zlib.crc32(type)
+            verify = zlib.crc32(strtobytes(type))
             verify = zlib.crc32(data, verify)
             # Whether the output from zlib.crc32 is signed or not varies
             # according to hideous implementation details, see
@@ -1717,6 +1719,7 @@ class Reader:
             raise FormatError(
               'End of file whilst reading chunk length and type.')
         length,type = struct.unpack('!I4s', x)
+        type = bytestostr(type)
         if length > 2**31-1:
             raise FormatError('Chunk %s is too large: %d.' % (type,length))
         return length,type
