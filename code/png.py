@@ -224,7 +224,13 @@ else:
         ``array``.
         """
         return row.tostring()
-        
+
+# Conditionally convert to bytes.  Works on Python 2 and Python 3.
+try:
+    bytes('', 'ascii')
+    def strtobytes(x): return bytes(x, 'ascii')
+except:
+    strtobytes = str
 
 def interleave_planes(ipixels, apixels, ipsize, apsize):
     """
@@ -948,7 +954,7 @@ class Writer:
                             pixels[offset+i:end_offset:skip]
                     yield row
 
-def write_chunk(outfile, tag, data=''):
+def write_chunk(outfile, tag, data=strtobytes('')):
     """
     Write a PNG chunk to the output file, including length and
     checksum.
@@ -956,6 +962,7 @@ def write_chunk(outfile, tag, data=''):
 
     # http://www.w3.org/TR/PNG/#5Chunk-layout
     outfile.write(struct.pack("!I", len(data)))
+    tag = strtobytes(tag)
     outfile.write(tag)
     outfile.write(data)
     checksum = zlib.crc32(tag)
@@ -2301,7 +2308,12 @@ except:
 # Run the tests from the command line:
 # python -c 'import png;png.test()'
 
-from StringIO import StringIO
+# (For an in-memory binary file IO object) We use BytesIO where
+# available, otherwise we use StringIO, but name it BytesIO.
+try:
+    from io import BytesIO
+except:
+    from StringIO import StringIO as BytesIO
 import tempfile
 # http://www.python.org/doc/2.4.4/lib/module-unittest.html
 import unittest
@@ -2321,7 +2333,7 @@ def topngbytes(name, rows, x, y, **k):
     import os
 
     print name
-    f = StringIO()
+    f = BytesIO()
     w = Writer(x, y, **k)
     w.write(f, rows)
     if os.environ.get('PYPNG_TEST_TMP'):
@@ -2358,7 +2370,7 @@ class Test(unittest.TestCase):
         # Use small chunk_limit so that multiple chunk writing is
         # tested.  Making it a test for Issue 20.
         w = Writer(15, 17, greyscale=True, bitdepth=n, chunk_limit=99)
-        f = StringIO()
+        f = BytesIO()
         w.write_array(f, array('B', map(mask.__and__, range(1, 256))))
         r = Reader(bytes=f.getvalue())
         x,y,pixels,meta = r.read()
@@ -2373,7 +2385,7 @@ class Test(unittest.TestCase):
     def testL2(self):
         "Also tests asRGB8."
         w = Writer(1, 4, greyscale=True, bitdepth=2)
-        f = StringIO()
+        f = BytesIO()
         w.write_array(f, array('B', range(4)))
         r = Reader(bytes=f.getvalue())
         x,y,pixels,meta = r.asRGB8()
@@ -2388,7 +2400,7 @@ class Test(unittest.TestCase):
         b = (200,120,120)
         c = (50,99,50)
         w = Writer(1, 4, bitdepth=2, palette=[a,b,c])
-        f = StringIO()
+        f = BytesIO()
         w.write_array(f, array('B', (0,1,1,2)))
         r = Reader(bytes=f.getvalue())
         x,y,pixels,meta = r.asRGB8()
@@ -2403,7 +2415,7 @@ class Test(unittest.TestCase):
         d = (200,120,120)
         e = (50,99,50)
         w = Writer(3, 3, bitdepth=4, palette=[a,b,c,d,e])
-        f = StringIO()
+        f = BytesIO()
         w.write_array(f, array('B', (4, 3, 2, 3, 2, 0, 2, 0, 1)))
         r = Reader(bytes=f.getvalue())
         x,y,pixels,meta = r.asRGBA8()
@@ -2494,12 +2506,12 @@ class Test(unittest.TestCase):
         """Test that the command line tool can read PGM files."""
         def do():
             return _main(['testPGMin'])
-        s = StringIO()
+        s = BytesIO()
         s.write('P5 2 2 3\n')
         s.write('\x00\x01\x02\x03')
         s.flush()
         s.seek(0)
-        o = StringIO()
+        o = BytesIO()
         testWithIO(s, o, do)
         r = Reader(bytes=o.getvalue())
         x,y,pixels,meta = r.read()
@@ -2509,7 +2521,7 @@ class Test(unittest.TestCase):
         """Test that the command line tool can read PAM file."""
         def do():
             return _main(['testPAMin'])
-        s = StringIO()
+        s = BytesIO()
         s.write('P7\nWIDTH 3\nHEIGHT 1\nDEPTH 4\nMAXVAL 255\n'
                 'TUPLTYPE RGB_ALPHA\nENDHDR\n')
         # The pixels in flat row flat pixel format
@@ -2517,7 +2529,7 @@ class Test(unittest.TestCase):
         s.write(''.join(map(chr, flat)))
         s.flush()
         s.seek(0)
-        o = StringIO()
+        o = BytesIO()
         testWithIO(s, o, do)
         r = Reader(bytes=o.getvalue())
         x,y,pixels,meta = r.read()
@@ -2534,13 +2546,13 @@ class Test(unittest.TestCase):
         """Test that PNM files can generates sBIT chunk."""
         def do():
             return _main(['testPNMsbit'])
-        s = StringIO()
+        s = BytesIO()
         s.write('P6 8 1 1\n')
         for pixel in range(8):
             s.write(struct.pack('<I', (0x4081*pixel)&0x10101)[:3])
         s.flush()
         s.seek(0)
-        o = StringIO()
+        o = BytesIO()
         testWithIO(s, o, do)
         r = Reader(bytes=o.getvalue())
         sbit = r.chunk('sBIT')[1]
@@ -2554,7 +2566,7 @@ class Test(unittest.TestCase):
     def helperLtrns(self, transparent):
         """Helper used by :meth:`testLtrns*`."""
         pixels = zip(map(ord, _dehex('00384c545c403800')))
-        o = StringIO()
+        o = BytesIO()
         w = Writer(8, 8, greyscale=True, bitdepth=1, transparent=transparent)
         w.write_packed(o, pixels)
         r = Reader(bytes=o.getvalue())
@@ -2575,7 +2587,7 @@ class Test(unittest.TestCase):
         Indicative for Issue 47.
         """
         w = Writer(16, 2, greyscale=True, alpha=False, bitdepth=1)
-        o = StringIO()
+        o = BytesIO()
         w.write_packed(o, [itertools.chain([0x0a], [0xaa]),
                            itertools.chain([0x0f], [0xff])])
         r = Reader(bytes=o.getvalue())
@@ -2632,7 +2644,7 @@ class Test(unittest.TestCase):
         self.assertRaises(FormatError, self.helperFormat, eachchunk)
     def helperFormat(self, f):
         r = Reader(bytes=_pngsuite['basn0g01'])
-        o = StringIO()
+        o = BytesIO()
         def newchunks():
             for chunk in r.chunks():
                 yield f(chunk)
@@ -2666,7 +2678,7 @@ class Test(unittest.TestCase):
     def testfromarrayRGB(self):
         img = from_array([[0,0,0, 0,0,1, 0,1,0, 0,1,1],
                           [1,0,0, 1,0,1, 1,1,0, 1,1,1]], 'RGB;1')
-        o = StringIO()
+        o = BytesIO()
         img.save(o)
     def testfromarrayIter(self):
         import itertools
@@ -2735,18 +2747,11 @@ def _dehex(s):
     import re
     import binascii
 
-    # Conditionally convert to bytes.  Works on Python 2 and Python 3.
-    try:
-        bytes('', 'ascii')
-        def mkbytes(x): return bytes(x, 'ascii')
-    except:
-        mkbytes = str
-
     # Remove all non-hexadecimal digits
     s = re.sub(r'[^a-fA-F\d]', '', s)
     # binscii.unhexlify works in Python 2 and Python 3 (unlike
     # thing.decode('hex')).
-    return binascii.unhexlify(mkbytes(s))
+    return binascii.unhexlify(strtobytes(s))
 
 # Copies of PngSuite test files taken
 # from http://www.schaik.com/pngsuite/pngsuite_bas_png.html
