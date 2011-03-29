@@ -1882,16 +1882,12 @@ class Reader:
             # routine will do one yield per IDAT chunk.  So not very
             # incremental.
             d = zlib.decompressobj()
-            # The decompression loop:
-            # Decompress an IDAT chunk, then decompress any remaining
-            # unused data until the unused data does not get any
-            # smaller.  Add the unused data to the front of the input
-            # and loop to process the next IDAT chunk.
-            cdata = ''
+            # Each IDAT chunk is passed to the decompressor, then any
+            # remaining state is decompressed out.
             for data in idat:
                 # :todo: add a max_length argument here to limit output
                 # size.
-                yield array('B', d.decompress(cdata + data))
+                yield array('B', d.decompress(data))
             yield array('B', d.flush())
 
         self.preamble()
@@ -2544,7 +2540,7 @@ class Test(unittest.TestCase):
         bytes = topngbytes('la4.png', [[5, 12]], 1, 1,
           greyscale=True, alpha=True, bitdepth=4)
         sbit = Reader(bytes=bytes).chunk('sBIT')[1]
-        self.assertEqual(sbit, '\x04\x04')
+        self.assertEqual(sbit, strtobytes('\x04\x04'))
     def testPNMsbit(self):
         """Test that PNM files can generates sBIT chunk."""
         def do():
