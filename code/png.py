@@ -3443,8 +3443,8 @@ def read_pam_header(infile):
     required = ['WIDTH', 'HEIGHT', 'DEPTH', 'MAXVAL']
     required = [strtobytes(x) for x in required]
     WIDTH,HEIGHT,DEPTH,MAXVAL = required
-    present = (x in header for x in required)
-    if not all(present):
+    present = [x for x in required if x in header]
+    if len(present) != len(required):
         raise Error('PAM file must specify WIDTH, HEIGHT, DEPTH, and MAXVAL')
     width = int(header[WIDTH])
     height = int(header[HEIGHT])
