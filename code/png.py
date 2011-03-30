@@ -228,8 +228,8 @@ else:
 # Conditionally convert to bytes.  Works on Python 2 and Python 3.
 try:
     bytes('', 'ascii')
-    def strtobytes(x): return bytes(x, 'ascii')
-    def bytestostr(x): return str(x, 'ascii')
+    def strtobytes(x): return bytes(x, 'iso8859-1')
+    def bytestostr(x): return str(x, 'iso8859-1')
 except:
     strtobytes = str
     bytestostr = str
@@ -2521,11 +2521,13 @@ class Test(unittest.TestCase):
         def do():
             return _main(['testPAMin'])
         s = BytesIO()
-        s.write('P7\nWIDTH 3\nHEIGHT 1\nDEPTH 4\nMAXVAL 255\n'
-                'TUPLTYPE RGB_ALPHA\nENDHDR\n')
+        s.write(strtobytes('P7\nWIDTH 3\nHEIGHT 1\nDEPTH 4\nMAXVAL 255\n'
+                'TUPLTYPE RGB_ALPHA\nENDHDR\n'))
         # The pixels in flat row flat pixel format
         flat =  [255,0,0,255, 0,255,0,120, 0,0,255,30]
-        s.write(''.join(map(chr, flat)))
+        asbytes = ''.join(chr(x) for x in flat)
+        asbytes = strtobytes(asbytes)
+        s.write(asbytes)
         s.flush()
         s.seek(0)
         o = BytesIO()
@@ -3426,27 +3428,28 @@ def read_pam_header(infile):
     header = dict()
     while True:
         l = infile.readline().strip()
-        if l == 'ENDHDR':
+        if l == strtobytes('ENDHDR'):
             break
-        if l == '':
+        if not l:
             raise EOFError('PAM ended prematurely')
-        if l[0] == '#':
+        if l[0] == strtobytes('#'):
             continue
         l = l.split(None, 1)
         if l[0] not in header:
             header[l[0]] = l[1]
         else:
-            header[l[0]] += ' ' + l[1]
+            header[l[0]] += strtobytes(' ') + l[1]
 
-    if ('WIDTH' not in header or
-        'HEIGHT' not in header or
-        'DEPTH' not in header or
-        'MAXVAL' not in header):
+    required = ['WIDTH', 'HEIGHT', 'DEPTH', 'MAXVAL']
+    required = [strtobytes(x) for x in required]
+    WIDTH,HEIGHT,DEPTH,MAXVAL = required
+    present = (x in header for x in required)
+    if not all(present):
         raise Error('PAM file must specify WIDTH, HEIGHT, DEPTH, and MAXVAL')
-    width = int(header['WIDTH'])
-    height = int(header['HEIGHT'])
-    depth = int(header['DEPTH'])
-    maxval = int(header['MAXVAL'])
+    width = int(header[WIDTH])
+    height = int(header[HEIGHT])
+    depth = int(header[DEPTH])
+    maxval = int(header[MAXVAL])
     if (width <= 0 or
         height <= 0 or
         depth <= 0 or
@@ -3475,7 +3478,7 @@ def read_pnm_header(infile, supported=('P5','P6')):
     type = infile.read(3).rstrip()
     if type not in supported:
         raise NotImplementedError('file format %s not supported' % type)
-    if type == 'P7':
+    if type == strtobytes('P7'):
         # PAM header parsing is completely different.
         return read_pam_header(infile)
     # Expected number of tokens in header (3 for P4, 4 for P6)
