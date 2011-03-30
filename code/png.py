@@ -2564,7 +2564,7 @@ class Test(unittest.TestCase):
         return self.helperLtrns((0,))
     def helperLtrns(self, transparent):
         """Helper used by :meth:`testLtrns*`."""
-        pixels = zip(map(ord, _dehex('00384c545c403800')))
+        pixels = zip([0x00, 0x38, 0x4c, 0x54, 0x5c, 0x40, 0x38, 0x00])
         o = BytesIO()
         w = Writer(8, 8, greyscale=True, bitdepth=1, transparent=transparent)
         w.write_packed(o, pixels)
