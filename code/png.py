@@ -2652,9 +2652,9 @@ class Test(unittest.TestCase):
         def eachchunk(chunk):
             if chunk[0] != 'IDAT':
                 return chunk
-            data = chunk[1].decode('zip')
-            data += '\x00garbage'
-            data = data.encode('zip')
+            data = zlib.decompress(chunk[1])
+            data += strtobytes('\x00garbage')
+            data = zlib.compress(data)
             chunk = (chunk[0], data)
             return chunk
         self.assertRaises(FormatError, self.helperFormat, eachchunk)
@@ -2663,9 +2663,9 @@ class Test(unittest.TestCase):
             if chunk[0] != 'IDAT':
                 return chunk
             # Remove last byte.
-            data = chunk[1].decode('zip')
+            data = zlib.decompress(chunk[1])
             data = data[:-1]
-            data = data.encode('zip')
+            data = zlib.compress(data)
             return (chunk[0], data)
         self.assertRaises(FormatError, self.helperFormat, eachchunk)
     def helperFormat(self, f):
@@ -2681,10 +2681,10 @@ class Test(unittest.TestCase):
         def eachchunk(chunk):
             if chunk[0] != 'IDAT':
                 return chunk
-            data = chunk[1].decode('zip')
+            data = zlib.decompress(chunk[1])
             # Corrupt the first filter byte
-            data = '\x99' + data[1:]
-            data = data.encode('zip')
+            data = strtobytes('\x99') + data[1:]
+            data = zlib.compress(data)
             return (chunk[0], data)
         self.assertRaises(FormatError, self.helperFormat, eachchunk)
     def testFlat(self):
