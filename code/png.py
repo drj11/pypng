@@ -2450,8 +2450,8 @@ class Test(unittest.TestCase):
         w.write_array(f, array('B', (4, 3, 2, 3, 2, 0, 2, 0, 1)))
         r = Reader(bytes=f.getvalue())
         x,y,pixels,meta = r.asRGBA8()
-        self.assertEquals(x, 3)
-        self.assertEquals(y, 3)
+        self.assertEqual(x, 3)
+        self.assertEqual(y, 3)
         c = c+(255,)
         d = d+(255,)
         e = e+(255,)
@@ -2546,7 +2546,7 @@ class Test(unittest.TestCase):
         testWithIO(s, o, do)
         r = Reader(bytes=o.getvalue())
         x,y,pixels,meta = r.read()
-        self.assert_(r.greyscale)
+        self.assertTrue(r.greyscale)
         self.assertEqual(r.bitdepth, 2)
     def testPAMin(self):
         """Test that the command line tool can read PAM file."""
@@ -2565,8 +2565,8 @@ class Test(unittest.TestCase):
         testWithIO(s, o, do)
         r = Reader(bytes=o.getvalue())
         x,y,pixels,meta = r.read()
-        self.assert_(r.alpha)
-        self.assert_(not r.greyscale)
+        self.assertTrue(r.alpha)
+        self.assertTrue(not r.greyscale)
         self.assertEqual(list(itertools.chain(*pixels)), flat)
     def testLA4(self):
         """Create an LA image with bitdepth 4."""
@@ -2603,8 +2603,8 @@ class Test(unittest.TestCase):
         w.write_packed(o, pixels)
         r = Reader(bytes=o.getvalue())
         x,y,pixels,meta = r.asDirect()
-        self.assert_(meta['alpha'])
-        self.assert_(meta['greyscale'])
+        self.assertTrue(meta['alpha'])
+        self.assertTrue(meta['greyscale'])
         self.assertEqual(meta['bitdepth'], 1)
     def testWinfo(self):
         """Test the dictionary returned by a `read` method can be used
