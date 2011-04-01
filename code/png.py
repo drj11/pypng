@@ -3520,7 +3520,7 @@ def read_pnm_header(infile, supported=('P5','P6')):
     # readline; but it would be wrong.
     def getc():
         c = infile.read(1)
-        if c == '':
+        if not c:
             raise Error('premature EOF reading PNM header')
         return c
 
@@ -3559,7 +3559,7 @@ def read_pnm_header(infile, supported=('P5','P6')):
     if type in pbm:
         # synthesize a MAXVAL
         header.append(1)
-    depth = (1,3)[type == 'P6']
+    depth = (1,3)[type == strtobytes('P6')]
     return header[0], header[1], header[2], depth, header[3]
 
 def write_pnm(file, width, height, pixels, meta):
