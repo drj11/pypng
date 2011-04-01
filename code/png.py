@@ -1640,7 +1640,7 @@ class Reader:
         shifts = map(self.bitdepth.__mul__, reversed(range(spb)))
         l = width
         for o in bytes:
-            out.extend(map(lambda i: mask&(o>>i), shifts)[:l])
+            out.extend([(mask&(o>>s)) for s in shifts][:l])
             l -= spb
             if l <= 0:
                 l = width
