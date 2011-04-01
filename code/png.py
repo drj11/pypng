@@ -2380,6 +2380,13 @@ def mycallersname():
       inspect.getouterframes(frame)[2])
     return funname
 
+def seqtobytes(s):
+    """Convert a sequence of integers to a *bytes* instance.  Good for
+    plastering over Python 2 / Python 3 cracks.
+    """
+
+    return strtobytes(''.join(chr(x) for x in s))
+
 class Test(unittest.TestCase):
     # This member is used by the superclass.  If we don't define a new
     # class here then when we use self.assertRaises() and the PyPNG code
@@ -2550,8 +2557,7 @@ class Test(unittest.TestCase):
                 'TUPLTYPE RGB_ALPHA\nENDHDR\n'))
         # The pixels in flat row flat pixel format
         flat =  [255,0,0,255, 0,255,0,120, 0,0,255,30]
-        asbytes = ''.join(chr(x) for x in flat)
-        asbytes = strtobytes(asbytes)
+        asbytes = seqtobytes(flat)
         s.write(asbytes)
         s.flush()
         s.seek(0)
@@ -2693,8 +2699,8 @@ class Test(unittest.TestCase):
 
         r = Reader(bytes=_pngsuite['basn0g02'])
         x,y,pixel,meta = r.read_flat()
-        d = hashlib.md5(''.join(map(chr, pixel))).digest()
-        self.assertEqual(d.encode('hex'), '255cd971ab8cd9e7275ff906e5041aa0')
+        d = hashlib.md5(seqtobytes(pixel)).digest()
+        self.assertEqual(_enhex(d), '255cd971ab8cd9e7275ff906e5041aa0')
     def testfromarray(self):
         img = from_array([[0, 0x33, 0x66], [0xff, 0xcc, 0x99]], 'L')
         img.save('testfromarray.png')
@@ -2778,6 +2784,12 @@ def _dehex(s):
     # binscii.unhexlify works in Python 2 and Python 3 (unlike
     # thing.decode('hex')).
     return binascii.unhexlify(strtobytes(s))
+def _enhex(s):
+    """Convert from binary string (bytes) to hex string (str)."""
+
+    import binascii
+
+    return bytestostr(binascii.hexlify(s))
 
 # Copies of PngSuite test files taken
 # from http://www.schaik.com/pngsuite/pngsuite_bas_png.html
