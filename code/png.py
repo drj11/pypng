@@ -2582,7 +2582,7 @@ class Test(unittest.TestCase):
         testWithIO(s, o, do)
         r = Reader(bytes=o.getvalue())
         sbit = r.chunk('sBIT')[1]
-        self.assertEqual(sbit, '\x01\x01\x01')
+        self.assertEqual(sbit, strtobytes('\x01\x01\x01'))
     def testLtrns0(self):
         """Create greyscale image with tRNS chunk."""
         return self.helperLtrns(0)
