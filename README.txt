@@ -5,8 +5,14 @@ $Rev$
 README for PyPNG
 drj@pobox.com
 
+
+INTRODUCTION
+
 PyPNG provides Python code for encoding/decoding PNG files.  In
 particular png.py is a Python module written entirely in Python.
+
+PyPNG mailing list: http://groups.google.com/group/pypng-users
+PyPNG home page: http://code.google.com/p/pypng/
 
 
 INSTALLATION
@@ -14,6 +20,9 @@ INSTALLATION
 PyPNG requires Python version 2.3 (and that's all), or any compatible
 higher version.  It works best on Python 2.4 and above.  It can be used
 on Python 2.2, but some things do not work.
+
+PyPNG also works on Python 3.x if you use the 2to3 tool (this support is
+very recent, and preliminary).
 
 PyPNG comes with a setup.py script to use with distutils.  After
 unpacking the distribution, cd into the directory and execute the
@@ -25,7 +34,11 @@ The png module will be installed; "import png" will allow you to use it
 from your Python programs.
 
 Alternatively, you can copy code/png.py wherever you like.  It's intended
-that you can copy png.py into your application and distribute it.
+that you can copy png.py into your application and distribute it.  Thw
+following "curl" command should copy the latest version into your
+current directory:
+
+curl -O http://pypng.googlecode.com/svn/trunk/code/png.py
 
 
 GETTING STARTED
@@ -42,11 +55,13 @@ RELEASE NOTES
 
 Release 0.0.12
 
-Fix for converting grey images to RGBA.
+PyPNG now works on Python 3 if you use the 2to3 tool.  Fix for
+converting grey images to RGBA.
 
 The following issues have been fixed:
 
   Issue 60: Greyscale images not properly being converted to RGBA
+  Issue 61: Doesn't work on Python 3
 
 
 Release 0.0.11
@@ -170,13 +185,7 @@ MANIFEST
 .../code/ - the Python code.
 .../html/ - lickable manuals (generated).
 .../man/ - manuals (in source/plain-text).
-
-
-PROJECT HOME
-
-Currently hosted on Google Code: http://code.google.com/p/pypng/
-
-Come join the love.  And submit bug reports and things.
+.../proc/ - documented procedures (release procedure).
 
 
 REFERENCES
