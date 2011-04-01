@@ -1359,7 +1359,7 @@ class Reader:
                 kw["file"] = _guess
 
         if "filename" in kw:
-            self.file = file(kw["filename"], "rb")
+            self.file = open(kw["filename"], "rb")
         elif "file" in kw:
             self.file = kw["file"]
         elif "bytes" in kw:
@@ -2346,6 +2346,9 @@ def testWithIO(inp, out, f):
     and ``sys.stdout`` changed to `out`.  They are restored when `f`
     returns.  This function returns whatever `f` returns.
     """
+
+    import os
+
     try:
         oldin,sys.stdin = sys.stdin,inp
         oldout,sys.stdout = sys.stdout,out
@@ -2353,7 +2356,29 @@ def testWithIO(inp, out, f):
     finally:
         sys.stdin = oldin
         sys.stdout = oldout
+    if os.environ.get('PYPNG_TEST_TMP') and hasattr(out,'getvalue'):
+        name = mycallersname()
+        if name:
+            w = open(name+'.png', 'wb')
+            w.write(out.getvalue())
+            w.close()
     return x
+
+def mycallersname():
+    """Returns the name of the caller of the caller of this function
+    (hence the name of the caller of the function in which
+    "mycallersname()" textually appears).  Returns None if this cannot
+    be determined."""
+
+    # http://docs.python.org/library/inspect.html#the-interpreter-stack
+    import inspect
+
+    frame = inspect.currentframe()
+    if not frame:
+        return None
+    frame_,filename_,lineno_,funname,linelist_,listi_ = (
+      inspect.getouterframes(frame)[2])
+    return funname
 
 class Test(unittest.TestCase):
     # This member is used by the superclass.  If we don't define a new
