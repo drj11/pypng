@@ -29,7 +29,7 @@ cd into that subdirectory:
 
   cd pypng-X.Y.Z
   
-Build the documentation::
+Build the documentation (you will need sphinx installed)::
 
   python build.py
 
