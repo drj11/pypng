@@ -13,6 +13,9 @@
 # in the man directory, so that this file forms a single source for
 # metadata.
 
+# http://docs.python.org/release/2.4.4/lib/module-sys.html
+import sys
+
 conf = dict(
     name='pypng',
     version='0.0.12',
@@ -45,6 +48,14 @@ http://packages.python.org/pypng/
 conf['download_url'] = \
   'http://pypng.googlecode.com/files/%(name)s-%(version)s.tar.gz' % conf
 
+if sys.version_info >= (3,):
+    conf['use_2to3'] = True
+
 if __name__ == '__main__':
-    from distutils.core import setup
+    try:
+        # http://peak.telecommunity.com/DevCenter/setuptools#basic-use
+        from setuptools import setup
+    except ImportError:
+        # http://docs.python.org/release/2.4.4/dist/setup-script.html
+        from distutils.core import setup
     setup(**conf)
