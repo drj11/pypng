@@ -34,7 +34,7 @@ The png module will be installed; "import png" will allow you to use it
 from your Python programs.
 
 Alternatively, you can copy code/png.py wherever you like.  It's intended
-that you can copy png.py into your application and distribute it.  Thw
+that you can copy png.py into your application and distribute it.  The
 following "curl" command should copy the latest version into your
 current directory:
 
@@ -51,6 +51,16 @@ no good then you could try the ReST sources in the man/ directory.
 RELEASE NOTES
 
 (For issues see http://code.google.com/p/pypng/issues/list )
+
+Release 0.0.13
+
+PyPNG now installs "out of the box" on Python 3.  Thanks to
+simon.sapin@kozea.fr and nathan@dunfield.info for the patch.
+
+The following issues have been fixed:
+
+  Issue 63: setup.py does not use 2to3
+  Issue 64: Typo in documentation
 
 
 Release 0.0.12
