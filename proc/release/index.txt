@@ -61,8 +61,8 @@ Upload to PyPI:
 
   python setup.py sdist upload
 
-(You can register releases on PyPI without uploading them:
-"python setup.py register")
+(If it complains about "you must be identified" then use
+"python setup.py register" first)
 
 cd back into your main development directory::
 
