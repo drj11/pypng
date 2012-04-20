@@ -70,7 +70,7 @@ that a *palette* argument is passed to the :meth:`write` method instead of
   # Assume f and s have been set up as per previous example
   palette=[(0x55,0x55,0x55), (0xff,0x99,0x99)]
   w = png.Writer(len(s[0]), len(s), palette=palette, bitdepth=1)
-  f.write(f, s)
+  w.write(f, s)
 
 Note that the palette consists of two entries (the bit depth is 1 so
 there are only 2 possible colours).  Each entry is an RGB triple.  If we
