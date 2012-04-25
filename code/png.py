@@ -3726,6 +3726,9 @@ def _main(argv):
     else:
         parser.error("more than one input file")
     outfile = sys.stdout
+    if sys.platform == "win32":
+        import msvcrt, os
+        msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
 
     if options.read_png:
         # Encode PNG to PPM
