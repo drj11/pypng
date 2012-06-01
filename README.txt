@@ -11,8 +11,9 @@ INTRODUCTION
 PyPNG provides Python code for encoding/decoding PNG files.  In
 particular png.py is a Python module written entirely in Python.
 
+PyPNG home page: http://github.com/drj11/pypng/
+PyPNG Documentation: http://packages.python.org/pypng/
 PyPNG mailing list: http://groups.google.com/group/pypng-users
-PyPNG home page: http://code.google.com/p/pypng/
 
 
 INSTALLATION
