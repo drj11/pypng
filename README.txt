@@ -52,6 +52,11 @@ RELEASE NOTES
 
 (For issues see http://code.google.com/p/pypng/issues/list )
 
+Release 0.0.14
+
+When using png.py as a command line tool, it can now produce
+non-square test images.
+
 Release 0.0.13
 
 PyPNG now installs "out of the box" on Python 3.  Thanks to

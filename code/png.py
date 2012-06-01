@@ -3301,6 +3301,8 @@ def test_suite(options, args):
     Create a PNG test image and write the file to stdout.
     """
 
+    import re
+
     # Below is a big stack of test image generators.
     # They're all really tiny, so PEP 8 rules are suspended.
 
@@ -3371,21 +3373,22 @@ def test_suite(options, args):
                 a.append(int(round(pfun(float(x)/fw, fy) * maxval)))
         return a
 
-    def test_rgba(size=256, bitdepth=8,
-                    red="GTB", green="GLR", blue="RTL", alpha=None):
+    def test_rgba(size=(256,256), bitdepth=8,
+                  red="GTB", green="GLR", blue="RTL", alpha=None):
         """
         Create a test image.  Each channel is generated from the
         specified pattern; any channel apart from red can be set to
         None, which will cause it not to be in the image.  It
         is possible to create all PNG channel types (L, RGB, LA, RGBA),
         as well as non PNG channel types (RGA, and so on).
+        *size* is a pair: (*width*,*height).
         """
 
-        i = test_pattern(size, size, bitdepth, red)
+        i = test_pattern(size[0], size[1], bitdepth, red)
         psize = 1
         for channel in (green, blue, alpha):
             if channel:
-                c = test_pattern(size, size, bitdepth, channel)
+                c = test_pattern(size[0], size[1], bitdepth, channel)
                 i = interleave_planes(i, c, psize, 1)
                 psize += 1
         return i
@@ -3400,7 +3403,6 @@ def test_suite(options, args):
             raise NotImplementedError("cannot find PngSuite file %s (use -L for a list)" % name)
         r = Reader(bytes=_pngsuite[name])
         w,h,pixels,meta = r.asDirect()
-        assert w == h
         # LAn for n < 8 is a special case for which we need to rescale
         # the data.
         if meta['greyscale'] and meta['alpha'] and meta['bitdepth'] < 8:
@@ -3411,12 +3413,21 @@ def test_suite(options, args):
             pixels = rescale(pixels)
             meta['bitdepth'] = 8
         arraycode = 'BH'[meta['bitdepth']>8]
-        return w, array(arraycode, itertools.chain(*pixels)), meta
+        return w, h, array(arraycode, itertools.chain(*pixels)), meta
 
     # The body of test_suite()
-    size = 256
+
+    size = (256,256)
+    # Expect option of the form '64,40'.
     if options.test_size:
-        size = options.test_size
+        size = re.findall(r'\d+', options.test_size)
+        if len(size) not in [1,2]:
+            raise ValueError(
+              'size should be one or two numbers, separated by punctuation')
+        if len(size) == 1:
+            size *= 2
+        assert len(size) == 2
+        size = map(int, size)
     options.bitdepth = options.test_depth
     options.greyscale=bool(options.test_black)
 
@@ -3439,11 +3450,12 @@ def test_suite(options, args):
     if not args:
         pixels = test_rgba(size, options.bitdepth, **kwargs)
     else:
-        size,pixels,meta = pngsuite_image(args[0])
+        w,h,pixels,meta = pngsuite_image(args[0])
+        size = (w,h)
         for k in ['bitdepth', 'alpha', 'greyscale']:
             setattr(options, k, meta[k])
 
-    writer = Writer(size, size,
+    writer = Writer(size[0], size[1],
                     bitdepth=options.bitdepth,
                     transparent=options.transparent,
                     background=options.background,
@@ -3695,7 +3707,7 @@ def _main(argv):
                       metavar='NBITS',
                       help="create test PNGs that are NBITS bits per channel")
     parser.add_option("-S", "--test-size",
-                      action="store", type="int", metavar="size",
+                      action="store", type="string", metavar="w[,h]",
                       help="width and height of the test image")
     (options, args) = parser.parse_args(args=argv[1:])
 
