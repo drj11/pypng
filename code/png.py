@@ -1367,7 +1367,8 @@ class Reader:
         else:
             raise TypeError("expecting filename, file or bytes array")
 
-    def chunk(self, seek=None):
+
+    def chunk(self, seek=None, lenient=False):
         """
         Read the next PNG chunk from the input file; returns a
         (*type*,*data*) tuple.  *type* is the chunk's type as a string
@@ -1379,6 +1380,9 @@ class Reader:
         out of file or finds the type specified by the argument.  Note
         that in general the order of chunks in PNGs is unspecified, so
         using `seek` can cause you to miss chunks.
+
+        If the optional `lenient` argument evaluates to True,
+        checksum failures will raise warnings rather than exceptions.
         """
 
         self.validate_signature()
@@ -1411,9 +1415,11 @@ class Reader:
                 # print repr(checksum)
                 (a, ) = struct.unpack('!I', checksum)
                 (b, ) = struct.unpack('!I', verify)
-                raise ChunkError(
-                  "Checksum error in %s chunk: 0x%08X != 0x%08X." %
-                  (type, a, b))
+                message = "Checksum error in %s chunk: 0x%08X != 0x%08X." % (type, a, b)
+                if lenient:
+                    warnings.warn(message, RuntimeWarning)
+                else:
+                    raise ChunkError(message)
             return type, data
 
     def chunks(self):
@@ -1685,12 +1691,15 @@ class Reader:
         if self.signature != _signature:
             raise FormatError("PNG file has invalid signature.")
 
-    def preamble(self):
+    def preamble(self, lenient=False):
         """
         Extract the image metadata by reading the initial part of the PNG
         file up to the start of the ``IDAT`` chunk.  All the chunks that
         precede the ``IDAT`` chunk are read and either processed for
         metadata or discarded.
+
+        If the optional `lenient` argument evaluates to True,
+        checksum failures will raise warnings rather than exceptions.
         """
 
         self.validate_signature()
@@ -1703,7 +1712,7 @@ class Reader:
                       'This PNG file has no IDAT chunks.')
             if self.atchunk[1] == 'IDAT':
                 return
-            self.process_chunk()
+            self.process_chunk(lenient=lenient)
 
     def chunklentype(self):
         """Reads just enough of the input to determine the next
@@ -1724,13 +1733,16 @@ class Reader:
             raise FormatError('Chunk %s is too large: %d.' % (type,length))
         return length,type
 
-    def process_chunk(self):
+    def process_chunk(self, lenient=False):
         """Process the next chunk and its data.  This only processes the
         following chunk types, all others are ignored: ``IHDR``,
         ``PLTE``, ``bKGD``, ``tRNS``, ``gAMA``, ``sBIT``.
+
+        If the optional `lenient` argument evaluates to True,
+        checksum failures will raise warnings rather than exceptions.
         """
 
-        type, data = self.chunk()
+        type, data = self.chunk(lenient=lenient)
         if type == 'IHDR':
             # http://www.w3.org/TR/PNG/#11IHDR
             if len(data) != 13:
@@ -1845,7 +1857,7 @@ class Reader:
                 not self.colormap and len(data) != self.planes):
                 raise FormatError("sBIT chunk has incorrect length.")
 
-    def read(self):
+    def read(self, lenient=False):
         """
         Read the PNG file and decode it.  Returns (`width`, `height`,
         `pixels`, `metadata`).
@@ -1853,13 +1865,16 @@ class Reader:
         May use excessive memory.
 
         `pixels` are returned in boxed row flat pixel format.
+
+        If the optional `lenient` argument evaluates to True,
+        checksum failures will raise warnings rather than exceptions.
         """
 
         def iteridat():
             """Iterator that yields all the ``IDAT`` chunks as strings."""
             while True:
                 try:
-                    type, data = self.chunk()
+                    type, data = self.chunk(lenient=lenient)
                 except ValueError, e:
                     raise ChunkError(e.args[0])
                 if type == 'IEND':
@@ -1890,7 +1905,7 @@ class Reader:
                 yield array('B', d.decompress(data))
             yield array('B', d.flush())
 
-        self.preamble()
+        self.preamble(lenient=lenient)
         raw = iterdecomp(iteridat())
 
         if self.interlace:
