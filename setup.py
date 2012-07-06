@@ -1,5 +1,3 @@
-# $URL$
-# $Rev$
 
 # PyPNG setup.py
 # This is the setup.py script used by distutils.
@@ -16,9 +14,17 @@
 # http://docs.python.org/release/2.4.4/lib/module-sys.html
 import sys
 
+def get_version():
+    from os.path import dirname, join
+    for line in open(join(dirname(__file__), 'code/png.py')):
+        if '__version__' in line:
+            version = line.split('"')[1]
+            break
+    return version
+
 conf = dict(
     name='pypng',
-    version='0.0.13',
+    version=get_version(),
     description='Pure Python PNG image encoder/decoder',
     long_description="""
 PyPNG allows PNG image files to be read and written using pure Python.
