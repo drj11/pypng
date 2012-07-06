@@ -91,7 +91,7 @@ def generate(options, args):
         return a
 
     def test_rgba(size=(256,256), bitdepth=8,
-                  red="GTB", green="GLR", blue="RTL", alpha=None):
+                  red=None, green=None, blue=None, alpha=None):
         """
         Create a test image.  Each channel is generated from the
         specified pattern; any channel apart from red can be set to
