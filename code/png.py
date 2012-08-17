@@ -352,7 +352,7 @@ class Writer:
         gamma
           Specify a gamma value (create a ``gAMA`` chunk).
         compression
-          zlib compression level (1-9).
+          zlib compression level: 0 (none) to 9 (more compressed); default: -1 or None.
         interlace
           Create an interlaced image.
         chunk_limit
@@ -420,12 +420,13 @@ class Writer:
         the PNG file, they are assumed to have already been converted
         appropriately for the gamma specified.
 
-        The `compression` argument specifies the compression level
-        to be used by the ``zlib`` module.  Higher values are likely
-        to compress better, but will be slower to compress.  The
-        default for this argument is ``None``; this does not mean
-        no compression, rather it means that the default from the
-        ``zlib`` module is used (which is generally acceptable).
+        The `compression` argument specifies the compression level to
+        be used by the ``zlib`` module.  Values from 1 to 9 specify
+        compression, with 9 being "more compressed" (usually smaller
+        and slower, but it doesn't always work out that way).  0 means
+        no compression.  -1 and ``None`` both mean that the default
+        level of compession will be picked by the ``zlib`` module
+        (which is generally acceptable).
 
         If `interlace` is true then an interlaced image is created
         (using PNG's so far only interace method, *Adam7*).  This does not
