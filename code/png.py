@@ -2592,13 +2592,43 @@ class Test(unittest.TestCase):
           greyscale=True, alpha=True, bitdepth=4)
         sbit = Reader(bytes=bytes).chunk('sBIT')[1]
         self.assertEqual(sbit, strtobytes('\x04\x04'))
-    def testP4(self):
-        """Test that a pallette PNG returns the palette in info."""
+    def testPal(self):
+        """Test that a palette PNG returns the palette in info."""
         r = Reader(bytes=_pngsuite['basn3p04'])
         x,y,pixels,info = r.read()
         self.assertEqual(x, 32)
         self.assertEqual(y, 32)
         self.assertTrue('palette' in info)
+    def testPalWrite(self):
+        """Test metadata for paletted PNG can be passed from one PNG
+        to another."""
+        r = Reader(bytes=_pngsuite['basn3p04'])
+        x,y,pixels,info = r.read()
+        w = Writer(**info)
+        o = BytesIO()
+        w.write(o, pixels)
+        o.flush()
+        o.seek(0)
+        r = Reader(file=o)
+        _,_,_,again_info = r.read()
+        # Same palette
+        self.assertEqual(again_info['palette'], info['palette'])
+    def testPalExpand(self):
+        """Test that bitdepth can be used to fiddle with pallete image."""
+        r = Reader(bytes=_pngsuite['basn3p04'])
+        x,y,pixels,info = r.read()
+        pixels = [list(row) for row in pixels]
+        info['bitdepth'] = 8
+        w = Writer(**info)
+        o = BytesIO()
+        w.write(o, pixels)
+        o.flush()
+        o.seek(0)
+        r = Reader(file=o)
+        _,_,again_pixels,again_info = r.read()
+        # Same pixels
+        again_pixels = [list(row) for row in again_pixels]
+        self.assertEqual(again_pixels, pixels)
 
     def testPNMsbit(self):
         """Test that PNM files can generates sBIT chunk."""
