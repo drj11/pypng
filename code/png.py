@@ -1926,6 +1926,8 @@ class Reader:
             a = getattr(self, attr, None)
             if a is not None:
                 meta[attr] = a
+        if self.plte:
+            meta['palette'] = self.palette()
         return self.width, self.height, pixels, meta
 
 
@@ -2590,6 +2592,14 @@ class Test(unittest.TestCase):
           greyscale=True, alpha=True, bitdepth=4)
         sbit = Reader(bytes=bytes).chunk('sBIT')[1]
         self.assertEqual(sbit, strtobytes('\x04\x04'))
+    def testP4(self):
+        """Test that a pallette PNG returns the palette in info."""
+        r = Reader(bytes=_pngsuite['basn3p04'])
+        x,y,pixels,info = r.read()
+        self.assertEqual(x, 32)
+        self.assertEqual(y, 32)
+        self.assertTrue('palette' in info)
+
     def testPNMsbit(self):
         """Test that PNM files can generates sBIT chunk."""
         def do():
@@ -2709,6 +2719,7 @@ class Test(unittest.TestCase):
             data = zlib.compress(data)
             return (chunk[0], data)
         self.assertRaises(FormatError, self.helperFormat, eachchunk)
+
     def testFlat(self):
         """Test read_flat."""
         import hashlib
@@ -3027,6 +3038,15 @@ f3edf2705dd10160f3b2815fe8ecf2027974a6b0c03f74a6e4192843e75c6c03
 fb8d3630039dbd59601e7ab3c06cf428507f0634d039afdc80123a7bb1801e7a
 b1802a7a14c89f016d74ce331bf080ce9e08f8414f04bca133bfe642fe5e07bb
 c4ec0000000049454e44ae426082
+"""),
+  'basn3p04': _dehex("""
+89504e470d0a1a0a0000000d4948445200000020000000200403000000815467
+c70000000467414d41000186a031e8965f000000037342495404040477f8b5a3
+0000002d504c54452200ff00ffff8800ff22ff000099ffff6600dd00ff77ff00
+ff000000ff99ddff00ff00bbffbb000044ff00ff44d2b049bd00000047494441
+54789c63e8e8080d3d7366d5aaf27263e377ef66ce64204300952b28488e002a
+d7c5851c0154eeddbbe408a07119c81140e52a29912380ca4d4b23470095bb7b
+37190200e0c4ead10f82057d0000000049454e44ae426082
 """),
   'basn6a08': _dehex("""
 89504e470d0a1a0a0000000d4948445200000020000000200806000000737a7a
