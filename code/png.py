@@ -2103,7 +2103,10 @@ class Reader:
         def iterscale():
             for row in pixels:
                 yield map(lambda x: int(round(x*factor)), row)
-        return width, height, iterscale(), meta
+        if maxval == targetmaxval:
+            return width, height, pixels, meta
+        else:
+            return width, height, iterscale(), meta
 
     def asRGB8(self):
         """Return the image data as an RGB pixels with 8-bits per
