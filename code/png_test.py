@@ -1,4 +1,5 @@
 # Use py.test to run these tests
+import array
 import png
 
 
@@ -68,11 +69,11 @@ def test_filter_scanline():
 def test_unfilter_scanline():
     reader = png.Reader(bytes='')
     reader.psize = 3
-    scanprev = [20, 21, 22, 210, 211, 212]
-    scanline = [30, 32, 34, 230, 233, 236]
+    scanprev = array.array('B', [20, 21, 22, 210, 211, 212])
+    scanline = array.array('B', [30, 32, 34, 230, 233, 236])
 
     out = reader.undo_filter(0, scanline, scanprev)
-    assert list(out) == scanline  # none
+    assert list(out) == list(scanline)  # none
     out = reader.undo_filter(1, scanline, scanprev)
     assert list(out) == [30, 32, 34, 4, 9, 14]  # sub
     out = reader.undo_filter(2, scanline, scanprev)
@@ -87,8 +88,8 @@ def test_unfilter_scanline_paeth():
     # This tests more edge cases in the paeth unfilter
     reader = png.Reader(bytes='')
     reader.psize = 3
-    scanprev = [2, 0, 0, 0, 9, 11]
-    scanline = [6, 10, 9, 100, 101, 102]
+    scanprev = array.array('B', [2, 0, 0, 0, 9, 11])
+    scanline = array.array('B', [6, 10, 9, 100, 101, 102])
 
     out = reader.undo_filter(4, scanline, scanprev)
     assert list(out) == [8, 10, 9, 108, 111, 113]  # paeth

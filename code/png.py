@@ -180,6 +180,12 @@ import sys
 import zlib
 # http://www.python.org/doc/2.4.4/lib/module-warnings.html
 import warnings
+try:
+    import pyximport
+    pyximport.install()
+    import cpngfilters as pngfilters
+except ImportError:
+    import pngfilters
 
 
 __all__ = ['Image', 'Reader', 'Writer', 'write_chunks', 'from_array']
@@ -1450,17 +1456,12 @@ class Reader:
         """
 
         # :todo: Would it be better to update scanline in place?
-
-        # Create the result byte array.  It seems that the best way to
-        # create the array to be the right size is to copy from an
-        # existing sequence.  *sigh*
-        # If we fill the result with scanline, then this allows a
-        # micro-optimisation in the "null" and "sub" cases.
-        result = array('B', scanline)
+        # Yes, with the Cython extension making the undo_filter fast,
+        # updating scanline inplace makes the code 3 times faster
+        # (reading 50 images of 800x800 went from 40s to 16s)
+        result = scanline
 
         if filter_type == 0:
-            # And here, we _rely_ on filling the result with scanline,
-            # above.
             return result
 
         if filter_type not in (1,2,3,4):
@@ -1543,7 +1544,10 @@ class Reader:
 
         # Call appropriate filter algorithm.  Note that 0 has already
         # been dealt with.
-        (None, sub, up, average, paeth)[filter_type]()
+        if filter_type in (1, 4):
+            pngfilters.undo_filter_paeth(fu, scanline, previous, result)
+        else:
+            (None, sub, up, average, paeth)[filter_type]()
         return result
 
     def deinterlace(self, raw):
@@ -2182,8 +2186,9 @@ class Reader:
             return width,height,pixels,meta
         typecode = 'BH'[meta['bitdepth'] > 8]
         maxval = 2**meta['bitdepth'] - 1
+        maxbuffer = '\xff' * 4 * width
         def newarray():
-            return array(typecode, [0]) * 4 * width
+            return array(typecode, maxbuffer)
         if meta['alpha'] and meta['greyscale']:
             # LA to RGBA
             def convert():
@@ -2192,18 +2197,14 @@ class Reader:
                     # into first three target channels, and A channel
                     # into fourth channel.
                     a = newarray()
-                    for i in range(3):
-                        a[i::4] = row[0::2]
-                    a[3::4] = row[1::2]
+                    pngfilters.convert_la_to_rgba(row, a)
                     yield a
         elif meta['greyscale']:
             # L to RGBA
             def convert():
                 for row in pixels:
                     a = newarray()
-                    for i in range(3):
-                        a[i::4] = row
-                    a[3::4] = array(typecode, [maxval]) * width
+                    pngfilters.convert_l_to_rgba(row, a)
                     yield a
         else:
             assert not meta['alpha'] and not meta['greyscale']
@@ -2211,9 +2212,7 @@ class Reader:
             def convert():
                 for row in pixels:
                     a = newarray()
-                    for i in range(3):
-                        a[i::4] = row[i::3]
-                    a[3::4] = array(typecode, [maxval]) * width
+                    pngfilters.convert_rgb_to_rgba(row, a)
                     yield a
         meta['alpha'] = True
         meta['greyscale'] = False
@@ -2458,7 +2457,7 @@ class Test(unittest.TestCase):
         x,y,pixels,meta = r.asRGB8()
         self.assertEqual(x, 1)
         self.assertEqual(y, 4)
-        self.assertEqual(list(pixels), map(list, [a, b, b, c]))
+        self.assertEqual([list(row) for row in pixels], map(list, [a, b, b, c]))
     def testPtrns(self):
         "Test colour type 3 and tRNS chunk (and 4-bit palette)."
         a = (50,99,50,50)
