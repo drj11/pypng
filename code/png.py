@@ -1544,7 +1544,9 @@ class Reader:
 
         # Call appropriate filter algorithm.  Note that 0 has already
         # been dealt with.
-        if filter_type in (1, 4):
+        if filter_type == 1:
+            pngfilters.undo_filter_sub(fu, scanline, previous, result)
+        elif filter_type == 4:
             pngfilters.undo_filter_paeth(fu, scanline, previous, result)
         else:
             (None, sub, up, average, paeth)[filter_type]()
@@ -2186,9 +2188,10 @@ class Reader:
             return width,height,pixels,meta
         typecode = 'BH'[meta['bitdepth'] > 8]
         maxval = 2**meta['bitdepth'] - 1
-        maxbuffer = '\xff' * 4 * width
+        maxbuffer = struct.pack('=' + typecode, maxval) * 4 * width
         def newarray():
             return array(typecode, maxbuffer)
+
         if meta['alpha'] and meta['greyscale']:
             # LA to RGBA
             def convert():
@@ -2485,7 +2488,7 @@ class Test(unittest.TestCase):
         x,y,pixels,meta = r.asRGBA8()
         # Test the pixels at row 9 columns 0 and 1.
         row9 = list(pixels)[9]
-        self.assertEqual(row9[0:8],
+        self.assertEqual(list(row9[0:8]),
                          [0xff, 0xdf, 0xff, 0xff, 0xff, 0xde, 0xff, 0xff])
     def testLtoRGBA(self):
         "asRGBA() on grey source."""
