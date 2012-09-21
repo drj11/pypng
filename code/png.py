@@ -185,7 +185,7 @@ try:
     pyximport.install()
     import cpngfilters as pngfilters
 except ImportError:
-    import pngfilters
+    pass
 
 
 __all__ = ['Image', 'Reader', 'Writer', 'write_chunks', 'from_array']
@@ -2314,6 +2314,97 @@ except:
     itertools.chain = _itertools_chain
 
 
+# === Support for users without Cython ===
+
+try:
+    pngfilters
+except:
+    class pngfilters(object):
+        def undo_filter_sub(filter_unit, scanline, previous, result):
+            """Undo sub filter."""
+
+            ai = 0
+            # Loops starts at index fu.  Observe that the initial part
+            # of the result is already filled in correctly with
+            # scanline.
+            for i in range(filter_unit, len(result)):
+                x = scanline[i]
+                a = result[ai]
+                result[i] = (x + a) & 0xff
+                ai += 1
+        undo_filter_sub = staticmethod(undo_filter_sub)
+
+        def undo_filter_up(filter_unit, scanline, previous, result):
+            """Undo up filter."""
+
+            for i in range(len(result)):
+                x = scanline[i]
+                b = previous[i]
+                result[i] = (x + b) & 0xff
+        undo_filter_up = staticmethod(undo_filter_up)
+
+        def undo_filter_average(filter_unit, scanline, previous, result):
+            """Undo up filter."""
+
+            ai = -filter_unit
+            for i in range(len(result)):
+                x = scanline[i]
+                if ai < 0:
+                    a = 0
+                else:
+                    a = result[ai]
+                b = previous[i]
+                result[i] = (x + ((a + b) >> 1)) & 0xff
+                ai += 1
+        undo_filter_average = staticmethod(undo_filter_average)
+
+        def undo_filter_paeth(filter_unit, scanline, previous, result):
+            """Undo Paeth filter."""
+
+            # Also used for ci.
+            ai = -filter_unit
+            for i in range(len(result)):
+                x = scanline[i]
+                if ai < 0:
+                    a = c = 0
+                else:
+                    a = result[ai]
+                    c = previous[ai]
+                b = previous[i]
+                p = a + b - c
+                pa = abs(p - a)
+                pb = abs(p - b)
+                pc = abs(p - c)
+                if pa <= pb and pa <= pc:
+                    pr = a
+                elif pb <= pc:
+                    pr = b
+                else:
+                    pr = c
+                result[i] = (x + pr) & 0xff
+                ai += 1
+        undo_filter_paeth = staticmethod(undo_filter_paeth)
+
+        def convert_la_to_rgba(row, result):
+            for i in range(3):
+                result[i::4] = row[0::2]
+            result[3::4] = row[1::2]
+        convert_la_to_rgba = staticmethod(convert_la_to_rgba)
+
+        def convert_l_to_rgba(row, result):
+            """Convert a grayscale image to RGBA. This method assumes the alpha
+            channel in result is already correctly initialized."""
+            for i in range(3):
+                result[i::4] = row
+        convert_l_to_rgba = staticmethod(convert_l_to_rgba)
+
+        def convert_rgb_to_rgba(row, result):
+            """Convert an RGB image to RGBA. This method assumes the alpha
+            channel in result is already correctly initialized."""
+            for i in range(3):
+                result[i::4] = row[i::3]
+        convert_rgb_to_rgba = staticmethod(convert_rgb_to_rgba)
+
 
 # === Internal Test Support ===
 
@@ -2459,7 +2550,7 @@ class Test(unittest.TestCase):
         x,y,pixels,meta = r.asRGB8()
         self.assertEqual(x, 1)
         self.assertEqual(y, 4)
-        self.assertEqual([list(row) for row in pixels], map(list, [a, b, b, c]))
+        self.assertEqual(map(list, pixels), map(list, [a, b, b, c]))
     def testPtrns(self):
         "Test colour type 3 and tRNS chunk (and 4-bit palette)."
         a = (50,99,50,50)
