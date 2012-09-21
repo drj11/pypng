@@ -1544,12 +1544,11 @@ class Reader:
 
         # Call appropriate filter algorithm.  Note that 0 has already
         # been dealt with.
-        if filter_type == 1:
-            pngfilters.undo_filter_sub(fu, scanline, previous, result)
-        elif filter_type == 4:
-            pngfilters.undo_filter_paeth(fu, scanline, previous, result)
-        else:
-            (None, sub, up, average, paeth)[filter_type]()
+        (None,
+         pngfilters.undo_filter_sub,
+         pngfilters.undo_filter_up,
+         pngfilters.undo_filter_average,
+         pngfilters.undo_filter_paeth)[filter_type](fu, scanline, previous, result)
         return result
 
     def deinterlace(self, raw):

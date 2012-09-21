@@ -1,13 +1,15 @@
-cimport cpython.array
-
 #cython: boundscheck=False
 #cython: wraparound=False
 
-def undo_filter_sub(int filter_unit, unsigned char[:] scanline,
-                    unsigned char[:] previous, unsigned char[:] result):
+cimport cpython.array
+
+
+# TODO: I don't know how can I not return any value (void doesn't work)
+cpdef int undo_filter_sub(int filter_unit, unsigned char[:] scanline,
+                          unsigned char[:] previous, unsigned char[:] result):
     """Undo sub filter."""
 
-    cdef int l = len(result)
+    cdef int l = result.shape[0]
     cdef int ai = 0
     cdef unsigned char x, a
 
@@ -19,15 +21,52 @@ def undo_filter_sub(int filter_unit, unsigned char[:] scanline,
         a = result[ai]
         result[i] = (x + a) & 0xff
         ai += 1
+    return 0
 
 
-def undo_filter_paeth(int filter_unit, unsigned char[:] scanline,
-                      unsigned char[:] previous, unsigned char[:] result):
+cpdef int undo_filter_up(int filter_unit, unsigned char[:] scanline,
+                         unsigned char[:] previous, unsigned char[:] result):
+    """Undo up filter."""
+
+    cdef int i
+    cdef int l = result.shape[0]
+    cdef unsigned char x, b
+
+    for i in range(l):
+        x = scanline[i]
+        b = previous[i]
+        result[i] = (x + b) & 0xff
+    return 0
+
+
+cpdef int undo_filter_average(int filter_unit, unsigned char[:] scanline,
+                              unsigned char[:] previous, unsigned char[:] result):
+    """Undo up filter."""
+
+    cdef int i, ai
+    cdef int l = result.shape[0]
+    cdef unsigned char x, a, b
+
+    ai = -filter_unit
+    for i in range(l):
+        x = scanline[i]
+        if ai < 0:
+            a = 0
+        else:
+            a = result[ai]
+        b = previous[i]
+        result[i] = (x + ((a + b) >> 1)) & 0xff
+        ai += 1
+    return 0
+
+
+cpdef int undo_filter_paeth(int filter_unit, unsigned char[:] scanline,
+                            unsigned char[:] previous, unsigned char[:] result):
     """Undo Paeth filter."""
 
     # Also used for ci.
     cdef int ai = -filter_unit
-    cdef int l = len(result)
+    cdef int l = result.shape[0]
     cdef int i, pa, pb, pc, p
     cdef unsigned char x, a, b, c, pr
 
@@ -51,22 +90,24 @@ def undo_filter_paeth(int filter_unit, unsigned char[:] scanline,
             pr = c
         result[i] = (x + pr) & 0xff
         ai += 1
+    return 0
 
 
-def convert_rgb_to_rgba(unsigned char[:] row, unsigned char[:] result):
+cpdef int convert_rgb_to_rgba(unsigned char[:] row, unsigned char[:] result):
     cdef int i, l, j, k
-    l = min(len(row) / 3, len(result) / 4)
+    l = min(row.shape[0] / 3, result.shape[0] / 4)
     for i in range(l):
         j = i * 3
         k = i * 4
         result[k] = row[j]
         result[k + 1] = row[j + 1]
         result[k + 2] = row[j + 2]
+    return 0
 
 
-def convert_l_to_rgba(unsigned char[:] row, unsigned char[:] result):
+cpdef int convert_l_to_rgba(unsigned char[:] row, unsigned char[:] result):
     cdef int i, l, j, k, lum
-    l = min(len(row), len(result) / 4)
+    l = min(row.shape[0], result.shape[0] / 4)
     for i in range(l):
         j = i
         k = i * 4
@@ -74,11 +115,12 @@ def convert_l_to_rgba(unsigned char[:] row, unsigned char[:] result):
         result[k] = lum
         result[k + 1] = lum
         result[k + 2] = lum
+    return 0
 
 
-def convert_la_to_rgba(unsigned char[:] row, unsigned char[:] result):
+cpdef int convert_la_to_rgba(unsigned char[:] row, unsigned char[:] result):
     cdef int i, l, j, k, lum
-    l = min(len(row) / 2, len(result) / 4)
+    l = min(row.shape[0] / 2, result.shape[0] / 4)
     for i in range(l):
         j = i * 2
         k = i * 4
@@ -87,3 +129,4 @@ def convert_la_to_rgba(unsigned char[:] row, unsigned char[:] result):
         result[k + 1] = lum
         result[k + 2] = lum
         result[k + 3] = row[j + 1]
+    return 0

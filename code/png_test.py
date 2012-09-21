@@ -71,16 +71,18 @@ def test_unfilter_scanline():
     reader.psize = 3
     scanprev = array.array('B', [20, 21, 22, 210, 211, 212])
     scanline = array.array('B', [30, 32, 34, 230, 233, 236])
+    def cp(a):
+        return array.array('B', a)
 
-    out = reader.undo_filter(0, scanline, scanprev)
+    out = reader.undo_filter(0, cp(scanline), cp(scanprev))
     assert list(out) == list(scanline)  # none
-    out = reader.undo_filter(1, scanline, scanprev)
+    out = reader.undo_filter(1, cp(scanline), cp(scanprev))
     assert list(out) == [30, 32, 34, 4, 9, 14]  # sub
-    out = reader.undo_filter(2, scanline, scanprev)
+    out = reader.undo_filter(2, cp(scanline), cp(scanprev))
     assert list(out) == [50, 53, 56, 184, 188, 192]  # up
-    out = reader.undo_filter(3, scanline, scanprev)
+    out = reader.undo_filter(3, cp(scanline), cp(scanprev))
     assert list(out) == [40, 42, 45, 99, 103, 108]  # average
-    out = reader.undo_filter(4, scanline, scanprev)
+    out = reader.undo_filter(4, cp(scanline), cp(scanprev))
     assert list(out) == [50, 53, 56, 184, 188, 192]  # paeth
     
 
@@ -93,3 +95,24 @@ def test_unfilter_scanline_paeth():
 
     out = reader.undo_filter(4, scanline, scanprev)
     assert list(out) == [8, 10, 9, 108, 111, 113]  # paeth
+
+
+def arraify(list_of_str):
+    return [array.array('B', s) for s in list_of_str]
+
+
+def test_iterstraight():
+    reader = png.Reader(bytes='')
+    reader.row_bytes = 6
+    reader.psize = 3
+    rows = reader.iterstraight(arraify(['\x00abcdef', '\x00ghijkl']))
+    assert list(rows) == arraify(['abcdef', 'ghijkl'])
+
+    rows = reader.iterstraight(arraify(['\x00abc', 'def\x00ghijkl']))
+    assert list(rows) == arraify(['abcdef', 'ghijkl'])
+
+    rows = reader.iterstraight(arraify(['\x00abcdef\x00ghijkl']))
+    assert list(rows) == arraify(['abcdef', 'ghijkl'])
+
+    rows = reader.iterstraight(arraify(['\x00abcdef\x00ghi', 'jkl']))
+    assert list(rows) == arraify(['abcdef', 'ghijkl'])
