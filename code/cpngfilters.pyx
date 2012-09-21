@@ -1,12 +1,14 @@
 #cython: boundscheck=False
 #cython: wraparound=False
 
+from libc.stdlib cimport abs as c_abs
+
 cimport cpython.array
 
 
 # TODO: I don't know how can I not return any value (void doesn't work)
 cpdef int undo_filter_sub(int filter_unit, unsigned char[:] scanline,
-                          unsigned char[:] previous, unsigned char[:] result):
+                          unsigned char[:] previous, unsigned char[:] result) nogil:
     """Undo sub filter."""
 
     cdef int l = result.shape[0]
@@ -25,7 +27,7 @@ cpdef int undo_filter_sub(int filter_unit, unsigned char[:] scanline,
 
 
 cpdef int undo_filter_up(int filter_unit, unsigned char[:] scanline,
-                         unsigned char[:] previous, unsigned char[:] result):
+                         unsigned char[:] previous, unsigned char[:] result) nogil:
     """Undo up filter."""
 
     cdef int i
@@ -40,7 +42,7 @@ cpdef int undo_filter_up(int filter_unit, unsigned char[:] scanline,
 
 
 cpdef int undo_filter_average(int filter_unit, unsigned char[:] scanline,
-                              unsigned char[:] previous, unsigned char[:] result):
+                              unsigned char[:] previous, unsigned char[:] result) nogil:
     """Undo up filter."""
 
     cdef int i, ai
@@ -61,7 +63,7 @@ cpdef int undo_filter_average(int filter_unit, unsigned char[:] scanline,
 
 
 cpdef int undo_filter_paeth(int filter_unit, unsigned char[:] scanline,
-                            unsigned char[:] previous, unsigned char[:] result):
+                            unsigned char[:] previous, unsigned char[:] result) nogil:
     """Undo Paeth filter."""
 
     # Also used for ci.
@@ -79,9 +81,9 @@ cpdef int undo_filter_paeth(int filter_unit, unsigned char[:] scanline,
             c = previous[ai]
         b = previous[i]
         p = a + b - c
-        pa = abs(p - a)
-        pb = abs(p - b)
-        pc = abs(p - c)
+        pa = c_abs(p - a)
+        pb = c_abs(p - b)
+        pc = c_abs(p - c)
         if pa <= pb and pa <= pc:
             pr = a
         elif pb <= pc:
@@ -93,7 +95,7 @@ cpdef int undo_filter_paeth(int filter_unit, unsigned char[:] scanline,
     return 0
 
 
-cpdef int convert_rgb_to_rgba(unsigned char[:] row, unsigned char[:] result):
+cpdef int convert_rgb_to_rgba(unsigned char[:] row, unsigned char[:] result) nogil:
     cdef int i, l, j, k
     l = min(row.shape[0] / 3, result.shape[0] / 4)
     for i in range(l):
@@ -105,7 +107,7 @@ cpdef int convert_rgb_to_rgba(unsigned char[:] row, unsigned char[:] result):
     return 0
 
 
-cpdef int convert_l_to_rgba(unsigned char[:] row, unsigned char[:] result):
+cpdef int convert_l_to_rgba(unsigned char[:] row, unsigned char[:] result) nogil:
     cdef int i, l, j, k, lum
     l = min(row.shape[0], result.shape[0] / 4)
     for i in range(l):
@@ -118,7 +120,7 @@ cpdef int convert_l_to_rgba(unsigned char[:] row, unsigned char[:] result):
     return 0
 
 
-cpdef int convert_la_to_rgba(unsigned char[:] row, unsigned char[:] result):
+cpdef int convert_la_to_rgba(unsigned char[:] row, unsigned char[:] result) nogil:
     cdef int i, l, j, k, lum
     l = min(row.shape[0] / 2, result.shape[0] / 4)
     for i in range(l):

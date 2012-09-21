@@ -22,7 +22,6 @@ def undo_filter_up(filter_unit, scanline, previous, result):
         x = scanline[i]
         b = previous[i]
         result[i] = (x + b) & 0xff
-        print 'x: %d, b: %d, result: %d' % (x, b, result[i])
 
 
 def undo_filter_average(filter_unit, scanline, previous, result):
