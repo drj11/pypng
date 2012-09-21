@@ -2833,6 +2833,103 @@ class Test(unittest.TestCase):
         img = from_array(pixels, 'L')
         img.save('testnumpyL16.png')
 
+    def paeth(self, x, a, b, c):
+        p = a + b - c
+        pa = abs(p - a)
+        pb = abs(p - b)
+        pc = abs(p - c)
+        if pa <= pb and pa <= pc:
+            pr = a
+        elif pb <= pc:
+            pr = b
+        else:
+            pr = c
+        return x - pr
+
+    # test filters and unfilters
+    def testFilterScanlineFirstLine(self):
+        fo = 3  # bytes per pixel
+        line = [30, 31, 32, 230, 231, 232]
+        out = filter_scanline(0, line, fo, None)  # none
+        self.assertEqual(list(out), [0, 30, 31, 32, 230, 231, 232])
+        out = filter_scanline(1, line, fo, None)  # sub
+        self.assertEqual(list(out), [1, 30, 31, 32, 200, 200, 200])
+        out = filter_scanline(2, line, fo, None)  # up
+        # TODO: All filtered scanlines start with a byte indicating the filter
+        # algorithm, except "up". Is this a bug? Should the expected output
+        # start with 2 here?
+        self.assertEqual(list(out), [30, 31, 32, 230, 231, 232])
+        out = filter_scanline(3, line, fo, None)  # average
+        self.assertEqual(list(out), [3, 30, 31, 32, 215, 216, 216])
+        out = filter_scanline(4, line, fo, None)  # paeth
+        self.assertEqual(list(out), [
+            4, self.paeth(30, 0, 0, 0), self.paeth(31, 0, 0, 0),
+            self.paeth(32, 0, 0, 0), self.paeth(230, 30, 0, 0),
+            self.paeth(231, 31, 0, 0), self.paeth(232, 32, 0, 0)
+            ])
+    def testFilterScanline(self):
+        prev = [20, 21, 22, 210, 211, 212]
+        line = [30, 32, 34, 230, 233, 236]
+        fo = 3
+        out = filter_scanline(0, line, fo, prev)  # none
+        self.assertEqual(list(out), [0, 30, 32, 34, 230, 233, 236])
+        out = filter_scanline(1, line, fo, prev)  # sub
+        self.assertEqual(list(out), [1, 30, 32, 34, 200, 201, 202])
+        out = filter_scanline(2, line, fo, prev)  # up
+        self.assertEqual(list(out), [2, 10, 11, 12, 20, 22, 24])
+        out = filter_scanline(3, line, fo, prev)  # average
+        self.assertEqual(list(out), [3, 20, 22, 23, 110, 112, 113])
+        out = filter_scanline(4, line, fo, prev)  # paeth
+        self.assertEqual(list(out), [
+            4, self.paeth(30, 0, 20, 0), self.paeth(32, 0, 21, 0),
+            self.paeth(34, 0, 22, 0), self.paeth(230, 30, 210, 20),
+            self.paeth(233, 32, 211, 21), self.paeth(236, 34, 212, 22)
+            ])
+    def testUnfilterScanline(self):
+        reader = Reader(bytes='')
+        reader.psize = 3
+        scanprev = array('B', [20, 21, 22, 210, 211, 212])
+        scanline = array('B', [30, 32, 34, 230, 233, 236])
+        def cp(a):
+            return array('B', a)
+
+        out = reader.undo_filter(0, cp(scanline), cp(scanprev))
+        self.assertEqual(list(out), list(scanline))  # none
+        out = reader.undo_filter(1, cp(scanline), cp(scanprev))
+        self.assertEqual(list(out), [30, 32, 34, 4, 9, 14])  # sub
+        out = reader.undo_filter(2, cp(scanline), cp(scanprev))
+        self.assertEqual(list(out), [50, 53, 56, 184, 188, 192])  # up
+        out = reader.undo_filter(3, cp(scanline), cp(scanprev))
+        self.assertEqual(list(out), [40, 42, 45, 99, 103, 108])  # average
+        out = reader.undo_filter(4, cp(scanline), cp(scanprev))
+        self.assertEqual(list(out), [50, 53, 56, 184, 188, 192])  # paeth
+    def testUnfilterScanlinePaeth(self):
+        # This tests more edge cases in the paeth unfilter
+        reader = Reader(bytes='')
+        reader.psize = 3
+        scanprev = array('B', [2, 0, 0, 0, 9, 11])
+        scanline = array('B', [6, 10, 9, 100, 101, 102])
+
+        out = reader.undo_filter(4, scanline, scanprev)
+        self.assertEqual(list(out), [8, 10, 9, 108, 111, 113])  # paeth
+    def testIterstraight(self):
+        def arraify(list_of_str):
+            return [array('B', s) for s in list_of_str]
+        reader = Reader(bytes='')
+        reader.row_bytes = 6
+        reader.psize = 3
+        rows = reader.iterstraight(arraify(['\x00abcdef', '\x00ghijkl']))
+        self.assertEqual(list(rows), arraify(['abcdef', 'ghijkl']))
+
+        rows = reader.iterstraight(arraify(['\x00abc', 'def\x00ghijkl']))
+        self.assertEqual(list(rows), arraify(['abcdef', 'ghijkl']))
+
+        rows = reader.iterstraight(arraify(['\x00abcdef\x00ghijkl']))
+        self.assertEqual(list(rows), arraify(['abcdef', 'ghijkl']))
+
+        rows = reader.iterstraight(arraify(['\x00abcdef\x00ghi', 'jkl']))
+        self.assertEqual(list(rows), arraify(['abcdef', 'ghijkl']))
+
 # === Command Line Support ===
 
 def _dehex(s):
