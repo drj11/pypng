@@ -2458,7 +2458,7 @@ class Test(unittest.TestCase):
         x,y,pixels,meta = r.asRGB8()
         self.assertEqual(x, 1)
         self.assertEqual(y, 4)
-        self.assertEqual(list(pixels), map(list, [a, b, b, c]))
+        self.assertEqual(map(list, pixels), map(list, [a, b, b, c]))
     def testPtrns(self):
         "Test colour type 3 and tRNS chunk (and 4-bit palette)."
         a = (50,99,50,50)
@@ -2486,7 +2486,7 @@ class Test(unittest.TestCase):
         x,y,pixels,meta = r.asRGBA8()
         # Test the pixels at row 9 columns 0 and 1.
         row9 = list(pixels)[9]
-        self.assertEqual(row9[0:8],
+        self.assertEqual(list(row9[0:8]),
                          [0xff, 0xdf, 0xff, 0xff, 0xff, 0xde, 0xff, 0xff])
     def testLtoRGBA(self):
         "asRGBA() on grey source."""
