@@ -1664,27 +1664,37 @@ class Reader:
         is straightlaced.  `raw` should be an iterable that yields the
         raw bytes in chunks of arbitrary size."""
 
-        # length of row, in bytes
-        rb = self.row_bytes
-        a = array('B')
-        # The previous (reconstructed) scanline.  None indicates first
-        # line of image.
+        # length of a row in bytes, including the file_type byte
+        sl = self.row_bytes + 1
+        tail = array('B')
         recon = None
         for some in raw:
-            a.extend(some)
-            while len(a) >= rb + 1:
-                filter_type = a[0]
-                scanline = a[1:rb+1]
-                del a[:rb+1]
+            offset = 0
+            if len(tail) > 0:
+                if len(tail) + len(some) >= sl:
+                    offset = sl - len(tail)
+                    tail.extend(some[:offset])
+                    recon = self.undo_filter(tail[0], tail[1:], recon)
+                    yield recon
+                    tail = array('B')
+                else:
+                    tail.extend(some)
+                    continue
+            while len(some) - offset >= sl:
+                filter_type = some[offset]
+                scanline = some[offset + 1:offset + sl]
                 recon = self.undo_filter(filter_type, scanline, recon)
                 yield recon
-        if len(a) != 0:
+                offset += sl
+            tail = some[offset:]
+
+        if len(tail) != 0:
             # :file:format We get here with a file format error: when the
             # available bytes (after decompressing) do not pack into exact
             # rows.
             raise FormatError(
               'Wrong size for decompressed IDAT chunk.')
-        assert len(a) == 0
+        assert len(tail) == 0
 
     def validate_signature(self):
         """If signature (header) has not been read then read and
