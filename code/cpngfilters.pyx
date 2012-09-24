@@ -7,8 +7,8 @@ cimport cpython.array
 
 
 # TODO: I don't know how can I not return any value (void doesn't work)
-cpdef int undo_filter_sub(int filter_unit, unsigned char[:] scanline,
-                          unsigned char[:] previous, unsigned char[:] result) nogil:
+def undo_filter_sub(int filter_unit, unsigned char[:] scanline,
+                    unsigned char[:] previous, unsigned char[:] result):
     """Undo sub filter."""
 
     cdef int l = result.shape[0]
@@ -23,11 +23,10 @@ cpdef int undo_filter_sub(int filter_unit, unsigned char[:] scanline,
         a = result[ai]
         result[i] = (x + a) & 0xff
         ai += 1
-    return 0
 
 
-cpdef int undo_filter_up(int filter_unit, unsigned char[:] scanline,
-                         unsigned char[:] previous, unsigned char[:] result) nogil:
+def undo_filter_up(int filter_unit, unsigned char[:] scanline,
+                   unsigned char[:] previous, unsigned char[:] result):
     """Undo up filter."""
 
     cdef int i
@@ -41,8 +40,8 @@ cpdef int undo_filter_up(int filter_unit, unsigned char[:] scanline,
     return 0
 
 
-cpdef int undo_filter_average(int filter_unit, unsigned char[:] scanline,
-                              unsigned char[:] previous, unsigned char[:] result) nogil:
+def undo_filter_average(int filter_unit, unsigned char[:] scanline,
+                        unsigned char[:] previous, unsigned char[:] result):
     """Undo up filter."""
 
     cdef int i, ai
@@ -62,8 +61,8 @@ cpdef int undo_filter_average(int filter_unit, unsigned char[:] scanline,
     return 0
 
 
-cpdef int undo_filter_paeth(int filter_unit, unsigned char[:] scanline,
-                            unsigned char[:] previous, unsigned char[:] result) nogil:
+def undo_filter_paeth(int filter_unit, unsigned char[:] scanline,
+                      unsigned char[:] previous, unsigned char[:] result):
     """Undo Paeth filter."""
 
     # Also used for ci.
@@ -90,12 +89,11 @@ cpdef int undo_filter_paeth(int filter_unit, unsigned char[:] scanline,
             pr = b
         else:
             pr = c
-        result[i] = (x + pr) & 0xff
+        result[i] = x + pr
         ai += 1
-    return 0
 
 
-cpdef int convert_rgb_to_rgba(unsigned char[:] row, unsigned char[:] result) nogil:
+def convert_rgb_to_rgba(unsigned char[:] row, unsigned char[:] result):
     cdef int i, l, j, k
     l = min(row.shape[0] / 3, result.shape[0] / 4)
     for i in range(l):
@@ -104,10 +102,9 @@ cpdef int convert_rgb_to_rgba(unsigned char[:] row, unsigned char[:] result) nog
         result[k] = row[j]
         result[k + 1] = row[j + 1]
         result[k + 2] = row[j + 2]
-    return 0
 
 
-cpdef int convert_l_to_rgba(unsigned char[:] row, unsigned char[:] result) nogil:
+def convert_l_to_rgba(unsigned char[:] row, unsigned char[:] result):
     cdef int i, l, j, k, lum
     l = min(row.shape[0], result.shape[0] / 4)
     for i in range(l):
@@ -117,10 +114,9 @@ cpdef int convert_l_to_rgba(unsigned char[:] row, unsigned char[:] result) nogil
         result[k] = lum
         result[k + 1] = lum
         result[k + 2] = lum
-    return 0
 
 
-cpdef int convert_la_to_rgba(unsigned char[:] row, unsigned char[:] result) nogil:
+def convert_la_to_rgba(unsigned char[:] row, unsigned char[:] result):
     cdef int i, l, j, k, lum
     l = min(row.shape[0] / 2, result.shape[0] / 4)
     for i in range(l):
@@ -131,4 +127,3 @@ cpdef int convert_la_to_rgba(unsigned char[:] row, unsigned char[:] result) nogi
         result[k + 1] = lum
         result[k + 2] = lum
         result[k + 3] = row[j + 1]
-    return 0
