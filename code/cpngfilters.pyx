@@ -6,9 +6,8 @@ from libc.stdlib cimport abs as c_abs
 cimport cpython.array
 
 
-# TODO: I don't know how can I not return any value (void doesn't work)
-def undo_filter_sub(int filter_unit, unsigned char[:] scanline,
-                    unsigned char[:] previous, unsigned char[:] result):
+def undo_filter_sub(int filter_unit, unsigned char[::1] scanline,
+                    unsigned char[::1] previous, unsigned char[::1] result):
     """Undo sub filter."""
 
     cdef int l = result.shape[0]
@@ -25,8 +24,8 @@ def undo_filter_sub(int filter_unit, unsigned char[:] scanline,
         ai += 1
 
 
-def undo_filter_up(int filter_unit, unsigned char[:] scanline,
-                   unsigned char[:] previous, unsigned char[:] result):
+def undo_filter_up(int filter_unit, unsigned char[::1] scanline,
+                   unsigned char[::1] previous, unsigned char[::1] result):
     """Undo up filter."""
 
     cdef int i
@@ -40,8 +39,8 @@ def undo_filter_up(int filter_unit, unsigned char[:] scanline,
     return 0
 
 
-def undo_filter_average(int filter_unit, unsigned char[:] scanline,
-                        unsigned char[:] previous, unsigned char[:] result):
+def undo_filter_average(int filter_unit, unsigned char[::1] scanline,
+                        unsigned char[::1] previous, unsigned char[::1] result):
     """Undo up filter."""
 
     cdef int i, ai
@@ -61,8 +60,8 @@ def undo_filter_average(int filter_unit, unsigned char[:] scanline,
     return 0
 
 
-def undo_filter_paeth(int filter_unit, unsigned char[:] scanline,
-                      unsigned char[:] previous, unsigned char[:] result):
+def undo_filter_paeth(int filter_unit, unsigned char[::1] scanline,
+                      unsigned char[::1] previous, unsigned char[::1] result):
     """Undo Paeth filter."""
 
     # Also used for ci.
@@ -93,7 +92,7 @@ def undo_filter_paeth(int filter_unit, unsigned char[:] scanline,
         ai += 1
 
 
-def convert_rgb_to_rgba(unsigned char[:] row, unsigned char[:] result):
+def convert_rgb_to_rgba(unsigned char[::1] row, unsigned char[::1] result):
     cdef int i, l, j, k
     l = min(row.shape[0] / 3, result.shape[0] / 4)
     for i in range(l):
@@ -104,7 +103,7 @@ def convert_rgb_to_rgba(unsigned char[:] row, unsigned char[:] result):
         result[k + 2] = row[j + 2]
 
 
-def convert_l_to_rgba(unsigned char[:] row, unsigned char[:] result):
+def convert_l_to_rgba(unsigned char[::1] row, unsigned char[::1] result):
     cdef int i, l, j, k, lum
     l = min(row.shape[0], result.shape[0] / 4)
     for i in range(l):
@@ -116,7 +115,7 @@ def convert_l_to_rgba(unsigned char[:] row, unsigned char[:] result):
         result[k + 2] = lum
 
 
-def convert_la_to_rgba(unsigned char[:] row, unsigned char[:] result):
+def convert_la_to_rgba(unsigned char[::1] row, unsigned char[::1] result):
     cdef int i, l, j, k, lum
     l = min(row.shape[0] / 2, result.shape[0] / 4)
     for i in range(l):
