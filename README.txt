@@ -1,7 +1,3 @@
-$URL$
-$Rev$
-
-
 README for PyPNG
 drj@pobox.com
 
@@ -22,8 +18,8 @@ PyPNG requires Python version 2.3 (and that's all), or any compatible
 higher version.  It works best on Python 2.4 and above.  It can be used
 on Python 2.2, but some things do not work.
 
-PyPNG also works on Python 3.x if you use the 2to3 tool (this support is
-very recent, and preliminary).
+PyPNG also works on Python 3.x if you use the 2to3 tool which it should
+do automatically (this support is very recent, and preliminary).
 
 PyPNG comes with a setup.py script to use with distutils.  After
 unpacking the distribution, cd into the directory and execute the
@@ -57,6 +53,34 @@ Release 0.0.14
 
 When using png.py as a command line tool, it can now produce
 non-square test images.
+
+PyPNG now installs "out of the box" on Python 3 on a plain install
+(previously distribute or pip was required).
+
+PyPNG welcomes the following community contributions:
+
+  Joaquín Cuenca Abela speeds up PNG reading when Cython is available.
+
+  Josh Bleecher Snyder adds a lenient mode which has relaxed checksum
+  checking.
+
+  nathan@dunfield.info fixed a problem writing files when using
+  the command line tool on Windows (Issue 62).
+
+The following issues have been fixed:
+
+  On github:
+
+  Issue 6: Palette processing is annoying
+
+  On googlecode:
+
+  Issue 62: Problem writing PNG files on Windows
+
+Development has moved from googlecode to github.  All issues below here,
+and the one immediately above, are from the googlecode issue tracker.
+All newer issue should be on github.
+
 
 Release 0.0.13
 
