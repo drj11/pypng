@@ -48,14 +48,28 @@ http://packages.python.org/pypng/
 conf['download_url'] = \
   'http://pypng.googlecode.com/files/%(name)s-%(version)s.tar.gz' % conf
 
-if sys.version_info >= (3,):
-    conf['use_2to3'] = True
+def prepare3():
+    """Prepare files for installing on Python 3.  If you have
+    distribute for Python 3, then we don't need to run this.
+    """
+    import os
 
+    try:
+      os.mkdir('code3')
+    except OSError:
+      pass
+    os.system("2to3 -w -n -o code3 code/png.py")
+    conf['package_dir'] = {'':'code3'}
+      
 if __name__ == '__main__':
     try:
         # http://peak.telecommunity.com/DevCenter/setuptools#basic-use
         from setuptools import setup
+        # distribute is probably installed, so use_2to3 should work
+        conf['use_2to3'] = True
     except ImportError:
         # http://docs.python.org/release/2.4.4/dist/setup-script.html
         from distutils.core import setup
+        if sys.version_info >= (3,):
+            prepare3()
     setup(**conf)
