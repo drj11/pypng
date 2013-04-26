@@ -1,6 +1,3 @@
-.. $URL$
-.. $Rev$
-
 Release Procedure
 =================
 
@@ -8,7 +5,7 @@ Extremely draft.
 
 At top-level...
 
-Edit ``setup.py`` for new version number.  Then ``git commit`` and ``git push`` this.
+Edit ``setup.py`` for new version number.  Then ``git commit`` this.
 
 Get release notes into ``README.txt`` somehow.
 
@@ -16,7 +13,15 @@ Get the latest git change hash::
 
     git log -n1 | sed q
 
-(this is called *CHANGE* below)
+Add a tag for this release (the tags have this format so that
+the automatically generated tarballs from github.com have the
+right URL).
+
+    git tag -a pypng-X.Y.Z -m 'PyPNG release 0.0.14'
+
+and push:
+
+    git push --tags
 
 Change to a directory where you can checkout a fresh copy of the sources
 into a subdirectory.  You can delete it later if you want.
@@ -25,7 +30,7 @@ Checkout the particular revision of the source::
 
     git clone git://github.com/drj11/pypng.git pypng-X.Y.Z
     cd pypng-X.Y.Z
-    git checkout CHANGE
+    git checkout pypng-X.Y.Z
 
 (note the above cd's into the subdirectory)
   

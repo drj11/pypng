@@ -43,7 +43,7 @@ http://pythonhosted.org/pypng/
       ],
     )
 conf['download_url'] = \
-  'https://github.com/drj11/pypng/archive/%(name)s-%(version).tar.gz' % conf
+  'https://github.com/drj11/pypng/archive/%(name)s-%(version)s.tar.gz' % conf
 
 def prepare3():
     """Prepare files for installing on Python 3.  If you have
