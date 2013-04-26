@@ -1,6 +1,3 @@
-# $URL$
-# $Rev$
-
 # PyPNG setup.py
 # This is the setup.py script used by distutils.
 
@@ -23,16 +20,16 @@ conf = dict(
     long_description="""
 PyPNG allows PNG image files to be read and written using pure Python.
 
-It's available from Google code:
-http://code.google.com/p/pypng/downloads/list
+It's available from github.com
+https://github.com/drj11/pypng
 
-Documentation is kindly hosted at python.org:
-http://packages.python.org/pypng/
+Documentation is kindly hosted by PyPI
+http://pythonhosted.org/pypng/
 (and also available in the download tarball).
 """,
     author='David Jones',
     author_email='drj@pobox.com',
-    url='http://code.google.com/p/pypng/',
+    url='https://github.com/drj11/pypng',
     package_dir={'':'code'},
     py_modules=['png'],
     classifiers=[
@@ -46,7 +43,7 @@ http://packages.python.org/pypng/
       ],
     )
 conf['download_url'] = \
-  'http://pypng.googlecode.com/files/%(name)s-%(version)s.tar.gz' % conf
+  'https://github.com/drj11/pypng/archive/%(name)s-%(version).tar.gz' % conf
 
 def prepare3():
     """Prepare files for installing on Python 3.  If you have
