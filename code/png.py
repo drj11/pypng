@@ -1794,6 +1794,39 @@ class Reader:
                 not self.colormap and len(data) != self.planes):
                 raise FormatError("sBIT chunk has incorrect length.")
 
+    def idat(self, lenient=False):
+        """Iterator that yields all the ``IDAT`` chunks as strings."""
+        while True:
+            try:
+                typ, data = self.chunk(lenient=lenient)
+            except ValueError, e:
+                raise ChunkError(e.args[0])
+            if typ == 'IEND':
+                # http://www.w3.org/TR/PNG/#11IEND
+                break
+            if typ != 'IDAT':
+                continue
+            # typ == 'IDAT'
+            # http://www.w3.org/TR/PNG/#11IDAT
+            if self.colormap and not self.plte:
+                warnings.warn("PLTE chunk is required before IDAT chunk")
+            yield data
+
+    def idatdecomp(self, lenient=False, max_length=0):
+        """Iterator that yields decompressed ``IDAT`` strings."""
+
+        # Currently, with no max_length paramter to decompress, this
+        # routine will do one yield per IDAT chunk.  So not very
+        # incremental.
+        d = zlib.decompressobj()
+        # Each IDAT chunk is passed to the decompressor, then any
+        # remaining state is decompressed out.
+        for data in self.idat(lenient):
+            # :todo: add a max_length argument here to limit output
+            # size.
+            yield array('B', d.decompress(data))
+        yield array('B', d.flush())
+
     def read(self, lenient=False):
         """
         Read the PNG file and decode it.  Returns (`width`, `height`,
@@ -1807,43 +1840,8 @@ class Reader:
         checksum failures will raise warnings rather than exceptions.
         """
 
-        def iteridat():
-            """Iterator that yields all the ``IDAT`` chunks as strings."""
-            while True:
-                try:
-                    type, data = self.chunk(lenient=lenient)
-                except ValueError, e:
-                    raise ChunkError(e.args[0])
-                if type == 'IEND':
-                    # http://www.w3.org/TR/PNG/#11IEND
-                    break
-                if type != 'IDAT':
-                    continue
-                # type == 'IDAT'
-                # http://www.w3.org/TR/PNG/#11IDAT
-                if self.colormap and not self.plte:
-                    warnings.warn("PLTE chunk is required before IDAT chunk")
-                yield data
-
-        def iterdecomp(idat):
-            """Iterator that yields decompressed strings.  `idat` should
-            be an iterator that yields the ``IDAT`` chunk data.
-            """
-
-            # Currently, with no max_length paramter to decompress, this
-            # routine will do one yield per IDAT chunk.  So not very
-            # incremental.
-            d = zlib.decompressobj()
-            # Each IDAT chunk is passed to the decompressor, then any
-            # remaining state is decompressed out.
-            for data in idat:
-                # :todo: add a max_length argument here to limit output
-                # size.
-                yield array('B', d.decompress(data))
-            yield array('B', d.flush())
-
         self.preamble(lenient=lenient)
-        raw = iterdecomp(iteridat())
+        raw = self.idatdecomp(lenient)
 
         if self.interlace:
             raw = array('B', itertools.chain(*raw))
