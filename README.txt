@@ -47,7 +47,11 @@ no good then you could try the ReST sources in the man/ directory.
 
 RELEASE NOTES
 
-(For issues see http://code.google.com/p/pypng/issues/list )
+(For issues see https://github.com/drj11/pypng/issues?state=open )
+
+Release 0.0.15
+
+Fixed various URLs to point at github.com instead of googlecode.
 
 Release 0.0.14
 
