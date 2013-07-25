@@ -628,7 +628,6 @@ class Writer:
 
           Interlacing will require the entire image to be in working memory.
         """
-
         if self.interlace:
             fmt = 'BH'[self.bitdepth > 8]
             a = array(fmt, itertools.chain(*rows))
@@ -659,7 +658,15 @@ class Writer:
         sequence of bytes.
 
         """
+        self.write_idat(outfile, self.idat(rows, packed))
+        return self.irows
 
+    def write_idat(self, outfile, idat):
+        """Write png with IDAT to file
+
+        'idat' should be iterable that produce IDAT chunks
+        compatible with 'Writer' configuration
+        """
         # http://www.w3.org/TR/PNG/#5PNG-file-signature
         outfile.write(_signature)
 
@@ -712,6 +719,14 @@ class Writer:
                 write_chunk(outfile, 'bKGD',
                             struct.pack("!3H", *self.background))
 
+        for idat in idat:
+            write_chunk(outfile, 'IDAT', idat)
+        # http://www.w3.org/TR/PNG/#11IEND
+        write_chunk(outfile, 'IEND')
+
+    def idat(self, rows, packed=False):
+        """Generator that produce IDAT chunks from rows
+        """
         # http://www.w3.org/TR/PNG/#11IDAT
         if self.compression is not None:
             compressor = zlib.compressobj(self.compression)
@@ -793,7 +808,7 @@ class Writer:
                 compressed = compressor.compress(tostring(data))
                 if len(compressed):
                     # print >> sys.stderr, len(data), len(compressed)
-                    write_chunk(outfile, 'IDAT', compressed)
+                    yield compressed
                 # Because of our very witty definition of ``extend``,
                 # above, we must re-use the same ``data`` object.  Hence
                 # we use ``del`` to empty this one, rather than create a
@@ -806,10 +821,8 @@ class Writer:
         flushed = compressor.flush()
         if len(compressed) or len(flushed):
             # print >> sys.stderr, len(data), len(compressed), len(flushed)
-            write_chunk(outfile, 'IDAT', compressed + flushed)
-        # http://www.w3.org/TR/PNG/#11IEND
-        write_chunk(outfile, 'IEND')
-        return i+1
+            yield compressed + flushed
+        self.irows = i + 1
 
     def write_array(self, outfile, pixels):
         """
