@@ -347,7 +347,8 @@ class Writer:
                  planes=None,
                  colormap=None,
                  maxval=None,
-                 chunk_limit=2**20):
+                 chunk_limit=2 ** 20,
+                 filter_typ=None):
         """
         Create a PNG encoder object.
 
@@ -549,6 +550,11 @@ class Writer:
         if not isinteger(bitdepth) or bitdepth < 1 or 16 < bitdepth:
             raise ValueError("bitdepth (%r) must be a postive integer <= 16" %
               bitdepth)
+
+        if filter_typ is None:
+            self.filter_typ = 0
+        else:
+            self.filter_typ = filter_typ
 
         self.rescale = None
         if palette:
@@ -755,17 +761,25 @@ class Writer:
         else:
             compressor = zlib.compressobj()
 
+        filterer = Filter(self.bitdepth * self.planes,
+                          self.interlace, self.height)
+        data = array('B')
+
+        #Filtering algorithms are applied to bytes, not to pixels,
+        #regardless of the bit depth or color type of the image.
+        def byteextend(rowbytes):
+            data.extend(filterer.do_filter(self.filter_typ, rowbytes))
+
         # Choose an extend function based on the bitdepth.  The extend
         # function packs/decomposes the pixel values into bytes and
         # stuffs them onto the data array.
-        data = array('B')
         if self.bitdepth == 8 or packed:
-            extend = data.extend
+            extend = byteextend
         elif self.bitdepth == 16:
             # Decompose into bytes
             def extend(sl):
                 fmt = '!%dH' % len(sl)
-                data.extend(array('B', struct.pack(fmt, *sl)))
+                byteextend(array('B', struct.pack(fmt, *sl)))
         else:
             # Pack into bytes
             assert self.bitdepth < 8
@@ -782,7 +796,7 @@ class Writer:
                 l = group(a, spb)
                 l = map(lambda e: reduce(lambda x,y:
                                            (x << self.bitdepth) + y, e), l)
-                data.extend(l)
+                byteextend(l)
         if self.rescale:
             oldextend = extend
             factor = \
@@ -798,8 +812,6 @@ class Writer:
         enumrows = enumerate(rows)
         del rows
 
-        # First row's filter type.
-        data.append(0)
         # :todo: Certain exceptions in the call to ``.next()`` or the
         # following try would indicate no row data supplied.
         # Should catch.
@@ -824,7 +836,7 @@ class Writer:
             # mark the first row of a reduced pass image; that means we
             # could accidentally compute the wrong filtered scanline if
             # we used "up", "average", or "paeth" on such a line.
-            data.append(0)
+            #data.append(0)
             extend(row)
             if len(data) > self.chunk_limit:
                 compressed = compressor.compress(tostring(data))
@@ -1079,7 +1091,8 @@ def filter_scanline(type, line, fo, prev=None):
         # "left" (non-trivial, but true). "average" needs to be handled
         # specially.
         if type == 2: # "up"
-            return line # type = 0
+            #return line
+            type = 0
         elif type == 3:
             prev = [0]*len(line)
         elif type == 4: # "paeth"
@@ -1095,6 +1108,29 @@ def filter_scanline(type, line, fo, prev=None):
     else: # type == 4
         paeth()
     return out
+
+
+class Filter:
+    def __init__(self, bitdepth=8, interlace=None, rows=None):
+        self.fu = bitdepth // 8 if bitdepth > 8 else 1
+        self.interlace = interlace
+        self.restarts = []
+        if self.interlace:
+            for _, off, _, step in _adam7:
+                self.restarts.append((rows - off - 1 + step) // step)
+        self.prev = None
+
+    def do_filter(self, typ, line):
+        """Applying filter, caring about prev line, interlacing etc.
+        """
+        res = filter_scanline(typ, line, self.fu, self.prev)
+        self.prev = line
+        if self.restarts:
+            self.restarts[0] -= 1
+            if self.restarts[0] == 0:
+                del self.restarts[0]
+                self.prev = None
+        return res
 
 
 def from_array(a, mode=None, info={}):
@@ -2517,35 +2553,39 @@ class Test(unittest.TestCase):
             straight = straight.read()[2]
             adam7 = adam7.read()[2]
             self.assertEqual(map(list, straight), map(list, adam7))
+
     def testAdam7write(self):
         """Adam7 interlace writing.
         For each test image in the PngSuite, write an interlaced
         and a straightlaced version.  Decode both, and compare results.
+        Also test filter on interlaced version as it's filtering is complex.
         """
         # Not such a great test, because the only way we can check what
         # we have written is to read it back again.
+        for filter_typ in range(5):
+            print "Test filter " + str(filter_typ)
+            for name, bytes in _pngsuite.items():
+                # Only certain colour types supported for this test.
+                if name[3:5] not in ['n0', 'n2', 'n4', 'n6']:
+                    continue
+                it = Reader(bytes=bytes)
+                x, y, pixels, _ = it.read()
+                pngi = topngbytes('adam7wn' + name + '.png', pixels,
+                                  x=x, y=y, bitdepth=it.bitdepth,
+                                  greyscale=it.greyscale, alpha=it.alpha,
+                                  transparent=it.transparent,
+                                  interlace=False, filter_typ=0)
+                x, y, ps, _ = Reader(bytes=pngi).read()
+                it = Reader(bytes=bytes)
+                x, y, pixels, _ = it.read()
+                pngs = topngbytes('adam7wi' + name + '.png', pixels,
+                                  x=x, y=y, bitdepth=it.bitdepth,
+                                  greyscale=it.greyscale, alpha=it.alpha,
+                                  transparent=it.transparent,
+                                  interlace=True, filter_typ=filter_typ)
+                x, y, pi, _ = Reader(bytes=pngs).read()
+                self.assertEqual(map(list, ps), map(list, pi))
 
-        for name,bytes in _pngsuite.items():
-            # Only certain colour types supported for this test.
-            if name[3:5] not in ['n0', 'n2', 'n4', 'n6']:
-                continue
-            it = Reader(bytes=bytes)
-            x,y,pixels,meta = it.read()
-            pngi = topngbytes('adam7wn'+name+'.png', pixels,
-              x=x, y=y, bitdepth=it.bitdepth,
-              greyscale=it.greyscale, alpha=it.alpha,
-              transparent=it.transparent,
-              interlace=False)
-            x,y,ps,meta = Reader(bytes=pngi).read()
-            it = Reader(bytes=bytes)
-            x,y,pixels,meta = it.read()
-            pngs = topngbytes('adam7wi'+name+'.png', pixels,
-              x=x, y=y, bitdepth=it.bitdepth,
-              greyscale=it.greyscale, alpha=it.alpha,
-              transparent=it.transparent,
-              interlace=True)
-            x,y,pi,meta = Reader(bytes=pngs).read()
-            self.assertEqual(map(list, ps), map(list, pi))
     def testPGMin(self):
         """Test that the command line tool can read PGM files."""
         def do():
@@ -2846,10 +2886,7 @@ class Test(unittest.TestCase):
         out = filter_scanline(1, line, fo, None)  # sub
         self.assertEqual(list(out), [1, 30, 31, 32, 200, 200, 200])
         out = filter_scanline(2, line, fo, None)  # up
-        # TODO: All filtered scanlines start with a byte indicating the filter
-        # algorithm, except "up". Is this a bug? Should the expected output
-        # start with 2 here?
-        self.assertEqual(list(out), [30, 31, 32, 230, 231, 232])
+        self.assertEqual(list(out), [2, 30, 31, 32, 230, 231, 232])
         out = filter_scanline(3, line, fo, None)  # average
         self.assertEqual(list(out), [3, 30, 31, 32, 215, 216, 216])
         out = filter_scanline(4, line, fo, None)  # paeth
@@ -3706,7 +3743,10 @@ def _main(argv):
     outfile = sys.stdout
     if sys.platform == "win32":
         import msvcrt, os
-        msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
+        try:
+            msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
+        except:
+            pass
 
     if options.read_png:
         # Encode PNG to PPM
