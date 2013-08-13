@@ -9,11 +9,9 @@ Created on 22.07.2013
 
 def undo_filter_sub(filter_unit, scanline, previous, result):
     """Undo sub filter."""
-
     ai = 0
     # Loops starts at index fu.  Observe that the initial part
-    # of the result is already filled in correctly with
-    # scanline.
+    # of the result is already filled in correctly with scanline.
     for i in range(filter_unit, len(result)):
         x = scanline[i]
         a = result[ai]
@@ -22,9 +20,19 @@ def undo_filter_sub(filter_unit, scanline, previous, result):
     return None
 
 
+def do_filter_sub(filter_unit, scanline, previous, result):
+    """Sub filter."""
+    ai = 0
+    for i in range(filter_unit, len(result)):
+        x = scanline[i]
+        a = scanline[ai]
+        result[i] = (x - a) & 0xff
+        ai += 1
+    return None
+
+
 def undo_filter_up(filter_unit, scanline, previous, result):
     """Undo up filter."""
-
     for i in range(len(result)):
         x = scanline[i]
         b = previous[i]
@@ -32,8 +40,17 @@ def undo_filter_up(filter_unit, scanline, previous, result):
     return None
 
 
+def do_filter_up(filter_unit, scanline, previous, result):
+    """Up filter."""
+    for i in range(len(result)):
+        x = scanline[i]
+        b = previous[i]
+        result[i] = (x - b) & 0xff
+    return None
+
+
 def undo_filter_average(filter_unit, scanline, previous, result):
-    """Undo up filter."""
+    """Undo average filter."""
 
     ai = -filter_unit
     for i in range(len(result)):
@@ -46,6 +63,34 @@ def undo_filter_average(filter_unit, scanline, previous, result):
         result[i] = (x + ((a + b) >> 1)) & 0xff
         ai += 1
     return None
+
+
+def do_filter_average(filter_unit, scanline, previous, result):
+    """Average filter."""
+    ai = -filter_unit
+    for i in range(len(result)):
+        x = scanline[i]
+        if ai < 0:
+            a = 0
+        else:
+            a = scanline[ai]
+        b = previous[i]
+        result[i] = (x - ((a + b) >> 1)) & 0xff
+        ai += 1
+    return None
+
+
+def _paeth(a, b, c):
+    p = a + b - c
+    pa = abs(p - a)
+    pb = abs(p - b)
+    pc = abs(p - c)
+    if pa <= pb and pa <= pc:
+        return a
+    elif pb <= pc:
+        return b
+    else:
+        return c
 
 
 def undo_filter_paeth(filter_unit, scanline, previous, result):
@@ -61,17 +106,24 @@ def undo_filter_paeth(filter_unit, scanline, previous, result):
             a = result[ai]
             c = previous[ai]
         b = previous[i]
-        p = a + b - c
-        pa = abs(p - a)
-        pb = abs(p - b)
-        pc = abs(p - c)
-        if pa <= pb and pa <= pc:
-            pr = a
-        elif pb <= pc:
-            pr = b
+        result[i] = (x + _paeth(a, b, c)) & 0xff
+        ai += 1
+    return None
+
+
+def do_filter_paeth(filter_unit, scanline, previous, result):
+    """Paeth filter."""
+    # http://www.w3.org/TR/PNG/#9Filter-type-4-Paeth
+    ai = -filter_unit
+    for i in range(len(result)):
+        x = scanline[i]
+        if ai < 0:
+            a = c = 0
         else:
-            pr = c
-        result[i] = (x + pr) & 0xff
+            a = scanline[ai]
+            c = previous[ai]
+        b = previous[i]
+        result[i] = (x - _paeth(a, b, c)) & 0xff
         ai += 1
     return None
 
