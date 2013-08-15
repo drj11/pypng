@@ -289,28 +289,6 @@ def check_palette(palette):
                   "palette entry %d: values must be integer: 0 <= x <= 255" % i)
     return p
 
-
-def apply_alpha_p(red, green, blue, alpha, bkgd):
-    red = int(0.5 + red * alpha + bkgd[0] * (1.0 - alpha))
-    green = int(0.5 + green * alpha + bkgd[1] * (1.0 - alpha))
-    blue = int(0.5 + blue * alpha + bkgd[2] * (1.0 - alpha))
-    return (red, green, blue)
-
-
-def apply_alpha(pixels, bkgd, bitdepth=8):
-    """Convert from RGBA to RGB with 'bkgd' as background color
-    'bkgd' should be (R, G, B) tuple
-    'pixels' and result are flatboxed pixels data
-    """
-    for row in pixels:
-        newrow = array('BH'[bitdepth > 8])
-        for i in range(0, len(row), 4):
-            newrow.extend(apply_alpha_p(row[i], row[i + 1], row[i + 2],
-                                        row[i + 3] / float(2 ** bitdepth - 1),
-                                        bkgd))
-        yield newrow
-
-
 class Error(Exception):
     prefix = 'Error'
     def __str__(self):
@@ -2115,34 +2093,7 @@ class Reader:
 
         width,height,pixels,meta = self.asDirect()
         if meta['alpha']:
-            if meta['greyscale']:
-                typecode = 'BH'[meta['bitdepth'] > 8]
-                maxval = 2 ** meta['bitdepth'] - 1
-                maxbuffer = struct.pack('=' + typecode, maxval) * 4 * width
-
-                def newarray():
-                    return array(typecode, maxbuffer)
-
-                # LA to RGBA
-                def convert():
-                    for row in pixels:
-                        # Create a fresh target row, then copy L channel
-                        # into first three target channels, and A channel
-                        # into fourth channel.
-                        a = newarray()
-                        pngfilters.convert_la_to_rgba(row, a)
-                        yield a
-                meta['greyscale'] = False
-                pa = convert()
-            else:
-                pa = pixels
-            meta['alpha'] = False
-            meta['planes'] = 3
-            return width, height, apply_alpha(pa,
-                                              meta['background'],
-                                              meta['bitdepth']), meta
-
-            #raise Error("will not convert image with alpha channel to RGB")
+            raise Error("will not convert image with alpha channel to RGB")
         if not meta['greyscale']:
             return width,height,pixels,meta
         meta['greyscale'] = False
@@ -3615,35 +3566,23 @@ def write_pnm(file, width, height, pixels, meta):
         file.write(struct.pack(fmt, *row))
     file.flush()
 
-
-def color_triple(color, tgtdepth=None):
+def color_triple(color):
     """
     Convert a command line colour value to a RGB triple of integers.
     FIXME: Somewhere we need support for greyscale backgrounds etc.
     """
-    res = None
     if color.startswith('#') and len(color) == 4:
-        res = (int(color[1], 16),
+        return (int(color[1], 16),
                 int(color[2], 16),
                 int(color[3], 16))
-    elif color.startswith('#') and len(color) == 7:
-        res = (int(color[1:3], 16),
+    if color.startswith('#') and len(color) == 7:
+        return (int(color[1:3], 16),
                 int(color[3:5], 16),
                 int(color[5:7], 16))
     elif color.startswith('#') and len(color) == 13:
-        res = (int(color[1:5], 16),
+        return (int(color[1:5], 16),
                 int(color[5:9], 16),
                 int(color[9:13], 16))
-    if tgtdepth is None:
-        return res
-    else:
-        depth = (len(color) - 1) * 8 / 3
-        if depth == tgtdepth:
-            return res
-        else:
-            raise NotImplementedError
-        #TODO: resample
-
 
 def _add_common_options(parser):
     """Call *parser.add_option* for each of the options that are
@@ -3681,15 +3620,18 @@ def _main(argv):
     parser.add_option('-r', '--read-png', default=False,
                       action='store_true',
                       help='Read PNG, write PNM')
-    parser.add_option('-m', '--merge', default=False,
-                      action='store_true',
-                      help='Merge with background, remove alpha')
     parser.add_option("-a", "--alpha",
                       action="store", type="string", metavar="pgmfile",
                       help="alpha channel transparency (RGBA)")
     _add_common_options(parser)
 
     (options, args) = parser.parse_args(args=argv[1:])
+
+    # Convert options
+    if options.transparent is not None:
+        options.transparent = color_triple(options.transparent)
+    if options.background is not None:
+        options.background = color_triple(options.background)
 
     # Prepare input and output files
     if len(args) == 0:
@@ -3712,19 +3654,7 @@ def _main(argv):
         # Encode PNG to PPM
         png = Reader(file=infile)
         width,height,pixels,meta = png.asDirect()
-        if options.merge and meta['alpha']:
-            if 'background' in meta:
-                background = meta['background']
-            elif options.background is not None:
-                background = color_triple(options.background, meta['bitdepth'])
-            else:
-                raise AssertionError('Missing Background')
-
-            pixels = apply_alpha(pixels, background)
-            meta['alpha'] = False
-            meta['planes'] -= 1
-
-        write_pnm(outfile, width, height, pixels, meta)
+        write_pnm(outfile, width, height, pixels, meta) 
     else:
         # Encode PNM to PNG
         format, width, height, depth, maxval = \
@@ -3745,12 +3675,6 @@ def _main(argv):
               'your maxval (%s) not in supported list %s' %
               (maxval, str(supported)))
         bitdepth = mi+1
-        # Convert options
-        if options.transparent is not None:
-            options.transparent = color_triple(options.transparent, bitdepth)
-        if options.background is not None:
-            options.background = color_triple(options.background, bitdepth)
-
         writer = Writer(width, height,
                         greyscale=greyscale,
                         bitdepth=bitdepth,
