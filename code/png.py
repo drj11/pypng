@@ -210,6 +210,18 @@ def isarray(x):
     except:
         return False
 
+
+#Bytearray are faster than array, but looks more like list
+#So they usage limit to internal and no "tostring"
+try:
+    def barray(*nargs):
+        return bytearray(*nargs)
+except:
+    #Bytearray appears in python 2.6
+    def barray(*nargs):
+        return array('B', *nargs)
+
+
 try:  # see :pyver:old
     array.tostring
 except:
@@ -757,14 +769,14 @@ class Writer:
             # Decompose into bytes
             def extend(sl):
                 fmt = '!%dH' % len(sl)
-                byteextend(array('B', struct.pack(fmt, *sl)))
+                byteextend(barray(struct.pack(fmt, *sl)))
         else:
             # Pack into bytes
             assert self.bitdepth < 8
             # samples per byte
             spb = int(8/self.bitdepth)
             def extend(sl):
-                a = array('B', sl)
+                a = barray(sl)
                 # Adding padding bytes so we can group into a whole
                 # number of spb-tuples.
                 l = float(len(a))
@@ -1034,10 +1046,10 @@ def filter_scanline(typ, line, fo, prev=None):
             f = pngfilters.do_filter_sub
     # There are dirty hacks for buffer compatibility
     # when using compiled filters
-    line = array('B', line)
-    prev = array('B') if prev is None else array('B', prev)
+    line = barray(line)
+    prev = barray() if prev is None else barray(prev)
 
-    result = array('B', line)
+    result = barray(line)
     if f is not None:
         f(fo, line, prev, result)
     result.insert(0, typ)  # Add filter type in the beginning of row
@@ -1476,7 +1488,7 @@ class Reader:
         # first line 'up' is the same as 'null', 'paeth' is the same
         # as 'sub', with only 'average' requiring any special case.
         if not previous:
-            previous = array('B', [0]*len(scanline))
+            previous = barray([0] * len(scanline))
 
         # Call appropriate filter algorithm.  Note that 0 has already
         # been dealt with.
