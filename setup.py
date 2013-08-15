@@ -12,6 +12,16 @@
 
 # http://docs.python.org/release/2.4.4/lib/module-sys.html
 import sys
+try:
+    # http://peak.telecommunity.com/DevCenter/setuptools#basic-use
+    from setuptools import setup
+    from setuptools import Extension
+    setupt = True
+except ImportError:
+    # http://docs.python.org/release/2.4.4/dist/setup-script.html
+    from distutils.core import setup
+    from distutils.extension import Extension
+    setupt = False
 
 def get_version():
     from os.path import dirname, join
@@ -40,6 +50,7 @@ http://pythonhosted.org/pypng/
     url='https://github.com/drj11/pypng',
     package_dir={'':'code'},
     py_modules=['png'],
+    ext_modules=[Extension('pngfilters', ['code/pngfilters.c'])],
     classifiers=[
       'Topic :: Multimedia :: Graphics',
       'Topic :: Software Development :: Libraries :: Python Modules',
@@ -67,14 +78,11 @@ def prepare3():
     conf['package_dir'] = {'':'code3'}
       
 if __name__ == '__main__':
-    try:
-        # http://peak.telecommunity.com/DevCenter/setuptools#basic-use
-        from setuptools import setup
+    if setupt:
         # distribute is probably installed, so use_2to3 should work
         conf['use_2to3'] = True
-    except ImportError:
-        # http://docs.python.org/release/2.4.4/dist/setup-script.html
-        from distutils.core import setup
+    else:
         if sys.version_info >= (3,):
             prepare3()
+
     setup(**conf)

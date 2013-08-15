@@ -1054,6 +1054,10 @@ def filter_scanline(typ, line, fo, prev=None):
             prev = [0] * len(line)
         elif typ == 4:  # "paeth"
             f = pngfilters.do_filter_sub
+    # There are dirty hacks for buffer compatibility
+    # when using compiled filters
+    line = array('B', line)
+    prev = array('B') if prev is None else array('B', prev)
 
     result = array('B', line)
     if f is not None:
@@ -2256,6 +2260,10 @@ except:
             if type(init) == str:
                 return map(ord, init)
             return list(init)
+        # Hacks for buffer will be broken in python 2.2
+        # So we must switch to native pngfilters instead of compiled
+        import imp
+        pngfilters = imp.load_source('pngfilters', 'pngfilters.py')
 
 # Further hacks to get it limping along on Python 2.2
 try:

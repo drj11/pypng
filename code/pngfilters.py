@@ -5,6 +5,8 @@ Created on 22.07.2013
 
 @author: scond_000
 '''
+# NOTE: Remove binary (pyd/so) version and pngfilters.c if you change this file
+# Rebuild them with Cython if you can
 
 
 def undo_filter_sub(filter_unit, scanline, previous, result):
@@ -17,7 +19,7 @@ def undo_filter_sub(filter_unit, scanline, previous, result):
         a = result[ai]
         result[i] = (x + a) & 0xff
         ai += 1
-    return None
+    return 0
 
 
 def do_filter_sub(filter_unit, scanline, previous, result):
@@ -28,7 +30,7 @@ def do_filter_sub(filter_unit, scanline, previous, result):
         a = scanline[ai]
         result[i] = (x - a) & 0xff
         ai += 1
-    return None
+    return 0
 
 
 def undo_filter_up(filter_unit, scanline, previous, result):
@@ -37,7 +39,7 @@ def undo_filter_up(filter_unit, scanline, previous, result):
         x = scanline[i]
         b = previous[i]
         result[i] = (x + b) & 0xff
-    return None
+    return 0
 
 
 def do_filter_up(filter_unit, scanline, previous, result):
@@ -46,12 +48,11 @@ def do_filter_up(filter_unit, scanline, previous, result):
         x = scanline[i]
         b = previous[i]
         result[i] = (x - b) & 0xff
-    return None
+    return 0
 
 
 def undo_filter_average(filter_unit, scanline, previous, result):
     """Undo average filter."""
-
     ai = -filter_unit
     for i in range(len(result)):
         x = scanline[i]
@@ -62,7 +63,7 @@ def undo_filter_average(filter_unit, scanline, previous, result):
         b = previous[i]
         result[i] = (x + ((a + b) >> 1)) & 0xff
         ai += 1
-    return None
+    return 0
 
 
 def do_filter_average(filter_unit, scanline, previous, result):
@@ -77,7 +78,7 @@ def do_filter_average(filter_unit, scanline, previous, result):
         b = previous[i]
         result[i] = (x - ((a + b) >> 1)) & 0xff
         ai += 1
-    return None
+    return 0
 
 
 def _paeth(a, b, c):
@@ -95,8 +96,6 @@ def _paeth(a, b, c):
 
 def undo_filter_paeth(filter_unit, scanline, previous, result):
     """Undo Paeth filter."""
-
-    # Also used for ci.
     ai = -filter_unit
     for i in range(len(result)):
         x = scanline[i]
@@ -108,7 +107,7 @@ def undo_filter_paeth(filter_unit, scanline, previous, result):
         b = previous[i]
         result[i] = (x + _paeth(a, b, c)) & 0xff
         ai += 1
-    return None
+    return 0
 
 
 def do_filter_paeth(filter_unit, scanline, previous, result):
@@ -125,14 +124,14 @@ def do_filter_paeth(filter_unit, scanline, previous, result):
         b = previous[i]
         result[i] = (x - _paeth(a, b, c)) & 0xff
         ai += 1
-    return None
+    return 0
 
 
 def convert_la_to_rgba(row, result):
     for i in range(3):
         result[i::4] = row[0::2]
     result[3::4] = row[1::2]
-    return None
+    return 0
 
 
 def convert_l_to_rgba(row, result):
@@ -140,7 +139,7 @@ def convert_l_to_rgba(row, result):
     channel in result is already correctly initialized."""
     for i in range(3):
         result[i::4] = row
-    return None
+    return 0
 
 
 def convert_rgb_to_rgba(row, result):
@@ -148,4 +147,4 @@ def convert_rgb_to_rgba(row, result):
     channel in result is already correctly initialized."""
     for i in range(3):
         result[i::4] = row[i::3]
-    return None
+    return 0
