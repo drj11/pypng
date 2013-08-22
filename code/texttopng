@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Script to renders text as a PNG image.
+# Script to render text as a PNG image.
 
 from array import array
 import itertools
