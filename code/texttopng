@@ -4,6 +4,9 @@
 from array import array
 import itertools
 
+def usage(fil):
+    fil.write("texttopng [--help] text > text.png\n")
+
 font = {
   32: '0000000000000000',
   33: '0010101010001000',
@@ -139,8 +142,18 @@ def main(argv=None):
 
     if argv is None:
         argv = sys.argv
-    if len(argv) > 1:
-        message = argv[1]
+    for i,a in enumerate(sys.argv):
+        if a.startswith('-'):
+            if a == '--help':
+                usage(sys.stdout)
+                sys.exit(0)
+            else:
+                sys.stderr.write("Unknown option: %s\n" % a)
+                usage(sys.stderr)
+                sys.exit(4)
+    arg = argv[1:]
+    if len(arg) > 0:
+        message = argv[0]
     else:
         message = sys.stdin.read()
     render(message, sys.stdout)
