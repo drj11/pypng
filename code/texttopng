@@ -153,7 +153,7 @@ def main(argv=None):
                 sys.exit(4)
     arg = argv[1:]
     if len(arg) > 0:
-        message = argv[0]
+        message = arg[0]
     else:
         message = sys.stdin.read()
     render(message, sys.stdout)
