@@ -117,9 +117,28 @@ def char(i):
     return map(lambda row: (ord(row),), font[i].decode('hex'))
 
 def texttoraster(m):
-    """Convert string *m* to a raster image (by rendering it using the
-    font in *font*).  A triple of (*width*, *height*, *pixels*) is
-    returned; *pixels* is in boxed row packed pixel format.
+    """Convert the string *m* to a raster image. Any newlines
+    in *m* will cause more than one line of output. The
+    resulting raster will be taller. Prior to rendering each
+    line, it is padded on the right with enough spaces to make
+    all lines the same length.
+    """
+
+    lines = m.split('\n')
+    maxlen = max(len(line) for line in lines)
+    justified = [line.ljust(maxlen) for line in lines]
+    rasters = [linetoraster(line) for line in justified]
+    x, = set(r[0] for r in rasters)
+    y = sum(r[1] for r in rasters)
+    raster = itertools.chain(*(r[2] for r in rasters))
+    return x, y, raster
+
+def linetoraster(m):
+    """Convert a single line of text *m* to a raster image (by 
+    rendering it using the font in *font*).
+    
+    A triple of (*width*, *height*, *pixels*) is returned;
+    *pixels* is in boxed row packed pixel format.
     """
 
     # Assumes monospaced font.
@@ -127,7 +146,6 @@ def texttoraster(m):
     y = 8
     return x,y,itertools.imap(lambda row: itertools.chain(*row),
                               zip(*map(char, m)))
-
 
 def render(message, out):
     import png
