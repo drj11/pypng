@@ -5,7 +5,7 @@ from array import array
 import itertools
 
 def usage(fil):
-    fil.write("texttopng [--help] text > text.png\n")
+    fil.write("texttopng [--help] text")
 
 font = {
   32: '0000000000000000',
@@ -154,9 +154,11 @@ def main(argv=None):
     arg = argv[1:]
     if len(arg) > 0:
         message = arg[0]
+        out = open("%s.png" % message, 'wb')
     else:
         message = sys.stdin.read()
-    render(message, sys.stdout)
+        out = sys.stdout
+    render(message, out)
 
 if __name__ == '__main__':
     main()
