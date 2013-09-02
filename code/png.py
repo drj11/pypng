@@ -1359,16 +1359,8 @@ class Reader:
                 kw["bytes"] = _guess
             elif isinstance(_guess, str):
                 kw["filename"] = _guess
-            elif isinstance(_guess, file):
+            elif isinstance(_guess, file) or str(_guess.__class__)=='StringIO.StringIO':
                 kw["file"] = _guess
-            else:
-                try:
-                    import StringIO
-                    if isinstance(_guess, StringIO.StringIO): kw["file"]=_guess
-                except:
-                    pass
-               # End try/except
-            # End if
 
         if "filename" in kw:
             self.file = open(kw["filename"], "rb")
