@@ -1361,6 +1361,14 @@ class Reader:
                 kw["filename"] = _guess
             elif isinstance(_guess, file):
                 kw["file"] = _guess
+            else:
+                try:
+                    import StringIO
+                    if isinstance(_guess, StringIO.StringIO): kw["file"]=_guess
+                except:
+                    pass
+               # End try/except
+            # End if
 
         if "filename" in kw:
             self.file = open(kw["filename"], "rb")
