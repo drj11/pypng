@@ -178,10 +178,165 @@ import zlib
 # http://www.python.org/doc/2.4.4/lib/module-warnings.html
 import warnings
 try:
-    import pyximport
-    pyximport.install()
-    import cpngfilters as pngfilters
-except ImportError:
+    import pngfilters
+except:
+    #===Super-safe pngfilters
+    class pngfilters:
+        #cython: boundscheck=False
+        #cython: wraparound=False
+        # NOTE: DO NOT edit filters in png.py. Edit pngfilters.py and
+        # use filter_embed.py to update png.py.
+        # Rename pngfilters.py and run tests after re-embeding
+        # !This done to allow one-file distribution !
+        # !to easier embeding png.py in applications!
+
+        # NOTE: Using reference to functions in pngfilters may cause wrong
+        # embeding. Check filters_embed to update fix for this case.
+
+        # NOTE: Remove binary (pyd/so) version and pngfilters.c if you change
+        # pngfilters. Rebuild them with Cython if you can
+
+        @staticmethod
+        def undo_filter_sub(filter_unit, scanline, previous, result):
+            """Undo sub filter."""
+            ai = 0
+            # Loops starts at index fu.  Observe that the initial part
+            # of the result is already filled in correctly with scanline.
+            for i in range(filter_unit, len(result)):
+                x = scanline[i]
+                a = result[ai]
+                result[i] = (x + a) & 0xff
+                ai += 1
+            return 0
+
+        @staticmethod
+        def do_filter_sub(filter_unit, scanline, previous, result):
+            """Sub filter."""
+            ai = 0
+            for i in range(filter_unit, len(result)):
+                x = scanline[i]
+                a = scanline[ai]
+                result[i] = (x - a) & 0xff
+                ai += 1
+            return 0
+
+        @staticmethod
+        def undo_filter_up(filter_unit, scanline, previous, result):
+            """Undo up filter."""
+            for i in range(len(result)):
+                x = scanline[i]
+                b = previous[i]
+                result[i] = (x + b) & 0xff
+            return 0
+
+        @staticmethod
+        def do_filter_up(filter_unit, scanline, previous, result):
+            """Up filter."""
+            for i in range(len(result)):
+                x = scanline[i]
+                b = previous[i]
+                result[i] = (x - b) & 0xff
+            return 0
+
+        @staticmethod
+        def undo_filter_average(filter_unit, scanline, previous, result):
+            """Undo average filter."""
+            ai = -filter_unit
+            for i in range(len(result)):
+                x = scanline[i]
+                if ai < 0:
+                    a = 0
+                else:
+                    a = result[ai]
+                b = previous[i]
+                result[i] = (x + ((a + b) >> 1)) & 0xff
+                ai += 1
+            return 0
+
+        @staticmethod
+        def do_filter_average(filter_unit, scanline, previous, result):
+            """Average filter."""
+            ai = -filter_unit
+            for i in range(len(result)):
+                x = scanline[i]
+                if ai < 0:
+                    a = 0
+                else:
+                    a = scanline[ai]
+                b = previous[i]
+                result[i] = (x - ((a + b) >> 1)) & 0xff
+                ai += 1
+            return 0
+
+        @staticmethod
+        def _paeth(a, b, c):
+            p = a + b - c
+            pa = abs(p - a)
+            pb = abs(p - b)
+            pc = abs(p - c)
+            if pa <= pb and pa <= pc:
+                return a
+            elif pb <= pc:
+                return b
+            else:
+                return c
+
+        @staticmethod
+        def undo_filter_paeth(filter_unit, scanline, previous, result):
+            """Undo Paeth filter."""
+            ai = -filter_unit
+            for i in range(len(result)):
+                x = scanline[i]
+                if ai < 0:
+                    a = c = 0
+                else:
+                    a = result[ai]
+                    c = previous[ai]
+                b = previous[i]
+                result[i] = (x + pngfilters._paeth(a, b, c)) & 0xff
+                ai += 1
+            return 0
+
+        @staticmethod
+        def do_filter_paeth(filter_unit, scanline, previous, result):
+            """Paeth filter."""
+            # http://www.w3.org/TR/PNG/#9Filter-type-4-Paeth
+            ai = -filter_unit
+            for i in range(len(result)):
+                x = scanline[i]
+                if ai < 0:
+                    a = c = 0
+                else:
+                    a = scanline[ai]
+                    c = previous[ai]
+                b = previous[i]
+                result[i] = (x - pngfilters._paeth(a, b, c)) & 0xff
+                ai += 1
+            return 0
+
+        @staticmethod
+        def convert_la_to_rgba(row, result):
+            for i in range(3):
+                result[i::4] = row[0::2]
+            result[3::4] = row[1::2]
+            return 0
+
+        @staticmethod
+        def convert_l_to_rgba(row, result):
+            """Convert a grayscale image to RGBA. This method assumes the alpha
+            channel in result is already correctly initialized."""
+            for i in range(3):
+                result[i::4] = row
+            return 0
+
+        @staticmethod
+        def convert_rgb_to_rgba(row, result):
+            """Convert an RGB image to RGBA. This method assumes the alpha
+            channel in result is already correctly initialized."""
+            for i in range(3):
+                result[i::4] = row[i::3]
+            return 0
+    #/===Super-safe pngfilters
     pass
 
 
@@ -214,6 +369,18 @@ def isarray(x):
         return isinstance(x, array)
     except:
         return False
+
+
+#Bytearray are faster than array, but looks more like list
+#So they usage limit to internal and no "tostring"
+try:
+    def barray(*nargs):
+        return bytearray(*nargs)
+except:
+    #Bytearray appears in python 2.6
+    def barray(*nargs):
+        return array('B', *nargs)
+
 
 try:  # see :pyver:old
     array.tostring
@@ -330,7 +497,8 @@ class Writer:
                  planes=None,
                  colormap=None,
                  maxval=None,
-                 chunk_limit=2**20):
+                 chunk_limit=2 ** 20,
+                 filter_typ=None):
         """
         Create a PNG encoder object.
 
@@ -533,6 +701,11 @@ class Writer:
             raise ValueError("bitdepth (%r) must be a postive integer <= 16" %
               bitdepth)
 
+        if filter_typ is None:
+            self.filter_typ = 0
+        else:
+            self.filter_typ = filter_typ
+
         self.rescale = None
         if palette:
             if bitdepth not in (1,2,4,8):
@@ -633,7 +806,6 @@ class Writer:
 
           Interlacing will require the entire image to be in working memory.
         """
-
         if self.interlace:
             fmt = 'BH'[self.bitdepth > 8]
             a = array(fmt, itertools.chain(*rows))
@@ -664,7 +836,15 @@ class Writer:
         sequence of bytes.
 
         """
+        self.write_idat(outfile, self.idat(rows, packed))
+        return self.irows
 
+    def write_idat(self, outfile, idat):
+        """Write png with IDAT to file
+
+        'idat' should be iterable that produce IDAT chunks
+        compatible with 'Writer' configuration
+        """
         # http://www.w3.org/TR/PNG/#5PNG-file-signature
         outfile.write(_signature)
 
@@ -717,30 +897,46 @@ class Writer:
                 write_chunk(outfile, 'bKGD',
                             struct.pack("!3H", *self.background))
 
+        for idat in idat:
+            write_chunk(outfile, 'IDAT', idat)
+        # http://www.w3.org/TR/PNG/#11IEND
+        write_chunk(outfile, 'IEND')
+
+    def idat(self, rows, packed=False):
+        """Generator that produce IDAT chunks from rows
+        """
         # http://www.w3.org/TR/PNG/#11IDAT
         if self.compression is not None:
             compressor = zlib.compressobj(self.compression)
         else:
             compressor = zlib.compressobj()
 
+        filterer = Filter(self.bitdepth * self.planes,
+                          self.interlace, self.height)
+        data = array('B')
+
+        #Filtering algorithms are applied to bytes, not to pixels,
+        #regardless of the bit depth or color type of the image.
+        def byteextend(rowbytes):
+            data.extend(filterer.do_filter(self.filter_typ, rowbytes))
+
         # Choose an extend function based on the bitdepth.  The extend
         # function packs/decomposes the pixel values into bytes and
         # stuffs them onto the data array.
-        data = array('B')
         if self.bitdepth == 8 or packed:
-            extend = data.extend
+            extend = byteextend
         elif self.bitdepth == 16:
             # Decompose into bytes
             def extend(sl):
                 fmt = '!%dH' % len(sl)
-                data.extend(array('B', struct.pack(fmt, *sl)))
+                byteextend(barray(struct.pack(fmt, *sl)))
         else:
             # Pack into bytes
             assert self.bitdepth < 8
             # samples per byte
             spb = int(8/self.bitdepth)
             def extend(sl):
-                a = array('B', sl)
+                a = barray(sl)
                 # Adding padding bytes so we can group into a whole
                 # number of spb-tuples.
                 l = float(len(a))
@@ -750,7 +946,7 @@ class Writer:
                 l = group(a, spb)
                 l = map(lambda e: reduce(lambda x,y:
                                            (x << self.bitdepth) + y, e), l)
-                data.extend(l)
+                byteextend(l)
         if self.rescale:
             oldextend = extend
             factor = \
@@ -766,8 +962,6 @@ class Writer:
         enumrows = enumerate(rows)
         del rows
 
-        # First row's filter type.
-        data.append(0)
         # :todo: Certain exceptions in the call to ``.next()`` or the
         # following try would indicate no row data supplied.
         # Should catch.
@@ -792,13 +986,13 @@ class Writer:
             # mark the first row of a reduced pass image; that means we
             # could accidentally compute the wrong filtered scanline if
             # we used "up", "average", or "paeth" on such a line.
-            data.append(0)
+            #data.append(0)
             extend(row)
             if len(data) > self.chunk_limit:
                 compressed = compressor.compress(tostring(data))
                 if len(compressed):
                     # print >> sys.stderr, len(data), len(compressed)
-                    write_chunk(outfile, 'IDAT', compressed)
+                    yield compressed
                 # Because of our very witty definition of ``extend``,
                 # above, we must re-use the same ``data`` object.  Hence
                 # we use ``del`` to empty this one, rather than create a
@@ -811,10 +1005,8 @@ class Writer:
         flushed = compressor.flush()
         if len(compressed) or len(flushed):
             # print >> sys.stderr, len(data), len(compressed), len(flushed)
-            write_chunk(outfile, 'IDAT', compressed + flushed)
-        # http://www.w3.org/TR/PNG/#11IEND
-        write_chunk(outfile, 'IEND')
-        return i+1
+            yield compressed + flushed
+        self.irows = i + 1
 
     def write_array(self, outfile, pixels):
         """
@@ -983,8 +1175,9 @@ def write_chunks(out, chunks):
     for chunk in chunks:
         write_chunk(out, *chunk)
 
-def filter_scanline(type, line, fo, prev=None):
-    """Apply a scanline filter to a scanline.  `type` specifies the
+
+def filter_scanline(typ, line, fo, prev=None):
+    """Apply a scanline filter to a scanline.  `typ` specifies the
     filter type (0 to 4); `line` specifies the current (unfiltered)
     scanline as a sequence of bytes; `prev` specifies the previous
     (unfiltered) scanline as a sequence of bytes. `fo` specifies the
@@ -992,79 +1185,58 @@ def filter_scanline(type, line, fo, prev=None):
     of bytes per sample times the number of channels), but when this is
     < 1 (for bit depths < 8) then the filter offset is 1.
     """
-
-    assert 0 <= type < 5
-
-    # The output array.  Which, pathetically, we extend one-byte at a
-    # time (fortunately this is linear).
-    out = array('B', [type])
-
-    def sub():
-        ai = -fo
-        for x in line:
-            if ai >= 0:
-                x = (x - line[ai]) & 0xff
-            out.append(x)
-            ai += 1
-    def up():
-        for i,x in enumerate(line):
-            x = (x - prev[i]) & 0xff
-            out.append(x)
-    def average():
-        ai = -fo
-        for i,x in enumerate(line):
-            if ai >= 0:
-                x = (x - ((line[ai] + prev[i]) >> 1)) & 0xff
-            else:
-                x = (x - (prev[i] >> 1)) & 0xff
-            out.append(x)
-            ai += 1
-    def paeth():
-        # http://www.w3.org/TR/PNG/#9Filter-type-4-Paeth
-        ai = -fo # also used for ci
-        for i,x in enumerate(line):
-            a = 0
-            b = prev[i]
-            c = 0
-
-            if ai >= 0:
-                a = line[ai]
-                c = prev[ai]
-            p = a + b - c
-            pa = abs(p - a)
-            pb = abs(p - b)
-            pc = abs(p - c)
-            if pa <= pb and pa <= pc: Pr = a
-            elif pb <= pc: Pr = b
-            else: Pr = c
-
-            x = (x - Pr) & 0xff
-            out.append(x)
-            ai += 1
-
+    assert 0 <= typ < 5
+    f = [None,
+         pngfilters.do_filter_sub,
+         pngfilters.do_filter_up,
+         pngfilters.do_filter_average,
+         pngfilters.do_filter_paeth][typ]
     if not prev:
         # We're on the first line.  Some of the filters can be reduced
         # to simpler cases which makes handling the line "off the top"
         # of the image simpler.  "up" becomes "none"; "paeth" becomes
         # "left" (non-trivial, but true). "average" needs to be handled
         # specially.
-        if type == 2: # "up"
-            return line # type = 0
-        elif type == 3:
-            prev = [0]*len(line)
-        elif type == 4: # "paeth"
-            type = 1
-    if type == 0:
-        out.extend(line)
-    elif type == 1:
-        sub()
-    elif type == 2:
-        up()
-    elif type == 3:
-        average()
-    else: # type == 4
-        paeth()
-    return out
+        if typ == 2:  # "up"
+            #return line
+            f = None
+        elif typ == 3:
+            prev = [0] * len(line)
+        elif typ == 4:  # "paeth"
+            f = pngfilters.do_filter_sub
+    # There are dirty hacks for buffer compatibility
+    # when using compiled filters
+    line = barray(line)
+    prev = barray() if prev is None else barray(prev)
+
+    result = barray(line)
+    if f is not None:
+        f(fo, line, prev, result)
+    result.insert(0, typ)  # Add filter type in the beginning of row
+    return result
+
+
+class Filter:
+    def __init__(self, bitdepth=8, interlace=None, rows=None):
+        self.fu = bitdepth // 8 if bitdepth > 8 else 1
+        self.interlace = interlace
+        self.restarts = []
+        if self.interlace:
+            for _, off, _, step in _adam7:
+                self.restarts.append((rows - off - 1 + step) // step)
+        self.prev = None
+
+    def do_filter(self, typ, line):
+        """Applying filter, caring about prev line, interlacing etc.
+        """
+        res = filter_scanline(typ, line, self.fu, self.prev)
+        self.prev = line
+        if self.restarts:
+            self.restarts[0] -= 1
+            if self.restarts[0] == 0:
+                del self.restarts[0]
+                self.prev = None
+        return res
 
 
 def from_array(a, mode=None, info={}):
@@ -1476,68 +1648,7 @@ class Reader:
         # first line 'up' is the same as 'null', 'paeth' is the same
         # as 'sub', with only 'average' requiring any special case.
         if not previous:
-            previous = array('B', [0]*len(scanline))
-
-        def sub():
-            """Undo sub filter."""
-
-            ai = 0
-            # Loops starts at index fu.  Observe that the initial part
-            # of the result is already filled in correctly with
-            # scanline.
-            for i in range(fu, len(result)):
-                x = scanline[i]
-                a = result[ai]
-                result[i] = (x + a) & 0xff
-                ai += 1
-
-        def up():
-            """Undo up filter."""
-
-            for i in range(len(result)):
-                x = scanline[i]
-                b = previous[i]
-                result[i] = (x + b) & 0xff
-
-        def average():
-            """Undo average filter."""
-
-            ai = -fu
-            for i in range(len(result)):
-                x = scanline[i]
-                if ai < 0:
-                    a = 0
-                else:
-                    a = result[ai]
-                b = previous[i]
-                result[i] = (x + ((a + b) >> 1)) & 0xff
-                ai += 1
-
-        def paeth():
-            """Undo Paeth filter."""
-
-            # Also used for ci.
-            ai = -fu
-            for i in range(len(result)):
-                x = scanline[i]
-                if ai < 0:
-                    a = c = 0
-                else:
-                    a = result[ai]
-                    c = previous[ai]
-                b = previous[i]
-                p = a + b - c
-                pa = abs(p - a)
-                pb = abs(p - b)
-                pc = abs(p - c)
-                if pa <= pb and pa <= pc:
-                    pr = a
-                elif pb <= pc:
-                    pr = b
-                else:
-                    pr = c
-                result[i] = (x + pr) & 0xff
-                ai += 1
+            previous = barray([0] * len(scanline))
 
         # Call appropriate filter algorithm.  Note that 0 has already
         # been dealt with.
@@ -1860,6 +1971,39 @@ class Reader:
                 not self.colormap and len(data) != self.planes):
                 raise FormatError("sBIT chunk has incorrect length.")
 
+    def idat(self, lenient=False):
+        """Iterator that yields all the ``IDAT`` chunks as strings."""
+        while True:
+            try:
+                typ, data = self.chunk(lenient=lenient)
+            except ValueError, e:
+                raise ChunkError(e.args[0])
+            if typ == 'IEND':
+                # http://www.w3.org/TR/PNG/#11IEND
+                break
+            if typ != 'IDAT':
+                continue
+            # typ == 'IDAT'
+            # http://www.w3.org/TR/PNG/#11IDAT
+            if self.colormap and not self.plte:
+                warnings.warn("PLTE chunk is required before IDAT chunk")
+            yield data
+
+    def idatdecomp(self, lenient=False, max_length=0):
+        """Iterator that yields decompressed ``IDAT`` strings."""
+
+        # Currently, with no max_length paramter to decompress, this
+        # routine will do one yield per IDAT chunk.  So not very
+        # incremental.
+        d = zlib.decompressobj()
+        # Each IDAT chunk is passed to the decompressor, then any
+        # remaining state is decompressed out.
+        for data in self.idat(lenient):
+            # :todo: add a max_length argument here to limit output
+            # size.
+            yield array('B', d.decompress(data))
+        yield array('B', d.flush())
+
     def read(self, lenient=False):
         """
         Read the PNG file and decode it.  Returns (`width`, `height`,
@@ -1873,43 +2017,8 @@ class Reader:
         checksum failures will raise warnings rather than exceptions.
         """
 
-        def iteridat():
-            """Iterator that yields all the ``IDAT`` chunks as strings."""
-            while True:
-                try:
-                    type, data = self.chunk(lenient=lenient)
-                except ValueError, e:
-                    raise ChunkError(e.args[0])
-                if type == 'IEND':
-                    # http://www.w3.org/TR/PNG/#11IEND
-                    break
-                if type != 'IDAT':
-                    continue
-                # type == 'IDAT'
-                # http://www.w3.org/TR/PNG/#11IDAT
-                if self.colormap and not self.plte:
-                    warnings.warn("PLTE chunk is required before IDAT chunk")
-                yield data
-
-        def iterdecomp(idat):
-            """Iterator that yields decompressed strings.  `idat` should
-            be an iterator that yields the ``IDAT`` chunk data.
-            """
-
-            # Currently, with no max_length paramter to decompress, this
-            # routine will do one yield per IDAT chunk.  So not very
-            # incremental.
-            d = zlib.decompressobj()
-            # Each IDAT chunk is passed to the decompressor, then any
-            # remaining state is decompressed out.
-            for data in idat:
-                # :todo: add a max_length argument here to limit output
-                # size.
-                yield array('B', d.decompress(data))
-            yield array('B', d.flush())
-
         self.preamble(lenient=lenient)
-        raw = iterdecomp(iteridat())
+        raw = self.idatdecomp(lenient)
 
         if self.interlace:
             raw = array('B', itertools.chain(*raw))
@@ -2274,6 +2383,12 @@ except:
             if type(init) == str:
                 return map(ord, init)
             return list(init)
+        # Hacks for buffer will be broken in python 2.2
+        # So we must switch to native pngfilters instead of compiled
+        if type(pngfilters) == type(zlib):  # isinstance(pngfilters, module)
+            # Must reimport only if it was module, not 'super-safe' class
+            import imp
+            pngfilters = imp.load_source('pngfilters', 'pngfilters.py')
 
 # Further hacks to get it limping along on Python 2.2
 try:
@@ -2310,97 +2425,6 @@ except:
                 yield element
     itertools.chain = _itertools_chain
 
-
-# === Support for users without Cython ===
-
-try:
-    pngfilters
-except:
-    class pngfilters(object):
-        def undo_filter_sub(filter_unit, scanline, previous, result):
-            """Undo sub filter."""
-
-            ai = 0
-            # Loops starts at index fu.  Observe that the initial part
-            # of the result is already filled in correctly with
-            # scanline.
-            for i in range(filter_unit, len(result)):
-                x = scanline[i]
-                a = result[ai]
-                result[i] = (x + a) & 0xff
-                ai += 1
-        undo_filter_sub = staticmethod(undo_filter_sub)
-
-        def undo_filter_up(filter_unit, scanline, previous, result):
-            """Undo up filter."""
-
-            for i in range(len(result)):
-                x = scanline[i]
-                b = previous[i]
-                result[i] = (x + b) & 0xff
-        undo_filter_up = staticmethod(undo_filter_up)
-
-        def undo_filter_average(filter_unit, scanline, previous, result):
-            """Undo up filter."""
-
-            ai = -filter_unit
-            for i in range(len(result)):
-                x = scanline[i]
-                if ai < 0:
-                    a = 0
-                else:
-                    a = result[ai]
-                b = previous[i]
-                result[i] = (x + ((a + b) >> 1)) & 0xff
-                ai += 1
-        undo_filter_average = staticmethod(undo_filter_average)
-
-        def undo_filter_paeth(filter_unit, scanline, previous, result):
-            """Undo Paeth filter."""
-
-            # Also used for ci.
-            ai = -filter_unit
-            for i in range(len(result)):
-                x = scanline[i]
-                if ai < 0:
-                    a = c = 0
-                else:
-                    a = result[ai]
-                    c = previous[ai]
-                b = previous[i]
-                p = a + b - c
-                pa = abs(p - a)
-                pb = abs(p - b)
-                pc = abs(p - c)
-                if pa <= pb and pa <= pc:
-                    pr = a
-                elif pb <= pc:
-                    pr = b
-                else:
-                    pr = c
-                result[i] = (x + pr) & 0xff
-                ai += 1
-        undo_filter_paeth = staticmethod(undo_filter_paeth)
-
-        def convert_la_to_rgba(row, result):
-            for i in range(3):
-                result[i::4] = row[0::2]
-            result[3::4] = row[1::2]
-        convert_la_to_rgba = staticmethod(convert_la_to_rgba)
-
-        def convert_l_to_rgba(row, result):
-            """Convert a grayscale image to RGBA. This method assumes the alpha
-            channel in result is already correctly initialized."""
-            for i in range(3):
-                result[i::4] = row
-        convert_l_to_rgba = staticmethod(convert_l_to_rgba)
-
-        def convert_rgb_to_rgba(row, result):
-            """Convert an RGB image to RGBA. This method assumes the alpha
-            channel in result is already correctly initialized."""
-            for i in range(3):
-                result[i::4] = row[i::3]
-        convert_rgb_to_rgba = staticmethod(convert_rgb_to_rgba)
 
 
 # === Internal Test Support ===
@@ -2614,35 +2638,39 @@ class Test(unittest.TestCase):
             straight = straight.read()[2]
             adam7 = adam7.read()[2]
             self.assertEqual(map(list, straight), map(list, adam7))
+
     def testAdam7write(self):
         """Adam7 interlace writing.
         For each test image in the PngSuite, write an interlaced
         and a straightlaced version.  Decode both, and compare results.
+        Also test filter on interlaced version as it's filtering is complex.
         """
         # Not such a great test, because the only way we can check what
         # we have written is to read it back again.
+        for filter_typ in range(5):
+            print "Test filter " + str(filter_typ)
+            for name, bytes in _pngsuite.items():
+                # Only certain colour types supported for this test.
+                if name[3:5] not in ['n0', 'n2', 'n4', 'n6']:
+                    continue
+                it = Reader(bytes=bytes)
+                x, y, pixels, _ = it.read()
+                pngi = topngbytes('adam7wn' + name + '.png', pixels,
+                                  x=x, y=y, bitdepth=it.bitdepth,
+                                  greyscale=it.greyscale, alpha=it.alpha,
+                                  transparent=it.transparent,
+                                  interlace=False, filter_typ=0)
+                x, y, ps, _ = Reader(bytes=pngi).read()
+                it = Reader(bytes=bytes)
+                x, y, pixels, _ = it.read()
+                pngs = topngbytes('adam7wi' + name + '.png', pixels,
+                                  x=x, y=y, bitdepth=it.bitdepth,
+                                  greyscale=it.greyscale, alpha=it.alpha,
+                                  transparent=it.transparent,
+                                  interlace=True, filter_typ=filter_typ)
+                x, y, pi, _ = Reader(bytes=pngs).read()
+                self.assertEqual(map(list, ps), map(list, pi))
 
-        for name,bytes in _pngsuite.items():
-            # Only certain colour types supported for this test.
-            if name[3:5] not in ['n0', 'n2', 'n4', 'n6']:
-                continue
-            it = Reader(bytes=bytes)
-            x,y,pixels,meta = it.read()
-            pngi = topngbytes('adam7wn'+name+'.png', pixels,
-              x=x, y=y, bitdepth=it.bitdepth,
-              greyscale=it.greyscale, alpha=it.alpha,
-              transparent=it.transparent,
-              interlace=False)
-            x,y,ps,meta = Reader(bytes=pngi).read()
-            it = Reader(bytes=bytes)
-            x,y,pixels,meta = it.read()
-            pngs = topngbytes('adam7wi'+name+'.png', pixels,
-              x=x, y=y, bitdepth=it.bitdepth,
-              greyscale=it.greyscale, alpha=it.alpha,
-              transparent=it.transparent,
-              interlace=True)
-            x,y,pi,meta = Reader(bytes=pngs).read()
-            self.assertEqual(map(list, ps), map(list, pi))
     def testPGMin(self):
         """Test that the command line tool can read PGM files."""
         def do():
@@ -2943,10 +2971,7 @@ class Test(unittest.TestCase):
         out = filter_scanline(1, line, fo, None)  # sub
         self.assertEqual(list(out), [1, 30, 31, 32, 200, 200, 200])
         out = filter_scanline(2, line, fo, None)  # up
-        # TODO: All filtered scanlines start with a byte indicating the filter
-        # algorithm, except "up". Is this a bug? Should the expected output
-        # start with 2 here?
-        self.assertEqual(list(out), [30, 31, 32, 230, 231, 232])
+        self.assertEqual(list(out), [2, 30, 31, 32, 230, 231, 232])
         out = filter_scanline(3, line, fo, None)  # average
         self.assertEqual(list(out), [3, 30, 31, 32, 215, 216, 216])
         out = filter_scanline(4, line, fo, None)  # paeth
@@ -3794,7 +3819,10 @@ def _main(argv):
     outfile = sys.stdout
     if sys.platform == "win32":
         import msvcrt, os
-        msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
+        try:
+            msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
+        except:
+            pass
 
     if options.read_png:
         # Encode PNG to PPM
