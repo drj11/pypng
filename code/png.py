@@ -2573,7 +2573,8 @@ class Test(unittest.TestCase):
     def testRGBtoRGBA(self):
         "asRGBA8() on colour type 2 source."""
         # Test for Issue 26
-        r = Reader(bytes=_pngsuite['basn2c08'])
+        # Also test that Reader can take a "file-like" object.
+        r = Reader(BytesIO(_pngsuite['basn2c08']))
         x,y,pixels,meta = r.asRGBA8()
         # Test the pixels at row 9 columns 0 and 1.
         row9 = list(pixels)[9]
