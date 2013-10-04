@@ -2945,10 +2945,7 @@ class Test(unittest.TestCase):
         out = filter_scanline(1, line, fo, None)  # sub
         self.assertEqual(list(out), [1, 30, 31, 32, 200, 200, 200])
         out = filter_scanline(2, line, fo, None)  # up
-        # TODO: All filtered scanlines start with a byte indicating the filter
-        # algorithm, except "up". Is this a bug? Should the expected output
-        # start with 2 here?
-        self.assertEqual(list(out), [30, 31, 32, 230, 231, 232])
+        self.assertEqual(list(out), [2, 30, 31, 32, 230, 231, 232])
         out = filter_scanline(3, line, fo, None)  # average
         self.assertEqual(list(out), [3, 30, 31, 32, 215, 216, 216])
         out = filter_scanline(4, line, fo, None)  # paeth
