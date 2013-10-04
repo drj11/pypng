@@ -49,9 +49,20 @@ RELEASE NOTES
 
 (For issues see https://github.com/drj11/pypng/issues?state=open )
 
+
+Release 0.0.16
+
+Compatible with nose: `nosetests png.py` now works.
+
+Allow any "file-like" object as an input.
+
+Handle newlines in texttopng.
+
+
 Release 0.0.15
 
 Fixed various URLs to point at github.com instead of googlecode.
+
 
 Release 0.0.14
 
