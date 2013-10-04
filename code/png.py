@@ -1355,12 +1355,12 @@ class Reader:
         self.atchunk = None
 
         if _guess is not None:
-						if isarray(_guess):
-								kw["bytes"] = _guess
-						elif isinstance(_guess, str):
-								kw["filename"] = _guess
-						elif isinstance(_guess, file) or hasattr(_guess, 'read'):
-								kw["file"] = _guess
+            if isarray(_guess):
+                kw["bytes"] = _guess
+            elif isinstance(_guess, str):
+                kw["filename"] = _guess
+            elif isinstance(_guess, file) or hasattr(_guess, 'read'):
+                kw["file"] = _guess
 
         if "filename" in kw:
             self.file = open(kw["filename"], "rb")
