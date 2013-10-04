@@ -2415,7 +2415,9 @@ except:
 # produce is valid.
 
 # Run the tests from the command line:
-# python -c 'import png;png.test()'
+#   python -c 'import png;png.runTest()'
+# If you have nose installed you can use that:
+#   nosetests png.py
 
 # (For an in-memory binary file IO object) We use BytesIO where
 # available, otherwise we use StringIO, but name it BytesIO.
@@ -2428,7 +2430,7 @@ import tempfile
 import unittest
 
 
-def test():
+def runTest():
     unittest.main(__name__)
 
 def topngbytes(name, rows, x, y, **k):
