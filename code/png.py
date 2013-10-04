@@ -2999,23 +2999,6 @@ class Test(unittest.TestCase):
 
         out = reader.undo_filter(4, scanline, scanprev)
         self.assertEqual(list(out), [8, 10, 9, 108, 111, 113])  # paeth
-    def testIterstraight(self):
-        def arraify(list_of_str):
-            return [array('B', s) for s in list_of_str]
-        reader = Reader(bytes='')
-        reader.row_bytes = 6
-        reader.psize = 3
-        rows = reader.iterstraight(arraify(['\x00abcdef', '\x00ghijkl']))
-        self.assertEqual(list(rows), arraify(['abcdef', 'ghijkl']))
-
-        rows = reader.iterstraight(arraify(['\x00abc', 'def\x00ghijkl']))
-        self.assertEqual(list(rows), arraify(['abcdef', 'ghijkl']))
-
-        rows = reader.iterstraight(arraify(['\x00abcdef\x00ghijkl']))
-        self.assertEqual(list(rows), arraify(['abcdef', 'ghijkl']))
-
-        rows = reader.iterstraight(arraify(['\x00abcdef\x00ghi', 'jkl']))
-        self.assertEqual(list(rows), arraify(['abcdef', 'ghijkl']))
 
 # === Command Line Support ===
 
