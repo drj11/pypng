@@ -5,7 +5,7 @@ Extremely draft.
 
 At top-level...
 
-Edit ``setup.py`` for new version number.  Then ``git commit`` this.
+Edit ``png.py`` for new version number.  Then ``git commit`` this.
 
 Get release notes into ``README.txt`` somehow.
 
