@@ -1049,7 +1049,7 @@ def filter_scanline(type, line, fo, prev=None):
         # "left" (non-trivial, but true). "average" needs to be handled
         # specially.
         if type == 2: # "up"
-            return line # type = 0
+            type = 0
         elif type == 3:
             prev = [0]*len(line)
         elif type == 4: # "paeth"
