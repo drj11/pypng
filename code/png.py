@@ -1359,7 +1359,7 @@ class Reader:
                 kw["bytes"] = _guess
             elif isinstance(_guess, str):
                 kw["filename"] = _guess
-            elif isinstance(_guess, file) or hasattr(_guess, 'read'):
+            elif hasattr(_guess, 'read'):
                 kw["file"] = _guess
 
         if "filename" in kw:
