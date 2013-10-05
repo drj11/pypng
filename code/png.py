@@ -167,7 +167,7 @@ __version__ = "0.0.16"
 from array import array
 try: # See :pyver:old
     import itertools
-except:
+except ImportError:
     pass
 import math
 # http://www.python.org/doc/2.4.4/lib/module-operator.html
@@ -212,12 +212,13 @@ def isarray(x):
 
     try:
         return isinstance(x, array)
-    except:
+    except TypeError:
+        # Because on Python 2.2 array.array is not a type.
         return False
 
 try:  # see :pyver:old
     array.tostring
-except:
+except AttributeError:
     def tostring(row):
         l = len(row)
         return struct.pack('%dB' % l, *row)
@@ -233,7 +234,11 @@ try:
     bytes('', 'ascii')
     def strtobytes(x): return bytes(x, 'iso8859-1')
     def bytestostr(x): return str(x, 'iso8859-1')
-except:
+except (NameError, TypeError):
+    # We get NameError when bytes() does not exist (most Python
+    # 2.x versions), and TypeError when bytes() exists but is on
+    # Python 2.x (when it is an alias for str() and takes at most
+    # one argument).
     strtobytes = str
     bytestostr = str
 
@@ -461,7 +466,7 @@ class Writer:
         def isinteger(x):
             try:
                 return int(x) == x
-            except:
+            except (TypeError, ValueError):
                 return False
 
         def check_color(c, which):
@@ -1166,7 +1171,7 @@ def from_array(a, mode=None, info={}):
         if len(mode) == 2:
             try:
                 bitdepth = int(mode[1])
-            except:
+            except (TypeError, ValueError):
                 raise Error()
     except Error:
         raise Error("mode string should be 'RGB' or 'L;16' or similar.")
@@ -1187,13 +1192,13 @@ def from_array(a, mode=None, info={}):
             if dimension in info:
                 if info[dimension] != info['size'][axis]:
                     raise Error(
-                      "info[%r] shhould match info['size'][%r]." %
+                      "info[%r] should match info['size'][%r]." %
                       (dimension, axis))
         info['width'],info['height'] = info['size']
     if 'height' not in info:
         try:
             l = len(a)
-        except:
+        except TypeError:
             raise Error(
               "len(a) does not work, supply info['height'] instead.")
         info['height'] = l
@@ -1222,7 +1227,7 @@ def from_array(a, mode=None, info={}):
         row[0][0]
         threed = True
         testelement = row[0]
-    except:
+    except TypeError:
         threed = False
         testelement = row
     if 'width' not in info:
@@ -1239,11 +1244,11 @@ def from_array(a, mode=None, info={}):
         try:
             dtype = testelement.dtype
             # goto the "else:" clause.  Sorry.
-        except:
+        except AttributeError:
             try:
                 # Try a Python array.array.
                 bitdepth = 8 * testelement.itemsize
-            except:
+            except AttributeError:
                 # We can't determine it from the array element's
                 # datatype, use a default of 8.
                 bitdepth = 8
@@ -1294,7 +1299,7 @@ class Image:
         try:
             file.write
             def close(): pass
-        except:
+        except AttributeError:
             file = open(file, 'wb')
             def close(): file.close()
 
@@ -2238,7 +2243,7 @@ class Reader:
 # array, and it cannot be extended with a list (or other sequence).
 # Both of those are repeated issues in the code.  Whilst I would not
 # normally tolerate this sort of behaviour, here we "shim" a replacement
-# for array into place (and hope no-ones notices).  You never read this.
+# for array into place (and hope no-one notices).  You never read this.
 #
 # In an amusing case of warty hacks on top of warty hacks... the array
 # shimming we try and do only works on Python 2.3 and above (you can't
@@ -2247,7 +2252,8 @@ class Reader:
 try:
     array('B').extend([])
     array('B', array('B'))
-except:
+# :todo:(drj) Check that TypeError is correct for Python 2.3
+except TypeError:
     # Expect to get here on Python 2.3
     try:
         class _array_shim(array):
@@ -2268,7 +2274,7 @@ except:
                     extension = list(extension)
                 return super_extend(self.true_array(self.typecode, extension))
         array = _array_shim
-    except:
+    except TypeError:
         # Expect to get here on Python 2.2
         def array(typecode, init=()):
             if type(init) == str:
@@ -2278,7 +2284,7 @@ except:
 # Further hacks to get it limping along on Python 2.2
 try:
     enumerate
-except:
+except NameError:
     def enumerate(seq):
         i=0
         for x in seq:
@@ -2287,7 +2293,7 @@ except:
 
 try:
     reversed
-except:
+except NameError:
     def reversed(l):
         l = list(l)
         l.reverse()
@@ -2296,7 +2302,7 @@ except:
 
 try:
     itertools
-except:
+except NameError:
     class _dummy_itertools:
         pass
     itertools = _dummy_itertools()
@@ -2315,7 +2321,7 @@ except:
 
 try:
     pngfilters
-except:
+except NameError:
     class pngfilters(object):
         def undo_filter_sub(filter_unit, scanline, previous, result):
             """Undo sub filter."""
@@ -2423,7 +2429,7 @@ except:
 # available, otherwise we use StringIO, but name it BytesIO.
 try:
     from io import BytesIO
-except:
+except ImportError:
     from StringIO import StringIO as BytesIO
 import tempfile
 # http://www.python.org/doc/2.4.4/lib/module-unittest.html
