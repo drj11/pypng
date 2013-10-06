@@ -2861,10 +2861,10 @@ class Test(unittest.TestCase):
         self.assertEqual(_enhex(d), '255cd971ab8cd9e7275ff906e5041aa0')
     def testfromarray(self):
         img = from_array([[0, 0x33, 0x66], [0xff, 0xcc, 0x99]], 'L')
-        img.save('testfromarray.png')
+        img.save(BytesIO())
     def testfromarrayL16(self):
         img = from_array(group(range(2**16), 256), 'L;16')
-        img.save('testL16.png')
+        img.save(BytesIO())
     def testfromarrayRGB(self):
         img = from_array([[0,0,0, 0,0,1, 0,1,0, 0,1,1],
                           [1,0,0, 1,0,1, 1,1,0, 1,1,1]], 'RGB;1')
@@ -2876,9 +2876,8 @@ class Test(unittest.TestCase):
         i = itertools.islice(itertools.count(10), 20)
         i = itertools.imap(lambda x: [x, x, x], i)
         img = from_array(i, 'RGB;5', dict(height=20))
-        f = open('testiter.png', 'wb')
+        f = BytesIO()
         img.save(f)
-        f.close()
 
     # numpy dependent tests.  These are skipped (with a message to
     # sys.stderr) if numpy cannot be imported.
