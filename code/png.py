@@ -29,26 +29,6 @@
 # ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-#
-# Changelog (recent first):
-# 2009-03-11 David: interlaced bit depth < 8 (writing).
-# 2009-03-10 David: interlaced bit depth < 8 (reading).
-# 2009-03-04 David: Flat and Boxed pixel formats.
-# 2009-02-26 David: Palette support (writing).
-# 2009-02-23 David: Bit-depths < 8; better PNM support.
-# 2006-06-17 Nicko: Reworked into a class, faster interlacing.
-# 2006-06-17 Johann: Very simple prototype PNG decoder.
-# 2006-06-17 Nicko: Test suite with various image generators.
-# 2006-06-17 Nicko: Alpha-channel, grey-scale, 16-bit/plane support.
-# 2006-06-15 Johann: Scanline iterator interface for large input files.
-# 2006-06-09 Johann: Very simple prototype PNG encoder.
-
-# Incorporated into Bangai-O Development Tools by drj on 2009-02-11 from
-# http://trac.browsershots.org/browser/trunk/pypng/lib/png.py?rev=2885
-
-# Incorporated into pypng by drj on 2009-03-12 from
-# //depot/prj/bangaio/master/code/png.py#67
-
 
 """
 Pure Python PNG Reader/Writer
