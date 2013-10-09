@@ -1,13 +1,12 @@
 #cython: boundscheck=False
 #cython: wraparound=False
-# NOTE: DO NOT edit filters in png.py. Edit pngfilters.py and
-# use filter_embed.py to update png.py.
-# Rename pngfilters.py and run tests after re-embeding
-# NOTE: Using reference to functions in pngfilters may cause wrong
-# embeding. Check filters_embed to update fix for this case.
+'''
+Created on 22.07.2013
 
-# NOTE: Remove binary (pyd/so) version and pngfilters.c if you change
-# pngfilters. Rebuild them with Cython if you can
+@author: scond_000
+'''
+# NOTE: Remove binary (pyd/so) version and pngfilters.c if you change this file
+# Rebuild them with Cython if you can
 
 
 def undo_filter_sub(filter_unit, scanline, previous, result):
