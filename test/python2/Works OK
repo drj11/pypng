@@ -1,0 +1,10 @@
+#!/bin/sh
+
+if ! py2=$(which python2)
+then
+  printf 2>&1 '%s\n' "Can't find python2"
+  exit 99
+fi
+
+export PYTHONPATH=../../code
+$py2 -c 'import png; png.runTest()'

@@ -263,7 +263,7 @@ def deblock(f) :
     l = (x >> 2) + 3
     # Offset is made from bottom 2 bits of x and all 8 bits of next
     # byte.  http://plan9.bell-labs.com/magic/man2html/6/image doesn't
-    # say whether x's 2 bits are most signiificant or least significant.
+    # say whether x's 2 bits are most significant or least significant.
     # But it is clear from inspecting a random file,
     # http://plan9.bell-labs.com/sources/plan9/sys/games/lib/sokoban/images/cargo.bit
     # that x's 2 bit are most significant.

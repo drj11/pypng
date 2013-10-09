@@ -1,10 +1,20 @@
 #!/usr/bin/env python
-# $URL$
-# $Rev$
-# Script to renders text as a PNG image.
+# Script to render text as a PNG image.
+
+"""texttopng"""
+
+# Example (all ASCII glyphs):
+"""
+printf $(printf '\\%s' $(seq 40 176 | grep -v '[89]')) |
+  fold -w 32 |
+  ./texttopng > ascii.png
+"""
 
 from array import array
 import itertools
+
+def usage(fil):
+    fil.write("texttopng [--help] text")
 
 font = {
   32: '0000000000000000',
@@ -116,9 +126,28 @@ def char(i):
     return map(lambda row: (ord(row),), font[i].decode('hex'))
 
 def texttoraster(m):
-    """Convert string *m* to a raster image (by rendering it using the
-    font in *font*).  A triple of (*width*, *height*, *pixels*) is
-    returned; *pixels* is in boxed row packed pixel format.
+    """Convert the string *m* to a raster image. Any newlines
+    in *m* will cause more than one line of output. The
+    resulting raster will be taller. Prior to rendering each
+    line, it is padded on the right with enough spaces to make
+    all lines the same length.
+    """
+
+    lines = m.split('\n')
+    maxlen = max(len(line) for line in lines)
+    justified = [line.ljust(maxlen) for line in lines]
+    rasters = [linetoraster(line) for line in justified]
+    x, = set(r[0] for r in rasters)
+    y = sum(r[1] for r in rasters)
+    raster = itertools.chain(*(r[2] for r in rasters))
+    return x, y, raster
+
+def linetoraster(m):
+    """Convert a single line of text *m* to a raster image (by 
+    rendering it using the font in *font*).
+    
+    A triple of (*width*, *height*, *pixels*) is returned;
+    *pixels* is in boxed row packed pixel format.
     """
 
     # Assumes monospaced font.
@@ -126,7 +155,6 @@ def texttoraster(m):
     y = 8
     return x,y,itertools.imap(lambda row: itertools.chain(*row),
                               zip(*map(char, m)))
-
 
 def render(message, out):
     import png
@@ -141,11 +169,23 @@ def main(argv=None):
 
     if argv is None:
         argv = sys.argv
-    if len(argv) > 1:
-        message = argv[1]
+    for i,a in enumerate(sys.argv):
+        if a.startswith('-'):
+            if a == '--help':
+                usage(sys.stdout)
+                sys.exit(0)
+            else:
+                sys.stderr.write("Unknown option: %s\n" % a)
+                usage(sys.stderr)
+                sys.exit(4)
+    arg = argv[1:]
+    if len(arg) > 0:
+        message = arg[0]
+        out = open("%s.png" % message, 'wb')
     else:
         message = sys.stdin.read()
-    render(message, sys.stdout)
+        out = sys.stdout
+    render(message, out)
 
 if __name__ == '__main__':
     main()

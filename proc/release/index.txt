@@ -5,7 +5,7 @@ Extremely draft.
 
 At top-level...
 
-Edit ``setup.py`` for new version number.  Then ``git commit`` this.
+Edit ``png.py`` for new version number.  Then ``git commit`` this.
 
 Get release notes into ``README.txt`` somehow.
 
@@ -13,11 +13,15 @@ Get the latest git change hash::
 
     git log -n1 | sed q
 
+Set the PYPNG_VERSION variable (extracted from `code/png.py`):
+
+    . ./pypng-version
+
 Add a tag for this release (the tags have this format so that
 the automatically generated tarballs from github.com have the
 right URL).
 
-    git tag -a pypng-X.Y.Z -m 'PyPNG release 0.0.14'
+    git tag -a pypng-$PYPNG_VERSION -m "PyPNG release $PYPNG_VERSION"
 
 and push:
 
@@ -28,19 +32,19 @@ into a subdirectory.  You can delete it later if you want.
 
 Checkout the particular revision of the source::
 
-    git clone git://github.com/drj11/pypng.git pypng-X.Y.Z
-    cd pypng-X.Y.Z
-    git checkout pypng-X.Y.Z
+    git clone git://github.com/drj11/pypng.git pypng-$PYPNG_VERSION
+    cd pypng-$PYPNG_VERSION
+    git checkout pypng-$PYPNG_VERSION
 
 (note the above cd's into the subdirectory)
   
 Build the documentation (you will need sphinx installed)::
 
-  python build.py
+    python build.py
 
 Make source distribution using Python distutils::
 
-  python setup.py sdist
+    python setup.py sdist
 
 It's possible at this point that you might want to smoke-test the actual
 release binary.  Let's assume that the release binary is good to go.
@@ -48,27 +52,28 @@ release binary.  Let's assume that the release binary is good to go.
 Move the dist binary that ``sdist`` just created, back into your main
 development directory::
 
-  mv dist/pypng-X.Y.Z.tar.gz ../pypng/dist
+    mv dist/pypng-$PYPNG_VERSION.tar.gz ../pypng/dist
 
 Create a zip for the documentation:
 
-  cd html
-  zip -r ../pypng-X.Y.Z-doc.zip .
+    cd html
+    zip -r ../pypng-$PYPNG_VERSION-doc.zip .
 
 Login to PyPI and go to "pypng" on the "Your packages" display.  Upload
 documentation zip file. (Often doesn't work, because of buggy server.)
 
 Upload to PyPI:
 
-  python setup.py sdist upload
+    python setup.py sdist upload
 
 (If it complains about "you must be identified" then use
 "python setup.py register" first)
 
 cd back into your main development directory::
 
-  cd ../pypng
+    cd ../pypng
 
 Make a record in ``release/index.txt``
 
-Upload ``dist/pypng-X.Y.Z.tar.gz`` to github.
+Upload ``dist/pypng-$PYPNG_VERSION.tar.gz`` to github (this
+isn't necessary, right?).
