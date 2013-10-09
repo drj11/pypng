@@ -3,9 +3,6 @@
 # NOTE: DO NOT edit filters in png.py. Edit pngfilters.py and
 # use filter_embed.py to update png.py.
 # Rename pngfilters.py and run tests after re-embeding
-# !This done to allow one-file distribution !
-# !to easier embeding png.py in applications!
-
 # NOTE: Using reference to functions in pngfilters may cause wrong
 # embeding. Check filters_embed to update fix for this case.
 
