@@ -177,7 +177,6 @@ import sys
 import zlib
 # http://www.python.org/doc/2.4.4/lib/module-warnings.html
 import warnings
-import pngfilters
 
 
 __all__ = ['Image', 'Reader', 'Writer', 'write_chunks', 'from_array']
@@ -214,11 +213,10 @@ def isarray(x):
 #Bytearray are faster than array, but looks more like list
 #So they usage limit to internal and no "tostring"
 try:
-    def barray(*nargs):
-        return bytearray(*nargs)
+    bytearray
 except:
     #Bytearray appears in python 2.6
-    def barray(*nargs):
+    def bytearray(*nargs):
         return array('B', *nargs)
 
 
@@ -338,7 +336,7 @@ class Writer:
                  colormap=None,
                  maxval=None,
                  chunk_limit=2 ** 20,
-                 filter_typ=None):
+                 filter_type=None):
         """
         Create a PNG encoder object.
 
@@ -541,10 +539,10 @@ class Writer:
             raise ValueError("bitdepth (%r) must be a postive integer <= 16" %
               bitdepth)
 
-        if filter_typ is None:
-            self.filter_typ = 0
+        if filter_type is None:
+            self.filter_type = 0
         else:
-            self.filter_typ = filter_typ
+            self.filter_type = filter_type
 
         self.rescale = None
         if palette:
@@ -758,7 +756,7 @@ class Writer:
         #Filtering algorithms are applied to bytes, not to pixels,
         #regardless of the bit depth or color type of the image.
         def byteextend(rowbytes):
-            data.extend(filterer.do_filter(self.filter_typ, rowbytes))
+            data.extend(filterer.do_filter(self.filter_type, rowbytes))
 
         # Choose an extend function based on the bitdepth.  The extend
         # function packs/decomposes the pixel values into bytes and
@@ -769,14 +767,14 @@ class Writer:
             # Decompose into bytes
             def extend(sl):
                 fmt = '!%dH' % len(sl)
-                byteextend(barray(struct.pack(fmt, *sl)))
+                byteextend(bytearray(struct.pack(fmt, *sl)))
         else:
             # Pack into bytes
             assert self.bitdepth < 8
             # samples per byte
             spb = int(8/self.bitdepth)
             def extend(sl):
-                a = barray(sl)
+                a = bytearray(sl)
                 # Adding padding bytes so we can group into a whole
                 # number of spb-tuples.
                 l = float(len(a))
@@ -821,12 +819,6 @@ class Writer:
             extend(row)
 
         for i,row in enumrows:
-            # Add "None" filter type.  Currently, it's essential that
-            # this filter type be used for every scanline as we do not
-            # mark the first row of a reduced pass image; that means we
-            # could accidentally compute the wrong filtered scanline if
-            # we used "up", "average", or "paeth" on such a line.
-            #data.append(0)
             extend(row)
             if len(data) > self.chunk_limit:
                 compressed = compressor.compress(tostring(data))
@@ -1016,60 +1008,186 @@ def write_chunks(out, chunks):
         write_chunk(out, *chunk)
 
 
-def filter_scanline(typ, line, fo, prev=None):
-    """Apply a scanline filter to a scanline.  `typ` specifies the
-    filter type (0 to 4); `line` specifies the current (unfiltered)
-    scanline as a sequence of bytes; `prev` specifies the previous
-    (unfiltered) scanline as a sequence of bytes. `fo` specifies the
-    filter offset; normally this is size of a pixel in bytes (the number
-    of bytes per sample times the number of channels), but when this is
-    < 1 (for bit depths < 8) then the filter offset is 1.
-    """
-    assert 0 <= typ < 5
-    f = [None,
-         pngfilters.do_filter_sub,
-         pngfilters.do_filter_up,
-         pngfilters.do_filter_average,
-         pngfilters.do_filter_paeth][typ]
-    if not prev:
-        # We're on the first line.  Some of the filters can be reduced
-        # to simpler cases which makes handling the line "off the top"
-        # of the image simpler.  "up" becomes "none"; "paeth" becomes
-        # "left" (non-trivial, but true). "average" needs to be handled
-        # specially.
-        if typ == 2:  # "up"
-            #return line
-            f = None
-        elif typ == 3:
-            prev = [0] * len(line)
-        elif typ == 4:  # "paeth"
-            f = pngfilters.do_filter_sub
-    # There are dirty hacks for buffer compatibility
-    # when using compiled filters
-    line = barray(line)
-    prev = barray() if prev is None else barray(prev)
-
-    result = barray(line)
-    if f is not None:
-        f(fo, line, prev, result)
-    result.insert(0, typ)  # Add filter type in the beginning of row
-    return result
-
-
 class Filter:
-    def __init__(self, bitdepth=8, interlace=None, rows=None):
+    def __init__(self, bitdepth=8, interlace=None, rows=None, prev=None):
         self.fu = bitdepth // 8 if bitdepth > 8 else 1
         self.interlace = interlace
         self.restarts = []
         if self.interlace:
             for _, off, _, step in _adam7:
                 self.restarts.append((rows - off - 1 + step) // step)
-        self.prev = None
+        self.prev = bytearray() if prev is None else bytearray(prev)
+
+    def undo_filter_sub(self, scanline, result):
+        """Undo sub filter."""
+
+        ai = 0
+        # Loops starts at index fu.  Observe that the initial part
+        # of the result is already filled in correctly with scanline.
+        for i in range(self.fu, len(result)):
+            x = scanline[i]
+            a = result[ai]
+            result[i] = (x + a) & 0xff
+            ai += 1
+        return 0
+
+    def do_filter_sub(self, scanline, result):
+        """Sub filter."""
+
+        ai = 0
+        for i in range(self.fu, len(result)):
+            x = scanline[i]
+            a = scanline[ai]
+            result[i] = (x - a) & 0xff
+            ai += 1
+        return 0
+
+    def undo_filter_up(self, scanline, result):
+        """Undo up filter."""
+        for i in range(len(result)):
+            x = scanline[i]
+            b = self.prev[i]
+            result[i] = (x + b) & 0xff
+        return 0
+
+    def do_filter_up(self, scanline, result):
+        """Up filter."""
+
+        for i in range(len(result)):
+            x = scanline[i]
+            b = self.prev[i]
+            result[i] = (x - b) & 0xff
+        return 0
+
+    def undo_filter_average(self, scanline, result):
+        """Undo average filter."""
+
+        ai = -self.fu
+        for i in range(len(result)):
+            x = scanline[i]
+            if ai < 0:
+                a = 0
+            else:
+                a = result[ai]
+            b = self.prev[i]
+            result[i] = (x + ((a + b) >> 1)) & 0xff
+            ai += 1
+        return 0
+
+    def do_filter_average(self, scanline, result):
+        """Average filter."""
+
+        ai = -self.fu
+        for i in range(len(result)):
+            x = scanline[i]
+            if ai < 0:
+                a = 0
+            else:
+                a = scanline[ai]
+            b = self.prev[i]
+            result[i] = (x - ((a + b) >> 1)) & 0xff
+            ai += 1
+        return 0
+
+    def _paeth(self, a, b, c):
+        p = a + b - c
+        pa = abs(p - a)
+        pb = abs(p - b)
+        pc = abs(p - c)
+        if pa <= pb and pa <= pc:
+            return a
+        elif pb <= pc:
+            return b
+        else:
+            return c
+
+    def undo_filter_paeth(self, scanline, result):
+        """Undo Paeth filter."""
+
+        ai = -self.fu
+        for i in range(len(result)):
+            x = scanline[i]
+            if ai < 0:
+                a = c = 0
+            else:
+                a = result[ai]
+                c = self.prev[ai]
+            b = self.prev[i]
+            result[i] = (x + self._paeth(a, b, c)) & 0xff
+            ai += 1
+        return 0
+
+    def do_filter_paeth(self, scanline, result):
+        """Paeth filter."""
+
+        # http://www.w3.org/TR/PNG/#9Filter-type-4-Paeth
+        ai = -self.fu
+        for i in range(len(result)):
+            x = scanline[i]
+            if ai < 0:
+                a = c = 0
+            else:
+                a = scanline[ai]
+                c = self.prev[ai]
+            b = self.prev[i]
+            result[i] = (x - self._paeth(a, b, c)) & 0xff
+            ai += 1
+        return 0
+
+    def filter_scanline(self, filter_type, line):
+        """Apply a scanline filter to a scanline.
+        `filter_type` specifies the filter type (0 to 4) also there are
+        adaptive filters 5 (criteria is sum) and 6 (criteria is entropy);
+        'line` specifies the current (unfiltered) scanline as a sequence
+        of bytes;
+        """
+
+        if filter_type == 5:
+            res = map(lambda i: self.filter_scanline(i, line),
+                  (0, 1, 2, 4, 3))  # 3 is last to use first line optimisation
+            res_s = map(lambda it: sum(it), res)
+            r = res_s.index(min(res_s))
+            return res[r]
+        if filter_type == 6:
+            res = map(lambda i: self.filter_scanline(i, line),
+                  (0, 1, 2, 4, 3))  # 3 is last to use first line optimisation
+            res_c = [len(set(it)) for it in res]
+            r = res_c.index(min(res_c))
+            return res[r]
+        #End of adaptive filters
+        assert 0 <= filter_type < 5
+        f = [None,
+             self.do_filter_sub,
+             self.do_filter_up,
+             self.do_filter_average,
+             self.do_filter_paeth][filter_type]
+        if not self.prev:
+        # We're on the first line.  Some of the filters can be reduced
+        # to simpler cases which makes handling the line "off the top"
+        # of the image simpler.  "up" becomes "none"; "paeth" becomes
+        # "left" (non-trivial, but true). "average" needs to be handled
+        # specially.
+            if filter_type == 2:  # "up"
+                #return line
+                f = None
+            elif filter_type == 3:
+                self.prev = bytearray([0] * len(line))
+            elif filter_type == 4:  # "paeth"
+                f = self.do_filter_sub
+        result = bytearray(line)
+        if f is not None:
+            f(line, result)
+        result.insert(0, filter_type)  # Add filter type as the first byte
+        return result
 
     def do_filter(self, typ, line):
         """Applying filter, caring about prev line, interlacing etc.
         """
-        res = filter_scanline(typ, line, self.fu, self.prev)
+
+        # There is dirty hack for buffer compatibility
+        # when using compiled filters
+        line = bytearray(line)
+        res = self.filter_scanline(typ, line)
         self.prev = line
         if self.restarts:
             self.restarts[0] -= 1
@@ -1077,6 +1195,67 @@ class Filter:
                 del self.restarts[0]
                 self.prev = None
         return res
+
+    def undo_filter(self, scanline):
+        """Undo the filter for a scanline.  `scanline` is a sequence of
+        bytes including the initial filter type byte.
+
+        The scanline will have the effects of filtering removed, and the
+        result will be returned as a fresh sequence of bytes.
+        """
+
+        filter_type = scanline[0]
+        scanline = bytearray(scanline[1:])
+        if filter_type == 0:
+            self.prev = bytearray(scanline)
+            return scanline
+
+        result = bytearray(scanline)
+        if filter_type not in (1, 2, 3, 4):
+            raise FormatError('Invalid PNG Filter Type.'
+              '  See http://www.w3.org/TR/2003/REC-PNG-20031110/#9Filters .')
+
+        # For the first line of a pass, synthesize a dummy previous
+        # line.  An alternative approach would be to observe that on the
+        # first line 'up' is the same as 'null', 'paeth' is the same
+        # as 'sub', with only 'average' requiring any special case.
+        if not self.prev:
+            self.prev = bytearray([0] * len(scanline))
+
+        # Call appropriate filter algorithm.  Note that 0 has already
+        # been dealt with.
+        (None,
+         self.undo_filter_sub,
+         self.undo_filter_up,
+         self.undo_filter_average,
+         self.undo_filter_paeth)[filter_type](scanline, result)
+        self.prev = bytearray(result)
+        return result
+
+    # Todo: color conversion functions should be moved
+    # to a separate part in future
+    def convert_la_to_rgba(self, row, result):
+        for i in range(len(row) // 3):
+            for j in range(3):
+                result[(4 * i) + j] = row[2 * i]
+            result[(4 * i) + 3] = row[(2 * i) + 1]
+        return 0
+
+    def convert_l_to_rgba(self, row, result):
+        """Convert a grayscale image to RGBA. This method assumes the alpha
+        channel in result is already correctly initialized."""
+        for i in range(len(row) // 3):
+            for j in range(3):
+                result[(4 * i) + j] = row[i]
+        return 0
+
+    def convert_rgb_to_rgba(self, row, result):
+        """Convert an RGB image to RGBA. This method assumes the alpha
+        channel in result is already correctly initialized."""
+        for i in range(len(row) // 3):
+            for j in range(3):
+                result[(4 * i) + j] = row[(3 * i) + j]
+        return 0
 
 
 def from_array(a, mode=None, info={}):
@@ -1449,56 +1628,6 @@ class Reader:
             if t == 'IEND':
                 break
 
-    def undo_filter(self, filter_type, scanline, previous):
-        """Undo the filter for a scanline.  `scanline` is a sequence of
-        bytes that does not include the initial filter type byte.
-        `previous` is decoded previous scanline (for straightlaced
-        images this is the previous pixel row, but for interlaced
-        images, it is the previous scanline in the reduced image, which
-        in general is not the previous pixel row in the final image).
-        When there is no previous scanline (the first row of a
-        straightlaced image, or the first row in one of the passes in an
-        interlaced image), then this argument should be ``None``.
-
-        The scanline will have the effects of filtering removed, and the
-        result will be returned as a fresh sequence of bytes.
-        """
-
-        # :todo: Would it be better to update scanline in place?
-        # Yes, with the Cython extension making the undo_filter fast,
-        # updating scanline inplace makes the code 3 times faster
-        # (reading 50 images of 800x800 went from 40s to 16s)
-        result = scanline
-
-        if filter_type == 0:
-            return result
-
-        if filter_type not in (1,2,3,4):
-            raise FormatError('Invalid PNG Filter Type.'
-              '  See http://www.w3.org/TR/2003/REC-PNG-20031110/#9Filters .')
-
-        # Filter unit.  The stride from one pixel to the corresponding
-        # byte from the previous previous.  Normally this is the pixel
-        # size in bytes, but when this is smaller than 1, the previous
-        # byte is used instead.
-        fu = max(1, self.psize)
-
-        # For the first line of a pass, synthesize a dummy previous
-        # line.  An alternative approach would be to observe that on the
-        # first line 'up' is the same as 'null', 'paeth' is the same
-        # as 'sub', with only 'average' requiring any special case.
-        if not previous:
-            previous = barray([0] * len(scanline))
-
-        # Call appropriate filter algorithm.  Note that 0 has already
-        # been dealt with.
-        (None,
-         pngfilters.undo_filter_sub,
-         pngfilters.undo_filter_up,
-         pngfilters.undo_filter_average,
-         pngfilters.undo_filter_paeth)[filter_type](fu, scanline, previous, result)
-        return result
-
     def deinterlace(self, raw):
         """
         Read raw pixel data, undo filters, deinterlace, and flatten.
@@ -1522,20 +1651,15 @@ class Reader:
             #     xstart, ystart, xstep, ystep)
             if xstart >= self.width:
                 continue
-            # The previous (reconstructed) scanline.  None at the
-            # beginning of a pass to indicate that there is no previous
-            # line.
-            recon = None
+            filt = Filter(self.bitdepth * self.planes)
             # Pixels per row (reduced pass image)
             ppr = int(math.ceil((self.width-xstart)/float(xstep)))
             # Row size in bytes for this pass.
             row_size = int(math.ceil(self.psize * ppr))
             for y in range(ystart, self.height, ystep):
-                filter_type = raw[source_offset]
-                source_offset += 1
-                scanline = raw[source_offset:source_offset+row_size]
-                source_offset += row_size
-                recon = self.undo_filter(filter_type, scanline, recon)
+                scanline = raw[source_offset:source_offset + row_size + 1]
+                source_offset += (row_size + 1)
+                recon = filt.undo_filter(scanline)
                 # Convert so that there is one element per pixel value
                 flat = self.serialtoflat(recon, ppr)
                 if xstep == 1:
@@ -1564,7 +1688,7 @@ class Reader:
             if self.bitdepth == 8:
                 return raw
             if self.bitdepth == 16:
-                raw = tostring(raw)
+                # TODO: raw = tostring(raw)
                 return array('H', struct.unpack('!%dH' % (len(raw)//2), raw))
             assert self.bitdepth < 8
             width = self.width
@@ -1584,6 +1708,7 @@ class Reader:
         flat pixel.
         """
 
+        bytes = array('B', bytes)
         if self.bitdepth == 8:
             return bytes
         if self.bitdepth == 16:
@@ -1615,17 +1740,14 @@ class Reader:
         # length of row, in bytes
         rb = self.row_bytes
         a = array('B')
-        # The previous (reconstructed) scanline.  None indicates first
-        # line of image.
-        recon = None
+        filt = Filter(self.bitdepth * self.planes)
         for some in raw:
             a.extend(some)
             while len(a) >= rb + 1:
-                filter_type = a[0]
-                scanline = a[1:rb+1]
-                del a[:rb+1]
-                recon = self.undo_filter(filter_type, scanline, recon)
-                yield recon
+                scanline = a[:rb + 1]
+                del a[:rb + 1]
+                yield filt.undo_filter(scanline)
+
         if len(a) != 0:
             # :file:format We get here with a file format error: when the
             # available bytes (after decompressing) do not pack into exact
@@ -2136,7 +2258,7 @@ class Reader:
         maxbuffer = struct.pack('=' + typecode, maxval) * 4 * width
         def newarray():
             return array(typecode, maxbuffer)
-
+        filt = Filter()
         if meta['alpha'] and meta['greyscale']:
             # LA to RGBA
             def convert():
@@ -2145,14 +2267,14 @@ class Reader:
                     # into first three target channels, and A channel
                     # into fourth channel.
                     a = newarray()
-                    pngfilters.convert_la_to_rgba(row, a)
+                    filt.convert_la_to_rgba(row, a)
                     yield a
         elif meta['greyscale']:
             # L to RGBA
             def convert():
                 for row in pixels:
                     a = newarray()
-                    pngfilters.convert_l_to_rgba(row, a)
+                    filt.convert_l_to_rgba(row, a)
                     yield a
         else:
             assert not meta['alpha'] and not meta['greyscale']
@@ -2160,7 +2282,7 @@ class Reader:
             def convert():
                 for row in pixels:
                     a = newarray()
-                    pngfilters.convert_rgb_to_rgba(row, a)
+                    filt.convert_rgb_to_rgba(row, a)
                     yield a
         meta['alpha'] = True
         meta['greyscale'] = False
@@ -2225,8 +2347,6 @@ except:
             return list(init)
         # Hacks for buffer will be broken in python 2.2
         # So we must switch to native pngfilters instead of compiled
-        import imp
-        pngfilters = imp.load_source('pngfilters', 'pngfilters.py')
 
 # Further hacks to get it limping along on Python 2.2
 try:
@@ -2485,8 +2605,8 @@ class Test(unittest.TestCase):
         """
         # Not such a great test, because the only way we can check what
         # we have written is to read it back again.
-        for filter_typ in range(5):
-            print "Test filter " + str(filter_typ)
+        for filter_type in range(7):
+            print "Test filter " + str(filter_type)
             for name, bytes in _pngsuite.items():
                 # Only certain colour types supported for this test.
                 if name[3:5] not in ['n0', 'n2', 'n4', 'n6']:
@@ -2497,7 +2617,7 @@ class Test(unittest.TestCase):
                                   x=x, y=y, bitdepth=it.bitdepth,
                                   greyscale=it.greyscale, alpha=it.alpha,
                                   transparent=it.transparent,
-                                  interlace=False, filter_typ=0)
+                                  interlace=False, filter_type=0)
                 x, y, ps, _ = Reader(bytes=pngi).read()
                 it = Reader(bytes=bytes)
                 x, y, pixels, _ = it.read()
@@ -2505,7 +2625,7 @@ class Test(unittest.TestCase):
                                   x=x, y=y, bitdepth=it.bitdepth,
                                   greyscale=it.greyscale, alpha=it.alpha,
                                   transparent=it.transparent,
-                                  interlace=True, filter_typ=filter_typ)
+                                  interlace=True, filter_type=filter_type)
                 x, y, pi, _ = Reader(bytes=pngs).read()
                 self.assertEqual(map(list, ps), map(list, pi))
 
@@ -2802,6 +2922,9 @@ class Test(unittest.TestCase):
 
     # test filters and unfilters
     def testFilterScanlineFirstLine(self):
+        def filter_scanline(typ, line, fo, prev):
+            filt = Filter(fo * 8, prev=prev)
+            return filt.do_filter(typ, line)
         fo = 3  # bytes per pixel
         line = [30, 31, 32, 230, 231, 232]
         out = filter_scanline(0, line, fo, None)  # none
@@ -2818,7 +2941,11 @@ class Test(unittest.TestCase):
             self.paeth(32, 0, 0, 0), self.paeth(230, 30, 0, 0),
             self.paeth(231, 31, 0, 0), self.paeth(232, 32, 0, 0)
             ])
+
     def testFilterScanline(self):
+        def filter_scanline(typ, line, fo, prev):
+            filt = Filter(fo * 8, prev=prev)
+            return filt.do_filter(typ, line)
         prev = [20, 21, 22, 210, 211, 212]
         line = [30, 32, 34, 230, 233, 236]
         fo = 3
@@ -2836,39 +2963,44 @@ class Test(unittest.TestCase):
             self.paeth(34, 0, 22, 0), self.paeth(230, 30, 210, 20),
             self.paeth(233, 32, 211, 21), self.paeth(236, 34, 212, 22)
             ])
-    def testUnfilterScanline(self):
-        reader = Reader(bytes='')
-        reader.psize = 3
-        scanprev = array('B', [20, 21, 22, 210, 211, 212])
-        scanline = array('B', [30, 32, 34, 230, 233, 236])
-        def cp(a):
-            return array('B', a)
 
-        out = reader.undo_filter(0, cp(scanline), cp(scanprev))
-        self.assertEqual(list(out), list(scanline))  # none
-        out = reader.undo_filter(1, cp(scanline), cp(scanprev))
+    def testUnfilterScanline(self):
+        scanprev = array('B', [20, 21, 22, 210, 211, 212])
+        scanline = array('B', [0, 30, 32, 34, 230, 233, 236])
+        out = Filter(24, prev=scanprev).undo_filter(scanline)
+        self.assertEqual(list(out), list(scanline[1:]))  # none
+        scanline[0] = 1
+        out = Filter(24, prev=scanprev).undo_filter(scanline)
         self.assertEqual(list(out), [30, 32, 34, 4, 9, 14])  # sub
-        out = reader.undo_filter(2, cp(scanline), cp(scanprev))
+        scanline[0] = 2
+        out = Filter(24, prev=scanprev).undo_filter(scanline)
         self.assertEqual(list(out), [50, 53, 56, 184, 188, 192])  # up
-        out = reader.undo_filter(3, cp(scanline), cp(scanprev))
+        scanline[0] = 3
+        out = Filter(24, prev=scanprev).undo_filter(scanline)
         self.assertEqual(list(out), [40, 42, 45, 99, 103, 108])  # average
-        out = reader.undo_filter(4, cp(scanline), cp(scanprev))
+        scanline[0] = 4
+        out = Filter(24, prev=scanprev).undo_filter(scanline)
         self.assertEqual(list(out), [50, 53, 56, 184, 188, 192])  # paeth
+
     def testUnfilterScanlinePaeth(self):
         # This tests more edge cases in the paeth unfilter
-        reader = Reader(bytes='')
-        reader.psize = 3
+        #reader = Reader(bytes='')
+        #reader.psize = 3
         scanprev = array('B', [2, 0, 0, 0, 9, 11])
-        scanline = array('B', [6, 10, 9, 100, 101, 102])
+        scanline = array('B', [4, 6, 10, 9, 100, 101, 102])
+        filt = Filter(24, prev=scanprev)
 
-        out = reader.undo_filter(4, scanline, scanprev)
+        out = filt.undo_filter(scanline)
         self.assertEqual(list(out), [8, 10, 9, 108, 111, 113])  # paeth
     def testIterstraight(self):
         def arraify(list_of_str):
-            return [array('B', s) for s in list_of_str]
+            #return [array('B', s) for s in list_of_str]
+            return [bytearray(s) for s in list_of_str]
         reader = Reader(bytes='')
         reader.row_bytes = 6
         reader.psize = 3
+        reader.bitdepth = 8
+        reader.planes = 3
         rows = reader.iterstraight(arraify(['\x00abcdef', '\x00ghijkl']))
         self.assertEqual(list(rows), arraify(['abcdef', 'ghijkl']))
 
