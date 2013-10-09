@@ -71,9 +71,9 @@ def prepare3():
     import os
 
     try:
-      os.mkdir('code3')
+        os.mkdir('code3')
     except OSError:
-      pass
+        pass
     os.system("2to3 -w -n -o code3 code/png.py")
     conf['package_dir'] = {'':'code3'}
       

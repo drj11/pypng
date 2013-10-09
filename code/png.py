@@ -29,26 +29,6 @@
 # ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-#
-# Changelog (recent first):
-# 2009-03-11 David: interlaced bit depth < 8 (writing).
-# 2009-03-10 David: interlaced bit depth < 8 (reading).
-# 2009-03-04 David: Flat and Boxed pixel formats.
-# 2009-02-26 David: Palette support (writing).
-# 2009-02-23 David: Bit-depths < 8; better PNM support.
-# 2006-06-17 Nicko: Reworked into a class, faster interlacing.
-# 2006-06-17 Johann: Very simple prototype PNG decoder.
-# 2006-06-17 Nicko: Test suite with various image generators.
-# 2006-06-17 Nicko: Alpha-channel, grey-scale, 16-bit/plane support.
-# 2006-06-15 Johann: Scanline iterator interface for large input files.
-# 2006-06-09 Johann: Very simple prototype PNG encoder.
-
-# Incorporated into Bangai-O Development Tools by drj on 2009-02-11 from
-# http://trac.browsershots.org/browser/trunk/pypng/lib/png.py?rev=2885
-
-# Incorporated into pypng by drj on 2009-03-12 from
-# //depot/prj/bangaio/master/code/png.py#67
-
 
 """
 Pure Python PNG Reader/Writer
@@ -162,12 +142,12 @@ And now, my famous members
 # http://www.python.org/doc/2.2.3/whatsnew/node5.html
 from __future__ import generators
 
-__version__ = "0.0.15"
+__version__ = "0.0.16"
 
 from array import array
 try: # See :pyver:old
     import itertools
-except:
+except ImportError:
     pass
 import math
 # http://www.python.org/doc/2.4.4/lib/module-operator.html
@@ -206,7 +186,8 @@ def isarray(x):
 
     try:
         return isinstance(x, array)
-    except:
+    except TypeError:
+        # Because on Python 2.2 array.array is not a type.
         return False
 
 
@@ -222,7 +203,7 @@ except:
 
 try:  # see :pyver:old
     array.tostring
-except:
+except AttributeError:
     def tostring(row):
         l = len(row)
         return struct.pack('%dB' % l, *row)
@@ -238,7 +219,11 @@ try:
     bytes('', 'ascii')
     def strtobytes(x): return bytes(x, 'iso8859-1')
     def bytestostr(x): return str(x, 'iso8859-1')
-except:
+except (NameError, TypeError):
+    # We get NameError when bytes() does not exist (most Python
+    # 2.x versions), and TypeError when bytes() exists but is on
+    # Python 2.x (when it is an alias for str() and takes at most
+    # one argument).
     strtobytes = str
     bytestostr = str
 
@@ -467,7 +452,7 @@ class Writer:
         def isinteger(x):
             try:
                 return int(x) == x
-            except:
+            except (TypeError, ValueError):
                 return False
 
         def check_color(c, which):
@@ -1357,7 +1342,7 @@ def from_array(a, mode=None, info={}):
         if len(mode) == 2:
             try:
                 bitdepth = int(mode[1])
-            except:
+            except (TypeError, ValueError):
                 raise Error()
     except Error:
         raise Error("mode string should be 'RGB' or 'L;16' or similar.")
@@ -1378,13 +1363,13 @@ def from_array(a, mode=None, info={}):
             if dimension in info:
                 if info[dimension] != info['size'][axis]:
                     raise Error(
-                      "info[%r] shhould match info['size'][%r]." %
+                      "info[%r] should match info['size'][%r]." %
                       (dimension, axis))
         info['width'],info['height'] = info['size']
     if 'height' not in info:
         try:
             l = len(a)
-        except:
+        except TypeError:
             raise Error(
               "len(a) does not work, supply info['height'] instead.")
         info['height'] = l
@@ -1413,7 +1398,7 @@ def from_array(a, mode=None, info={}):
         row[0][0]
         threed = True
         testelement = row[0]
-    except:
+    except TypeError:
         threed = False
         testelement = row
     if 'width' not in info:
@@ -1430,11 +1415,11 @@ def from_array(a, mode=None, info={}):
         try:
             dtype = testelement.dtype
             # goto the "else:" clause.  Sorry.
-        except:
+        except AttributeError:
             try:
                 # Try a Python array.array.
                 bitdepth = 8 * testelement.itemsize
-            except:
+            except AttributeError:
                 # We can't determine it from the array element's
                 # datatype, use a default of 8.
                 bitdepth = 8
@@ -1485,7 +1470,7 @@ class Image:
         try:
             file.write
             def close(): pass
-        except:
+        except AttributeError:
             file = open(file, 'wb')
             def close(): file.close()
 
@@ -1550,7 +1535,7 @@ class Reader:
                 kw["bytes"] = _guess
             elif isinstance(_guess, str):
                 kw["filename"] = _guess
-            elif isinstance(_guess, file):
+            elif hasattr(_guess, 'read'):
                 kw["file"] = _guess
 
         if "filename" in kw:
@@ -2309,7 +2294,7 @@ class Reader:
 # array, and it cannot be extended with a list (or other sequence).
 # Both of those are repeated issues in the code.  Whilst I would not
 # normally tolerate this sort of behaviour, here we "shim" a replacement
-# for array into place (and hope no-ones notices).  You never read this.
+# for array into place (and hope no-one notices).  You never read this.
 #
 # In an amusing case of warty hacks on top of warty hacks... the array
 # shimming we try and do only works on Python 2.3 and above (you can't
@@ -2318,7 +2303,8 @@ class Reader:
 try:
     array('B').extend([])
     array('B', array('B'))
-except:
+# :todo:(drj) Check that TypeError is correct for Python 2.3
+except TypeError:
     # Expect to get here on Python 2.3
     try:
         class _array_shim(array):
@@ -2339,7 +2325,7 @@ except:
                     extension = list(extension)
                 return super_extend(self.true_array(self.typecode, extension))
         array = _array_shim
-    except:
+    except TypeError:
         # Expect to get here on Python 2.2
         def array(typecode, init=()):
             if type(init) == str:
@@ -2351,7 +2337,7 @@ except:
 # Further hacks to get it limping along on Python 2.2
 try:
     enumerate
-except:
+except NameError:
     def enumerate(seq):
         i=0
         for x in seq:
@@ -2360,7 +2346,7 @@ except:
 
 try:
     reversed
-except:
+except NameError:
     def reversed(l):
         l = list(l)
         l.reverse()
@@ -2369,7 +2355,7 @@ except:
 
 try:
     itertools
-except:
+except NameError:
     class _dummy_itertools:
         pass
     itertools = _dummy_itertools()
@@ -2397,20 +2383,22 @@ except:
 # produce is valid.
 
 # Run the tests from the command line:
-# python -c 'import png;png.test()'
+#   python -c 'import png;png.runTest()'
+# If you have nose installed you can use that:
+#   nosetests png.py
 
 # (For an in-memory binary file IO object) We use BytesIO where
 # available, otherwise we use StringIO, but name it BytesIO.
 try:
     from io import BytesIO
-except:
+except ImportError:
     from StringIO import StringIO as BytesIO
 import tempfile
 # http://www.python.org/doc/2.4.4/lib/module-unittest.html
 import unittest
 
 
-def test():
+def runTest():
     unittest.main(__name__)
 
 def topngbytes(name, rows, x, y, **k):
@@ -2433,7 +2421,7 @@ def topngbytes(name, rows, x, y, **k):
         w.close()
     return f.getvalue()
 
-def testWithIO(inp, out, f):
+def _redirect_io(inp, out, f):
     """Calls the function `f` with ``sys.stdin`` changed to `inp`
     and ``sys.stdout`` changed to `out`.  They are restored when `f`
     returns.  This function returns whatever `f` returns.
@@ -2553,7 +2541,8 @@ class Test(unittest.TestCase):
     def testRGBtoRGBA(self):
         "asRGBA8() on colour type 2 source."""
         # Test for Issue 26
-        r = Reader(bytes=_pngsuite['basn2c08'])
+        # Also test that Reader can take a "file-like" object.
+        r = Reader(BytesIO(_pngsuite['basn2c08']))
         x,y,pixels,meta = r.asRGBA8()
         # Test the pixels at row 9 columns 0 and 1.
         row9 = list(pixels)[9]
@@ -2639,7 +2628,7 @@ class Test(unittest.TestCase):
         s.flush()
         s.seek(0)
         o = BytesIO()
-        testWithIO(s, o, do)
+        _redirect_io(s, o, do)
         r = Reader(bytes=o.getvalue())
         x,y,pixels,meta = r.read()
         self.assertTrue(r.greyscale)
@@ -2658,7 +2647,7 @@ class Test(unittest.TestCase):
         s.flush()
         s.seek(0)
         o = BytesIO()
-        testWithIO(s, o, do)
+        _redirect_io(s, o, do)
         r = Reader(bytes=o.getvalue())
         x,y,pixels,meta = r.read()
         self.assertTrue(r.alpha)
@@ -2719,7 +2708,7 @@ class Test(unittest.TestCase):
         s.flush()
         s.seek(0)
         o = BytesIO()
-        testWithIO(s, o, do)
+        _redirect_io(s, o, do)
         r = Reader(bytes=o.getvalue())
         sbit = r.chunk('sBIT')[1]
         self.assertEqual(sbit, strtobytes('\x01\x01\x01'))
@@ -2838,10 +2827,10 @@ class Test(unittest.TestCase):
         self.assertEqual(_enhex(d), '255cd971ab8cd9e7275ff906e5041aa0')
     def testfromarray(self):
         img = from_array([[0, 0x33, 0x66], [0xff, 0xcc, 0x99]], 'L')
-        img.save('testfromarray.png')
+        img.save(BytesIO())
     def testfromarrayL16(self):
         img = from_array(group(range(2**16), 256), 'L;16')
-        img.save('testL16.png')
+        img.save(BytesIO())
     def testfromarrayRGB(self):
         img = from_array([[0,0,0, 0,0,1, 0,1,0, 0,1,1],
                           [1,0,0, 1,0,1, 1,1,0, 1,1,1]], 'RGB;1')
@@ -2853,9 +2842,8 @@ class Test(unittest.TestCase):
         i = itertools.islice(itertools.count(10), 20)
         i = itertools.imap(lambda x: [x, x, x], i)
         img = from_array(i, 'RGB;5', dict(height=20))
-        f = open('testiter.png', 'wb')
+        f = BytesIO()
         img.save(f)
-        f.close()
 
     # numpy dependent tests.  These are skipped (with a message to
     # sys.stderr) if numpy cannot be imported.
@@ -2992,6 +2980,7 @@ class Test(unittest.TestCase):
 
         out = filt.undo_filter(scanline)
         self.assertEqual(list(out), [8, 10, 9, 108, 111, 113])  # paeth
+
     def testIterstraight(self):
         def arraify(list_of_str):
             #return [array('B', s) for s in list_of_str]
@@ -3012,6 +3001,7 @@ class Test(unittest.TestCase):
 
         rows = reader.iterstraight(arraify(['\x00abcdef\x00ghi', 'jkl']))
         self.assertEqual(list(rows), arraify(['abcdef', 'ghijkl']))
+
 
 # === Command Line Support ===
 
@@ -3758,7 +3748,7 @@ def _main(argv):
     # Parse command line arguments
     from optparse import OptionParser
     import re
-    version = '%prog ' + re.sub(r'( ?\$|URL: |Rev:)', '', __version__)
+    version = '%prog ' + __version__
     parser = OptionParser(version=version)
     parser.set_usage("%prog [options] [imagefile]")
     parser.add_option('-r', '--read-png', default=False,

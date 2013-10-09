@@ -1,0 +1,10 @@
+#!/bin/sh
+
+if ! py3=$(which python3)
+then
+  printf 2>&1 '%s\n' "Can't find python3"
+  exit 99
+fi
+
+export PYTHONPATH=../../code3
+$py3 -c 'import png; png.runTest()'
