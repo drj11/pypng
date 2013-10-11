@@ -293,8 +293,8 @@ def check_palette(palette):
 
 def check_color(c, greyscale, which):
     """Checks that a colour argument for transparent or
-    background options is the right form.  Also "corrects" bare
-    integers to 1-tuples.
+    background options is the right form.  Returns the colour
+    (which, if it's a bar integer, is "corrected" to a 1-tuple).
     """
 
     if c is None:
@@ -309,16 +309,14 @@ def check_color(c, greyscale, which):
                 which)
         if not isinteger(c[0]):
             raise ValueError(
-                "%s colour for greyscale must be integer" %
-                which)
+                "%s colour for greyscale must be integer" % which)
     else:
         if not (len(c) == 3 and
                 isinteger(c[0]) and
                 isinteger(c[1]) and
                 isinteger(c[2])):
             raise ValueError(
-                "%s colour must be a triple of integers" %
-                which)
+                "%s colour must be a triple of integers" % which)
     return c
 
 class Error(Exception):
