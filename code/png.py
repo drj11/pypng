@@ -1744,20 +1744,8 @@ class Reader:
              self.compression, self.filter,
              self.interlace) = struct.unpack("!2I5B", data)
 
-            # Check that the header specifies only valid combinations.
-            if self.bitdepth not in (1,2,4,8,16):
-                raise Error("invalid bit depth %d" % self.bitdepth)
-            if self.color_type not in (0,2,3,4,6):
-                raise Error("invalid colour type %d" % self.color_type)
-            # Check indexed (palettized) images have 8 or fewer bits
-            # per pixel; check only indexed or greyscale images have
-            # fewer than 8 bits per pixel.
-            if ((self.color_type & 1 and self.bitdepth > 8) or
-                (self.bitdepth < 8 and self.color_type not in (0,3))):
-                raise FormatError("Illegal combination of bit depth (%d)"
-                  " and colour type (%d)."
-                  " See http://www.w3.org/TR/2003/REC-PNG-20031110/#table111 ."
-                  % (self.bitdepth, self.color_type))
+            check_bitdepth_colortype(self.bitdepth, self.color_type)
+
             if self.compression != 0:
                 raise Error("unknown compression method %d" % self.compression)
             if self.filter != 0:
@@ -2208,6 +2196,31 @@ class Reader:
         meta['alpha'] = True
         meta['greyscale'] = False
         return width,height,convert(),meta
+
+def check_bitdepth_colortype(bitdepth, colortype):
+    """Check that `bitdepth` and `colortype` are both valid,
+    and specified in a valid combination. Returns if valid,
+    raise an Exception if not valid.
+    """
+
+    if bitdepth not in (1,2,4,8,16):
+        raise FormatError("invalid bit depth %d" % bitdepth)
+    if colortype not in (0,2,3,4,6):
+        raise FormatError("invalid colour type %d" % colortype)
+    # Check indexed (palettized) images have 8 or fewer bits
+    # per pixel; check only indexed or greyscale images have
+    # fewer than 8 bits per pixel.
+    if colortype & 1 and bitdepth > 8:
+        raise FormatError(
+          "Indexed images (colour type %d) cannot"
+          " have bitdepth > 8 (bit depth %d)."
+          " See http://www.w3.org/TR/2003/REC-PNG-20031110/#table111 ."
+          % (bitdepth, colortype))
+    if bitdepth < 8 and colortype not in (0,3):
+        raise FormatError("Illegal combination of bit depth (%d)"
+          " and colour type (%d)."
+          " See http://www.w3.org/TR/2003/REC-PNG-20031110/#table111 ."
+          % (bitdepth, colortype))
 
 def isinteger(x):
     try:
