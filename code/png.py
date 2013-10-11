@@ -291,6 +291,36 @@ def check_palette(palette):
                   "palette entry %d: values must be integer: 0 <= x <= 255" % i)
     return p
 
+def check_color(c, greyscale, which):
+    """Checks that a colour argument for transparent or
+    background options is the right form.  Also "corrects" bare
+    integers to 1-tuples.
+    """
+
+    if c is None:
+        return c
+    if greyscale:
+        try:
+            l = len(c)
+        except TypeError:
+            c = (c,)
+        if len(c) != 1:
+            raise ValueError("%s for greyscale must be 1-tuple" %
+                which)
+        if not isinteger(c[0]):
+            raise ValueError(
+                "%s colour for greyscale must be integer" %
+                which)
+    else:
+        if not (len(c) == 3 and
+                isinteger(c[0]) and
+                isinteger(c[1]) and
+                isinteger(c[2])):
+            raise ValueError(
+                "%s colour must be a triple of integers" %
+                which)
+    return c
+
 class Error(Exception):
     def __str__(self):
         return self.__class__.__name__ + ': ' + ' '.join(self.args)
@@ -451,45 +481,6 @@ class Writer:
         # returned by Reader.read and friends.
         # Ditto for `colormap`.
 
-        # A couple of helper functions come first.  Best skipped if you
-        # are reading through.
-
-        def isinteger(x):
-            try:
-                return int(x) == x
-            except (TypeError, ValueError):
-                return False
-
-        def check_color(c, which):
-            """Checks that a colour argument for transparent or
-            background options is the right form.  Also "corrects" bare
-            integers to 1-tuples.
-            """
-
-            if c is None:
-                return c
-            if greyscale:
-                try:
-                    l = len(c)
-                except TypeError:
-                    c = (c,)
-                if len(c) != 1:
-                    raise ValueError("%s for greyscale must be 1-tuple" %
-                        which)
-                if not isinteger(c[0]):
-                    raise ValueError(
-                        "%s colour for greyscale must be integer" %
-                        which)
-            else:
-                if not (len(c) == 3 and
-                        isinteger(c[0]) and
-                        isinteger(c[1]) and
-                        isinteger(c[2])):
-                    raise ValueError(
-                        "%s colour must be a triple of integers" %
-                        which)
-            return c
-
         if size:
             if len(size) != 2:
                 raise ValueError(
@@ -569,8 +560,8 @@ class Writer:
             raise ValueError(
                 "bit depth must be 8 or less for images with palette")
 
-        transparent = check_color(transparent, 'transparent')
-        background = check_color(background, 'background')
+        transparent = check_color(transparent, greyscale, 'transparent')
+        background = check_color(background, greyscale, 'background')
 
         # It's important that the true boolean values (greyscale, alpha,
         # colormap, interlace) are converted to bool because Iverson's
@@ -2210,6 +2201,12 @@ class Reader:
         meta['alpha'] = True
         meta['greyscale'] = False
         return width,height,convert(),meta
+
+def isinteger(x):
+    try:
+        return int(x) == x
+    except (TypeError, ValueError):
+        return False
 
 
 # === Legacy Version Support ===
