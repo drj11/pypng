@@ -1215,7 +1215,7 @@ def from_array(a, mode=None, info={}):
         row[0][0]
         threed = True
         testelement = row[0]
-    except TypeError:
+    except (IndexError, TypeError):
         threed = False
         testelement = row
     if 'width' not in info:
