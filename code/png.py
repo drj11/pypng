@@ -190,17 +190,6 @@ def isarray(x):
         # Because on Python 2.2 array.array is not a type.
         return False
 
-
-#Bytearray are faster than array, but looks more like list
-#So they usage limit to internal and no "tostring"
-try:
-    bytearray
-except:
-    #Bytearray appears in python 2.6
-    def bytearray(*nargs):
-        return array('B', *nargs)
-
-
 try:  # see :pyver:old
     array.tostring
 except AttributeError:
@@ -213,6 +202,18 @@ else:
         ``array``.
         """
         return row.tostring()
+
+#Bytearray are faster than array, but looks more like list
+try:
+    bytearray
+
+    def batostring(src):
+        return str(src)
+except:
+    #Bytearray appears in python 2.6
+    def bytearray(*nargs):
+        return array('B', *nargs)
+    batostring = tostring
 
 # Conditionally convert to bytes.  Works on Python 2 and Python 3.
 try:
@@ -796,15 +797,15 @@ class Writer:
         ``None`` if no ``tRNS`` chunk is necessary.
         """
 
-        p = array('B')
-        t = array('B')
+        p = bytearray()
+        t = bytearray()
 
         for x in self.palette:
             p.extend(x[0:3])
             if len(x) > 3:
                 t.append(x[3])
-        p = tostring(p)
-        t = tostring(t)
+        p = batostring(p)
+        t = batostring(t)
         if t:
             return p,t
         return p,None
@@ -929,7 +930,7 @@ class Writer:
 
         filterer = Filter(self.bitdepth * self.planes,
                           self.interlace, self.height)
-        data = array('B')
+        data = bytearray()
 
         #Filtering algorithms are applied to bytes, not to pixels,
         #regardless of the bit depth or color type of the image.
@@ -999,7 +1000,7 @@ class Writer:
         for i,row in enumrows:
             extend(row)
             if len(data) > self.chunk_limit:
-                compressed = compressor.compress(tostring(data))
+                compressed = compressor.compress(batostring(data))
                 if len(compressed):
                     # print >> sys.stderr, len(data), len(compressed)
                     yield compressed
@@ -1009,7 +1010,7 @@ class Writer:
                 # fresh one (which would be my natural FP instinct).
                 del data[:]
         if len(data):
-            compressed = compressor.compress(tostring(data))
+            compressed = compressor.compress(batostring(data))
         else:
             compressed = ''
         flushed = compressor.flush()
@@ -1107,7 +1108,7 @@ class Writer:
                 return array('H', struct.unpack(fmt, infile.read(row_bytes)))
         else:
             def line():
-                scanline = array('B', infile.read(row_bytes))
+                scanline = bytearray(infile.read(row_bytes))
                 return scanline
         for y in range(self.height):
             yield line()
@@ -1727,11 +1728,10 @@ class Reader:
         flat pixel.
         """
 
-        bytes = array('B', bytes)
         if self.bitdepth == 8:
-            return bytes
+            return array('B', bytes)
         if self.bitdepth == 16:
-            bytes = tostring(bytes)
+            bytes = batostring(bytes)
             return array('H',
               struct.unpack('!%dH' % (len(bytes)//2), bytes))
         assert self.bitdepth < 8
@@ -1758,7 +1758,7 @@ class Reader:
 
         # length of row, in bytes
         rb = self.row_bytes
-        a = array('B')
+        a = bytearray()
         filt = Filter(self.bitdepth * self.planes)
         for some in raw:
             a.extend(some)
@@ -1982,8 +1982,8 @@ class Reader:
         for data in self.idat(lenient):
             # :todo: add a max_length argument here to limit output
             # size.
-            yield array('B', d.decompress(data))
-        yield array('B', d.flush())
+            yield bytearray(d.decompress(data))
+        yield bytearray(d.flush())
 
     def read(self, lenient=False):
         """
@@ -2002,7 +2002,7 @@ class Reader:
         raw = self.idatdecomp(lenient)
 
         if self.interlace:
-            raw = array('B', itertools.chain(*raw))
+            raw = bytearray(itertools.chain(*raw))
             arraycode = 'BH'[self.bitdepth>8]
             # Like :meth:`group` but producing an array.array object for
             # each row.
@@ -2057,9 +2057,9 @@ class Reader:
         if not self.plte:
             raise FormatError(
                 "Required PLTE chunk is missing in colour type 3 image.")
-        plte = group(array('B', self.plte), 3)
+        plte = group(bytearray(self.plte), 3)
         if self.trns or alpha == 'force':
-            trns = array('B', self.trns or '')
+            trns = bytearray(self.trns or '')
             trns.extend([255]*(len(plte)-len(trns)))
             plte = map(operator.add, plte, group(trns, 1))
         return plte
@@ -2987,8 +2987,8 @@ class Test(unittest.TestCase):
             ])
 
     def testUnfilterScanline(self):
-        scanprev = array('B', [20, 21, 22, 210, 211, 212])
-        scanline = array('B', [0, 30, 32, 34, 230, 233, 236])
+        scanprev = bytearray([20, 21, 22, 210, 211, 212])
+        scanline = bytearray([0, 30, 32, 34, 230, 233, 236])
         out = Filter(24, prev=scanprev).undo_filter(scanline)
         self.assertEqual(list(out), list(scanline[1:]))  # none
         scanline[0] = 1
@@ -3008,8 +3008,8 @@ class Test(unittest.TestCase):
         # This tests more edge cases in the paeth unfilter
         #reader = Reader(bytes='')
         #reader.psize = 3
-        scanprev = array('B', [2, 0, 0, 0, 9, 11])
-        scanline = array('B', [4, 6, 10, 9, 100, 101, 102])
+        scanprev = bytearray([2, 0, 0, 0, 9, 11])
+        scanline = bytearray([4, 6, 10, 9, 100, 101, 102])
         filt = Filter(24, prev=scanprev)
 
         out = filt.undo_filter(scanline)
@@ -3017,7 +3017,6 @@ class Test(unittest.TestCase):
 
     def testIterstraight(self):
         def arraify(list_of_str):
-            #return [array('B', s) for s in list_of_str]
             return [bytearray(s) for s in list_of_str]
         reader = Reader(bytes='')
         reader.row_bytes = 6
