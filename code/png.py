@@ -292,19 +292,16 @@ def check_palette(palette):
     return p
 
 class Error(Exception):
-    prefix = 'Error'
     def __str__(self):
-        return self.prefix + ': ' + ' '.join(self.args)
+        return self.__class__.__name__ + ': ' + ' '.join(self.args)
 
 class FormatError(Error):
     """Problem with input file format.  In other words, PNG file does
     not conform to the specification in some way and is invalid.
     """
 
-    prefix = 'FormatError'
-
 class ChunkError(FormatError):
-    prefix = 'ChunkError'
+    pass
 
 
 class Writer:
