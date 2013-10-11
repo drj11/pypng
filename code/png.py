@@ -196,18 +196,26 @@ def isarray(x):
         # Because on Python 2.2 array.array is not a type.
         return False
 
-try:  # see :pyver:old
-    array.tostring
+try:
+    array.tobytes
 except AttributeError:
-    def tostring(row):
-        l = len(row)
-        return struct.pack('%dB' % l, *row)
+    try:  # see :pyver:old
+        array.tostring
+    except AttributeError:
+        def tostring(row):
+            l = len(row)
+            return struct.pack('%dB' % l, *row)
+    else:
+        def tostring(row):
+            """Convert row of bytes to string.  Expects `row` to be an
+            ``array``.
+            """
+            return row.tostring()
 else:
     def tostring(row):
-        """Convert row of bytes to string.  Expects `row` to be an
-        ``array``.
+        """ Python3 definition, array.tostring() is deprecated in Python3
         """
-        return row.tostring()
+        return row.tobytes()
 
 # Conditionally convert to bytes.  Works on Python 2 and Python 3.
 try:
