@@ -12,6 +12,7 @@ import math
 import sys
 
 import png
+import pngsuite
 
 def generate(options, args):
     """
@@ -116,9 +117,9 @@ def generate(options, args):
         from the PngSuite.  Returned in flat row flat pixel format.
         """
 
-        if name not in png._pngsuite:
+        if name not in pngsuite.png:
             raise NotImplementedError("cannot find PngSuite file %s (use -L for a list)" % name)
-        r = png.Reader(bytes=png._pngsuite[name])
+        r = png.Reader(bytes=pngsuite.png[name])
         w,h,pixels,meta = r.asDirect()
         # LAn for n < 8 is a special case for which we need to rescale
         # the data.
@@ -221,7 +222,7 @@ def main(argv=None):
     (options, args) = parser.parse_args(args=argv[1:])
 
     if options.list:
-        names = list(png._pngsuite)
+        names = list(pngsuite.png)
         names.sort()
         for name in names:
             print name
