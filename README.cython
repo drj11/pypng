@@ -1,0 +1,18 @@
+Part of png.py can be compiled with Cython to achieve better performance.
+Compiled part is 'BaseFilter' class now.
+
+If you change this part follow next steps:
+1. remove 'pngfilters.py' file if any
+2. remove 'pngfilters.c' file
+3. remove 'pngfilters.pyd' or 'pngfilters.so' file if any.
+4. keep 'pngfilters.pxd' file.
+If you don't interested in Cython compilation you may stop here
+
+5. run 'unimport.py' to extract compiled part into 'pngfilters.py'
+6. edit 'pngfilters.pxd' if you know what you do
+7. compile 'pngfilters.py' and 'pngfilters.pxd' into 'pngfilters.c'
+   using cython like "cython pngfilters.py"
+8. build png.py with c-code using "setup.py build"
+9. copy compiled lib ('pngfilters.pyd' or 'pngfilters.so') 
+   to 'code' folder and check unittests
+10. do not(!) commit binary lib to repo

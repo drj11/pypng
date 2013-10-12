@@ -1,12 +1,19 @@
 #cython: boundscheck=False
 #cython: wraparound=False
 class BaseFilter:
+    '''Basic methods of filtering and other byte manipulations
+
+    This part can be compile with Cython (see README.cython)
+    If you change this part - remove pngfilters.c file.
+    And if any other pngfilters.* except pngfilters.pxd - remove them too
+    '''
+
     def __init__(self, bitdepth=8, interlace=None, rows=None, prev=None):
         if bitdepth > 8:
             self.fu = bitdepth // 8
         else:
             self.fu = 1
-        self.prev = bytearray() if prev is None else bytearray(prev)
+        self.prev = None if prev is None else bytearray(prev)
 
     def undo_filter_sub(self, scanline, result):
         """Undo sub filter."""
@@ -124,6 +131,32 @@ class BaseFilter:
             ai += 1
         return 0
 
+    def unfilter_scanline(self, filter_type, line, result):
+        """Undo the filter for a scanline."""
+
+        # For the first line of a pass, synthesize a dummy previous
+        # line.  An alternative approach would be to observe that on the
+        # first line 'up' is the same as 'null', 'paeth' is the same
+        # as 'sub', with only 'average' requiring any special case.
+        if self.prev is None:
+            self.prev = bytearray(len(line))
+
+        # Call appropriate filter algorithm.  Note that 0 has already
+        # been dealt with.
+        if filter_type == 1:
+            self.undo_filter_sub(line, result)
+        elif filter_type == 2:
+            self.undo_filter_up(line, result)
+        elif filter_type == 3:
+            self.undo_filter_average(line, result)
+        elif filter_type == 4:
+            self.undo_filter_paeth(line, result)
+
+        # This will not work writing cython attributes from python
+        # Only 'cython from cython' or 'python from python'
+        self.prev[:] = result
+        return 0
+
     def filter_scanline_(self, filter_type, line, result):
         """Apply a scanline filter to a scanline.
         `filter_type` specifies the filter type (0 to 4) also there are
@@ -134,7 +167,7 @@ class BaseFilter:
 
         assert 0 <= filter_type < 5
         fa = filter_type
-        if not bool(self.prev):
+        if self.prev is None:
         # We're on the first line.  Some of the filters can be reduced
         # to simpler cases which makes handling the line "off the top"
         # of the image simpler.  "up" becomes "none"; "paeth" becomes
@@ -144,7 +177,7 @@ class BaseFilter:
                 #return line
                 fa = 0
             elif filter_type == 3:
-                self.prev = bytearray([0] * len(line))
+                self.prev = bytearray(len(line))
             elif filter_type == 4:  # "paeth"
                 fa = 1
 
