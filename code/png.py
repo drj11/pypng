@@ -1736,107 +1736,117 @@ class Reader:
         """
 
         type, data = self.chunk(lenient=lenient)
-        if type == 'IHDR':
-            # http://www.w3.org/TR/PNG/#11IHDR
-            if len(data) != 13:
-                raise FormatError('IHDR chunk has incorrect length.')
-            (self.width, self.height, self.bitdepth, self.color_type,
-             self.compression, self.filter,
-             self.interlace) = struct.unpack("!2I5B", data)
+        method = '_process_' + type
+        m = getattr(self, method, None)
+        if m:
+            m(data)
 
-            check_bitdepth_colortype(self.bitdepth, self.color_type)
+    def _process_IHDR(self, data):
+        # http://www.w3.org/TR/PNG/#11IHDR
+        if len(data) != 13:
+            raise FormatError('IHDR chunk has incorrect length.')
+        (self.width, self.height, self.bitdepth, self.color_type,
+         self.compression, self.filter,
+         self.interlace) = struct.unpack("!2I5B", data)
 
-            if self.compression != 0:
-                raise Error("unknown compression method %d" % self.compression)
-            if self.filter != 0:
-                raise FormatError("Unknown filter method %d,"
-                  " see http://www.w3.org/TR/2003/REC-PNG-20031110/#9Filters ."
-                  % self.filter)
-            if self.interlace not in (0,1):
-                raise FormatError("Unknown interlace method %d,"
-                  " see http://www.w3.org/TR/2003/REC-PNG-20031110/#8InterlaceMethods ."
-                  % self.interlace)
+        check_bitdepth_colortype(self.bitdepth, self.color_type)
 
-            # Derived values
-            # http://www.w3.org/TR/PNG/#6Colour-values
-            colormap =  bool(self.color_type & 1)
-            greyscale = not (self.color_type & 2)
-            alpha = bool(self.color_type & 4)
-            color_planes = (3,1)[greyscale or colormap]
-            planes = color_planes + alpha
+        if self.compression != 0:
+            raise Error("unknown compression method %d" % self.compression)
+        if self.filter != 0:
+            raise FormatError("Unknown filter method %d,"
+              " see http://www.w3.org/TR/2003/REC-PNG-20031110/#9Filters ."
+              % self.filter)
+        if self.interlace not in (0,1):
+            raise FormatError("Unknown interlace method %d,"
+              " see http://www.w3.org/TR/2003/REC-PNG-20031110/#8InterlaceMethods ."
+              % self.interlace)
 
-            self.colormap = colormap
-            self.greyscale = greyscale
-            self.alpha = alpha
-            self.color_planes = color_planes
-            self.planes = planes
-            self.psize = float(self.bitdepth)/float(8) * planes
-            if int(self.psize) == self.psize:
-                self.psize = int(self.psize)
-            self.row_bytes = int(math.ceil(self.width * self.psize))
-            # Stores PLTE chunk if present, and is used to check
-            # chunk ordering constraints.
-            self.plte = None
-            # Stores tRNS chunk if present, and is used to check chunk
-            # ordering constraints.
-            self.trns = None
-            # Stores sbit chunk if present.
-            self.sbit = None
-        elif type == 'PLTE':
-            # http://www.w3.org/TR/PNG/#11PLTE
-            if self.plte:
-                warnings.warn("Multiple PLTE chunks present.")
-            self.plte = data
-            if len(data) % 3 != 0:
-                raise FormatError(
-                  "PLTE chunk's length should be a multiple of 3.")
-            if len(data) > (2**self.bitdepth)*3:
-                raise FormatError("PLTE chunk is too long.")
-            if len(data) == 0:
-                raise FormatError("Empty PLTE is not allowed.")
-        elif type == 'bKGD':
-            try:
-                if self.colormap:
-                    if not self.plte:
-                        warnings.warn(
-                          "PLTE chunk is required before bKGD chunk.")
-                    self.background = struct.unpack('B', data)
-                else:
-                    self.background = struct.unpack("!%dH" % self.color_planes,
-                      data)
-            except struct.error:
-                raise FormatError("bKGD chunk has incorrect length.")
-        elif type == 'tRNS':
-            # http://www.w3.org/TR/PNG/#11tRNS
-            self.trns = data
+        # Derived values
+        # http://www.w3.org/TR/PNG/#6Colour-values
+        colormap =  bool(self.color_type & 1)
+        greyscale = not (self.color_type & 2)
+        alpha = bool(self.color_type & 4)
+        color_planes = (3,1)[greyscale or colormap]
+        planes = color_planes + alpha
+
+        self.colormap = colormap
+        self.greyscale = greyscale
+        self.alpha = alpha
+        self.color_planes = color_planes
+        self.planes = planes
+        self.psize = float(self.bitdepth)/float(8) * planes
+        if int(self.psize) == self.psize:
+            self.psize = int(self.psize)
+        self.row_bytes = int(math.ceil(self.width * self.psize))
+        # Stores PLTE chunk if present, and is used to check
+        # chunk ordering constraints.
+        self.plte = None
+        # Stores tRNS chunk if present, and is used to check chunk
+        # ordering constraints.
+        self.trns = None
+        # Stores sbit chunk if present.
+        self.sbit = None
+
+    def _process_PLTE(self, data):
+        # http://www.w3.org/TR/PNG/#11PLTE
+        if self.plte:
+            warnings.warn("Multiple PLTE chunks present.")
+        self.plte = data
+        if len(data) % 3 != 0:
+            raise FormatError(
+              "PLTE chunk's length should be a multiple of 3.")
+        if len(data) > (2**self.bitdepth)*3:
+            raise FormatError("PLTE chunk is too long.")
+        if len(data) == 0:
+            raise FormatError("Empty PLTE is not allowed.")
+
+    def _process_bKGD(self, data):
+        try:
             if self.colormap:
                 if not self.plte:
-                    warnings.warn("PLTE chunk is required before tRNS chunk.")
-                else:
-                    if len(data) > len(self.plte)/3:
-                        # Was warning, but promoted to Error as it
-                        # would otherwise cause pain later on.
-                        raise FormatError("tRNS chunk is too long.")
+                    warnings.warn(
+                      "PLTE chunk is required before bKGD chunk.")
+                self.background = struct.unpack('B', data)
             else:
-                if self.alpha:
-                    raise FormatError(
-                      "tRNS chunk is not valid with colour type %d." %
-                      self.color_type)
-                try:
-                    self.transparent = \
-                        struct.unpack("!%dH" % self.color_planes, data)
-                except struct.error:
-                    raise FormatError("tRNS chunk has incorrect length.")
-        elif type == 'gAMA':
+                self.background = struct.unpack("!%dH" % self.color_planes,
+                  data)
+        except struct.error:
+            raise FormatError("bKGD chunk has incorrect length.")
+
+    def _process_tRNS(self, data):
+        # http://www.w3.org/TR/PNG/#11tRNS
+        self.trns = data
+        if self.colormap:
+            if not self.plte:
+                warnings.warn("PLTE chunk is required before tRNS chunk.")
+            else:
+                if len(data) > len(self.plte)/3:
+                    # Was warning, but promoted to Error as it
+                    # would otherwise cause pain later on.
+                    raise FormatError("tRNS chunk is too long.")
+        else:
+            if self.alpha:
+                raise FormatError(
+                  "tRNS chunk is not valid with colour type %d." %
+                  self.color_type)
             try:
-                self.gamma = struct.unpack("!L", data)[0] / 100000.0
+                self.transparent = \
+                    struct.unpack("!%dH" % self.color_planes, data)
             except struct.error:
-                raise FormatError("gAMA chunk has incorrect length.")
-        elif type == 'sBIT':
-            self.sbit = data
-            if (self.colormap and len(data) != 3 or
-                not self.colormap and len(data) != self.planes):
-                raise FormatError("sBIT chunk has incorrect length.")
+                raise FormatError("tRNS chunk has incorrect length.")
+
+    def _process_gAMA(self, data):
+        try:
+            self.gamma = struct.unpack("!L", data)[0] / 100000.0
+        except struct.error:
+            raise FormatError("gAMA chunk has incorrect length.")
+
+    def _process_sBIT(self, data):
+        self.sbit = data
+        if (self.colormap and len(data) != 3 or
+            not self.colormap and len(data) != self.planes):
+            raise FormatError("sBIT chunk has incorrect length.")
 
     def read(self, lenient=False):
         """
