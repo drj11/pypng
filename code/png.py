@@ -161,8 +161,11 @@ import zlib
 # http://www.python.org/doc/2.4.4/lib/module-warnings.html
 import warnings
 try:
-    import pyximport
-    pyximport.install()
+    # `cpngfilters` is a Cython module: it must be compiled by
+    # Cython for this import to work.
+    # If this import does work, then it overrides pure-python
+    # filtering functions defined later in this file (see `class
+    # pngfilters`).
     import cpngfilters as pngfilters
 except ImportError:
     pass
