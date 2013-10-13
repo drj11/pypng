@@ -543,66 +543,75 @@ class Test(unittest.TestCase):
 
     # test filters and unfilters
     def testFilterScanlineFirstLine(self):
-        fo = 3  # bytes per pixel
         line = [30, 31, 32, 230, 231, 232]
-        out = png.filter_scanline(0, line, fo, None)  # none
+        def filter_scanline(filter_type, line, prev):
+            filter_ = png.Filter(24, prev = prev)
+            return filter_.filter_scanline(filter_type, line)
+
+        out = filter_scanline(0, line, None)  # none
         self.assertEqual(list(out), [0, 30, 31, 32, 230, 231, 232])
-        out = png.filter_scanline(1, line, fo, None)  # sub
+        out = filter_scanline(1, line, None)  # sub
         self.assertEqual(list(out), [1, 30, 31, 32, 200, 200, 200])
-        out = png.filter_scanline(2, line, fo, None)  # up
+        out = filter_scanline(2, line, None)  # up
         self.assertEqual(list(out), [2, 30, 31, 32, 230, 231, 232])
-        out = png.filter_scanline(3, line, fo, None)  # average
+        out = filter_scanline(3, line, None)  # average
         self.assertEqual(list(out), [3, 30, 31, 32, 215, 216, 216])
-        out = png.filter_scanline(4, line, fo, None)  # paeth
+        out = filter_scanline(4, line, None)  # paeth
         self.assertEqual(list(out), [
             4, self.paeth(30, 0, 0, 0), self.paeth(31, 0, 0, 0),
             self.paeth(32, 0, 0, 0), self.paeth(230, 30, 0, 0),
             self.paeth(231, 31, 0, 0), self.paeth(232, 32, 0, 0)
             ])
+
     def testFilterScanline(self):
         prev = [20, 21, 22, 210, 211, 212]
         line = [30, 32, 34, 230, 233, 236]
-        fo = 3
-        out = png.filter_scanline(0, line, fo, prev)  # none
+        def filter_scanline(filter_type, line, prev):
+            filter_ = png.Filter(24, prev = prev)
+            return filter_.filter_scanline(filter_type, line)
+
+        out = filter_scanline(0, line, prev)  # none
         self.assertEqual(list(out), [0, 30, 32, 34, 230, 233, 236])
-        out = png.filter_scanline(1, line, fo, prev)  # sub
+        out = filter_scanline(1, line, prev)  # sub
         self.assertEqual(list(out), [1, 30, 32, 34, 200, 201, 202])
-        out = png.filter_scanline(2, line, fo, prev)  # up
+        out = filter_scanline(2, line, prev)  # up
         self.assertEqual(list(out), [2, 10, 11, 12, 20, 22, 24])
-        out = png.filter_scanline(3, line, fo, prev)  # average
+        out = filter_scanline(3, line, prev)  # average
         self.assertEqual(list(out), [3, 20, 22, 23, 110, 112, 113])
-        out = png.filter_scanline(4, line, fo, prev)  # paeth
+        out = filter_scanline(4, line, prev)  # paeth
         self.assertEqual(list(out), [
             4, self.paeth(30, 0, 20, 0), self.paeth(32, 0, 21, 0),
             self.paeth(34, 0, 22, 0), self.paeth(230, 30, 210, 20),
             self.paeth(233, 32, 211, 21), self.paeth(236, 34, 212, 22)
             ])
+
     def testUnfilterScanline(self):
-        reader = png.Reader(bytes='')
-        reader.psize = 3
         scanprev = array('B', [20, 21, 22, 210, 211, 212])
         scanline = array('B', [30, 32, 34, 230, 233, 236])
-        def cp(a):
-            return array('B', a)
+        def undo_filter(filter_type, line, prev):
+            filter_ = png.Filter(24, prev=prev)
+            line = array('B', line)
+            line.insert(0,filter_type)
+            return filter_.undo_filter(line)
 
-        out = reader.undo_filter(0, cp(scanline), cp(scanprev))
+        out = undo_filter(0, scanline, scanprev)
         self.assertEqual(list(out), list(scanline))  # none
-        out = reader.undo_filter(1, cp(scanline), cp(scanprev))
+        out = undo_filter(1, scanline, scanprev)
         self.assertEqual(list(out), [30, 32, 34, 4, 9, 14])  # sub
-        out = reader.undo_filter(2, cp(scanline), cp(scanprev))
+        out = undo_filter(2, scanline, scanprev)
         self.assertEqual(list(out), [50, 53, 56, 184, 188, 192])  # up
-        out = reader.undo_filter(3, cp(scanline), cp(scanprev))
+        out = undo_filter(3, scanline, scanprev)
         self.assertEqual(list(out), [40, 42, 45, 99, 103, 108])  # average
-        out = reader.undo_filter(4, cp(scanline), cp(scanprev))
+        out = undo_filter(4, scanline, scanprev)
         self.assertEqual(list(out), [50, 53, 56, 184, 188, 192])  # paeth
+
     def testUnfilterScanlinePaeth(self):
         # This tests more edge cases in the paeth unfilter
-        reader = png.Reader(bytes='')
-        reader.psize = 3
         scanprev = array('B', [2, 0, 0, 0, 9, 11])
-        scanline = array('B', [6, 10, 9, 100, 101, 102])
+        scanline = array('B', [4, 6, 10, 9, 100, 101, 102])
+        filter_ = png.Filter(24, prev=scanprev)
 
-        out = reader.undo_filter(4, scanline, scanprev)
+        out = filter_.undo_filter(scanline)
         self.assertEqual(list(out), [8, 10, 9, 108, 111, 113])  # paeth
 
 def group(s, n):
