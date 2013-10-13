@@ -543,43 +543,40 @@ class Test(unittest.TestCase):
 
     # test filters and unfilters
     def testFilterScanlineFirstLine(self):
-        line = [30, 31, 32, 230, 231, 232]
-        def filter_scanline(filter_type, line, prev):
-            filter_ = png.Filter(24, prev = prev)
-            return filter_.filter_scanline(filter_type, line)
+        line = array('B', [30, 31, 32, 230, 231, 232])
+        filter_ = png.Filter(24, prev = None)
+        res = filter_.filter_all(line)
 
-        out = filter_scanline(0, line, None)  # none
-        self.assertEqual(list(out), [0, 30, 31, 32, 230, 231, 232])
-        out = filter_scanline(1, line, None)  # sub
-        self.assertEqual(list(out), [1, 30, 31, 32, 200, 200, 200])
-        out = filter_scanline(2, line, None)  # up
-        self.assertEqual(list(out), [2, 30, 31, 32, 230, 231, 232])
-        out = filter_scanline(3, line, None)  # average
-        self.assertEqual(list(out), [3, 30, 31, 32, 215, 216, 216])
-        out = filter_scanline(4, line, None)  # paeth
-        self.assertEqual(list(out), [
+        # none
+        self.assertEqual(list(res[0]), [0, 30, 31, 32, 230, 231, 232])
+        # sub
+        self.assertEqual(list(res[1]), [1, 30, 31, 32, 200, 200, 200])
+        # up
+        self.assertEqual(list(res[2]), [2, 30, 31, 32, 230, 231, 232])
+        # average  ! Note that order in list is not equal to filter number
+        self.assertEqual(list(res[4]), [3, 30, 31, 32, 215, 216, 216])
+        # paeth    ! Note that order in list is not equal to filter number
+        self.assertEqual(list(res[3]), [
             4, self.paeth(30, 0, 0, 0), self.paeth(31, 0, 0, 0),
             self.paeth(32, 0, 0, 0), self.paeth(230, 30, 0, 0),
             self.paeth(231, 31, 0, 0), self.paeth(232, 32, 0, 0)
             ])
 
     def testFilterScanline(self):
-        prev = [20, 21, 22, 210, 211, 212]
-        line = [30, 32, 34, 230, 233, 236]
-        def filter_scanline(filter_type, line, prev):
-            filter_ = png.Filter(24, prev = prev)
-            return filter_.filter_scanline(filter_type, line)
-
-        out = filter_scanline(0, line, prev)  # none
-        self.assertEqual(list(out), [0, 30, 32, 34, 230, 233, 236])
-        out = filter_scanline(1, line, prev)  # sub
-        self.assertEqual(list(out), [1, 30, 32, 34, 200, 201, 202])
-        out = filter_scanline(2, line, prev)  # up
-        self.assertEqual(list(out), [2, 10, 11, 12, 20, 22, 24])
-        out = filter_scanline(3, line, prev)  # average
-        self.assertEqual(list(out), [3, 20, 22, 23, 110, 112, 113])
-        out = filter_scanline(4, line, prev)  # paeth
-        self.assertEqual(list(out), [
+        prev = array('B', [20, 21, 22, 210, 211, 212])
+        line = array('B', [30, 32, 34, 230, 233, 236])
+        filter_ = png.Filter(24, prev = prev)
+        res = filter_.filter_all(line)
+        # None
+        self.assertEqual(list(res[0]), [0, 30, 32, 34, 230, 233, 236])
+        # sub
+        self.assertEqual(list(res[1]), [1, 30, 32, 34, 200, 201, 202])
+        # up
+        self.assertEqual(list(res[2]), [2, 10, 11, 12, 20, 22, 24])
+        # average  ! Note that order in list is not equal to filter number
+        self.assertEqual(list(res[4]), [3, 20, 22, 23, 110, 112, 113])
+        # paeth    ! Note that order in list is not equal to filter number
+        self.assertEqual(list(res[3]), [
             4, self.paeth(30, 0, 20, 0), self.paeth(32, 0, 21, 0),
             self.paeth(34, 0, 22, 0), self.paeth(230, 30, 210, 20),
             self.paeth(233, 32, 211, 21), self.paeth(236, 34, 212, 22)

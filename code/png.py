@@ -192,8 +192,6 @@ def isarray(x):
         # Because on Python 2.2 array.array is not a type.
         return False
 
-
-
 try:
     array.tobytes
 except AttributeError:
@@ -520,10 +518,9 @@ class BaseFilter:
         self.prev[:] = result
         return 0
 
-    def filter_scanline_(self, filter_type, line, result):
+    def filter_scanline(self, filter_type, line, result):
         """Apply a scanline filter to a scanline.
-        `filter_type` specifies the filter type (0 to 4) also there are
-        adaptive filters 5 (criteria is sum) and 6 (criteria is entropy);
+        `filter_type` specifies the filter type (0 to 4)
         'line` specifies the current (unfiltered) scanline as a sequence
         of bytes;
         """
@@ -552,7 +549,6 @@ class BaseFilter:
             self.do_filter_average(line, result)
         elif fa == 4:
             self.do_filter_paeth(line, result)
-
         return 0
 
     # Todo: color conversion functions should be moved
@@ -736,6 +732,7 @@ class Writer:
         # ``Writer(x, y, **info)`` works, where `info` is a dictionary
         # returned by Reader.read and friends.
         # Ditto for `colormap`.
+
         width, height = check_sizes(size, width, height)
         del size
 
@@ -870,6 +867,7 @@ class Writer:
           Interlacing will require the entire image to be in working
           memory.
         """
+
         if self.interlace:
             fmt = 'BH'[self.bitdepth > 8]
             a = array(fmt, itertools.chain(*rows))
@@ -899,6 +897,7 @@ class Writer:
         format; when `packed` is ``True`` each row should be a packed
         sequence of bytes.
         """
+
         self.write_idat(outfile, self.idat(rows, packed))
         return self.irows
 
@@ -908,6 +907,7 @@ class Writer:
         'idat' should be iterable that produce IDAT chunks
         compatible with 'Writer' configuration
         """
+
         # http://www.w3.org/TR/PNG/#5PNG-file-signature
         outfile.write(_signature)
 
@@ -1239,41 +1239,54 @@ class Filter(BaseFilter):
         if self.interlace:
             for _, off, _, step in _adam7:
                 self.restarts.append((rows - off - 1 + step) // step)
+    
+    def filter_all(self, line):
+        """Doing all filters for specified line and return 
+        filtered lines as list
 
-    def filter_scanline(self, filter_type, line):
-        """Apply a scanline filter to a scanline.
-        `filter_type` specifies the filter type (0 to 4) also there are
-        adaptive filters 5 (criteria is sum) and 6 (criteria is entropy);
+        For using with adaptive filters
+        """
+
+        lines = [bytearray(it) for it in ([line] * 5)]
+        f_types = (0, 1, 2, 4, 3)  # 3 is last to use first line optimisation
+        for res, filter_type in zip(lines, f_types):
+            self.filter_scanline(filter_type, line, res)
+            res.insert(0, filter_type)
+        return lines
+
+    def adaptive_filter(self, filter, cfg, line):
+        """Applying adaptive filters
+        'filter' specifies name of filter-selection stratery
+        'cfg' specifies config for this trategy (if strategy configurable)
         'line` specifies the current (unfiltered) scanline as a sequence
         of bytes;
         """
 
-        if filter_type == 5:
-            res = map(lambda i: self.filter_scanline(i, line),
-                  (0, 1, 2, 4, 3))  # 3 is last to use first line optimisation
+        if filter == 'sum':
+            res = self.filter_all(line)
             res_s = map(lambda it: sum(it), res)
             r = res_s.index(min(res_s))
             return res[r]
-        if filter_type == 6:
-            res = map(lambda i: self.filter_scanline(i, line),
-                  (0, 1, 2, 4, 3))  # 3 is last to use first line optimisation
+        if filter == 'entropy':
+            res = self.filter_all(line)
             res_c = [len(set(it)) for it in res]
             r = res_c.index(min(res_c))
             return res[r]
-        #End of adaptive filters
-        result = bytearray(line)
-        self.filter_scanline_(filter_type, line, result)
-        result.insert(0, filter_type)  # Add filter type as the first byte
-        return result
-
-    def do_filter(self, typ, line):
+        
+    def do_filter(self, filter_type, line):
         """Applying filter, caring about prev line, interlacing etc.
+        'filter_type' may be integer to apply basic filter or
+        adaptive strategy with dict 
+        ('name' is reqired field, others may tune strategy)
         """
 
-        # There is dirty hack for buffer compatibility
-        # when using compiled filters
         line = bytearray(line)
-        res = self.filter_scanline(typ, line)
+        if isinstance(filter_type, int):
+            res = bytearray(line)
+            self.filter_scanline(filter_type, line, res)
+            res.insert(0, filter_type)  # Add filter type as the first byte
+        else:
+            res = self.adaptive_filter(filter_type['name'], filter_type, line)   
         self.prev = line
         if self.restarts:
             self.restarts[0] -= 1

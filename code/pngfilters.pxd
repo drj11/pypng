@@ -2,7 +2,9 @@ import cython
 from libc.stdlib cimport abs as c_abs
 cimport cpython.array
 
-cdef inline int len(unsigned char[::1] line):
+ctypedef unsigned char[::1] buf_arr
+
+cdef inline int len(buf_arr line):
 	return line.shape[0]
 
 cdef class BaseFilter:
@@ -36,7 +38,7 @@ cdef class BaseFilter:
 	cdef int do_filter_paeth(self, unsigned char[::1] scanline, unsigned char[::1] result)
 
 	@cython.locals(fa = cython.int)
-	cpdef int filter_scanline_(self, int filter_type, unsigned char[::1] line, unsigned char[::1] result)
+	cpdef int filter_scanline(self, int filter_type, unsigned char[::1] line, unsigned char[::1] result)
 
 	cpdef int unfilter_scanline(self, int filter_type, unsigned char[::1] line, unsigned char[::1] result)
 
