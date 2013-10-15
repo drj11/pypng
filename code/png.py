@@ -1249,9 +1249,9 @@ class Filter(BaseFilter):
         if self.interlace:
             for _, off, _, step in _adam7:
                 self.restarts.append((rows - off - 1 + step) // step)
-    
+
     def filter_all(self, line):
-        """Doing all filters for specified line and return 
+        """Doing all filters for specified line and return
         filtered lines as list
 
         For using with adaptive filters
@@ -1264,7 +1264,15 @@ class Filter(BaseFilter):
             res.insert(0, filter_type)
         return lines
 
-    def adaptive_filter(self, filter, cfg, line):
+    adapt_methods = {}
+    # This dict should keep be methods of adaptive filtering
+    # Signature is def(lines, cfg, filter_obj)
+    # lines - list of lines filtered with defaulf filters
+    # cfg - dict with optional tuning
+    # filter_obj - instance of this class (for context)
+    # method should return filtered line
+
+    def adaptive_filter(self, cfg, line):
         """Applying adaptive filters
         'filter' specifies name of filter-selection stratery
         'cfg' specifies config for this trategy (if strategy configurable)
@@ -1272,21 +1280,17 @@ class Filter(BaseFilter):
         of bytes;
         """
 
-        if filter == 'sum':
-            res = self.filter_all(line)
-            res_s = map(lambda it: sum(it), res)
-            r = res_s.index(min(res_s))
-            return res[r]
-        if filter == 'entropy':
-            res = self.filter_all(line)
-            res_c = [len(set(it)) for it in res]
-            r = res_c.index(min(res_c))
-            return res[r]
-        
+        lines = self.filter_all(line)
+        strategy = Filter.adapt_methods.get(cfg['name'])
+        if strategy is None:
+            raise Error("Adaptive strategy not found")
+        else:
+            return strategy(lines, cfg, self)
+
     def do_filter(self, filter_type, line):
         """Applying filter, caring about prev line, interlacing etc.
         'filter_type' may be integer to apply basic filter or
-        adaptive strategy with dict 
+        adaptive strategy with dict
         ('name' is reqired field, others may tune strategy)
         """
 
@@ -1296,7 +1300,7 @@ class Filter(BaseFilter):
             self.filter_scanline(filter_type, line, res)
             res.insert(0, filter_type)  # Add filter type as the first byte
         else:
-            res = self.adaptive_filter(filter_type['name'], filter_type, line)   
+            res = self.adaptive_filter(filter_type, line)
         self.prev = line
         if self.restarts:
             self.restarts[0] -= 1
@@ -1326,6 +1330,22 @@ class Filter(BaseFilter):
         result = bytearray(scanline)
         self.unfilter_scanline(filter_type, scanline, result)
         return result
+
+
+def adapt_sum(lines, cfg, filter_obj):
+    res_s = map(lambda it: sum(it), lines)
+    r = res_s.index(min(res_s))
+    return lines[r]
+
+
+def adapt_entropy(lines, cfg, filter_obj):
+    res_c = [len(set(it)) for it in lines]
+    r = res_c.index(min(res_c))
+    return lines[r]
+
+#Two basic adaptive strategies
+Filter.adapt_methods['sum'] = adapt_sum
+Filter.adapt_methods['entropy'] = adapt_entropy
 
 
 def from_array(a, mode=None, info={}):
