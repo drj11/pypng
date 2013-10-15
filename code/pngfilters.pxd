@@ -1,11 +1,21 @@
 import cython
 from libc.stdlib cimport abs as c_abs
 cimport cpython.array
+from cython.view cimport array as carray
 
 ctypedef unsigned char[::1] buf_arr
 
 cdef inline int len(buf_arr line):
 	return line.shape[0]
+	
+cdef inline buf_arr newarray(int length):
+	cdef buf_arr res
+	cdef int i
+	#Seek for more effective view init (but without bytearrays)
+	res = carray(shape=(length,), itemsize=sizeof(uchar), format="B")
+	for i in range(length):
+		res[i] = 0
+	return res
 
 cdef class BaseFilter:
 	cdef int fu
@@ -43,7 +53,7 @@ cdef class BaseFilter:
 	cpdef int unfilter_scanline(self, int filter_type, unsigned char[::1] line, unsigned char[::1] result)
 
 	@cython.locals(i=cython.int, j=cython.int)
-	cpdef convert_la_to_rgba(self, unsigned char[::1] row, unsigned char[::1] result)
+	cpdef int convert_la_to_rgba(self, unsigned char[::1] row, unsigned char[::1] result)
 
 	@cython.locals(i=cython.int, j=cython.int)
 	cpdef int convert_l_to_rgba(self, unsigned char[::1] row, unsigned char[::1] result)

@@ -216,16 +216,26 @@ else:
 #Bytearray are faster than array, but looks more like list
 try:
     bytearray
-
-    def batostring(src):
-        return str(src)
-except:
+except NameError:
     #Bytearray appears in python 2.6
-    def bytearray(arg=0):
-        if isinstance(arg, int):
-            return array('B', [0] * arg)
-        return array('B', arg)
+    def bytearray(src=[]):
+        return array('B', src)
+
+    def newarray(length=0):
+        return array('B', [0] * length)
+
     batostring = tostring
+else:
+    def newarray(length=0):
+        return bytearray(length)
+    try:
+        bytes
+    except NameError:
+        def batostring(src):
+            return str(src)
+    else:
+        def batostring(src):
+            return bytes(src)
 
 # Conditionally convert to bytes.  Works on Python 2 and Python 3.
 try:
@@ -374,7 +384,6 @@ class BaseFilter:
             self.fu = bitdepth // 8
         else:
             self.fu = 1
-        self.prev = None if prev is None else bytearray(prev)
 
     def undo_filter_sub(self, scanline, result):
         """Undo sub filter."""
@@ -500,7 +509,7 @@ class BaseFilter:
         # first line 'up' is the same as 'null', 'paeth' is the same
         # as 'sub', with only 'average' requiring any special case.
         if self.prev is None:
-            self.prev = bytearray(len(line))
+            self.prev = newarray(len(line))
 
         # Call appropriate filter algorithm.  Note that 0 has already
         # been dealt with.
@@ -537,7 +546,7 @@ class BaseFilter:
                 #return line
                 fa = 0
             elif filter_type == 3:
-                self.prev = bytearray(len(line))
+                self.prev = newarray(len(line))
             elif filter_type == 4:  # "paeth"
                 fa = 1
 
@@ -1234,6 +1243,7 @@ def write_chunks(out, chunks):
 class Filter(BaseFilter):
     def __init__(self, bitdepth=8, interlace=None, rows=None, prev=None):
         BaseFilter.__init__(self, bitdepth, interlace, rows, prev)
+        self.prev = None if prev is None else bytearray(prev)
         self.interlace = interlace
         self.restarts = []
         if self.interlace:
