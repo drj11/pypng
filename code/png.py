@@ -587,11 +587,11 @@ class BaseFilter:
                 result[(4 * i) + j] = row[(3 * i) + j]
         return 0
 
-iFilter = BaseFilter  # 'i' means 'internal'
+iBaseFilter = BaseFilter  # 'i' means 'internal'
 try:
     from pngfilters import BaseFilter
 except ImportError:
-    BaseFilter = iFilter
+    BaseFilter = iBaseFilter
 
 
 class Writer:
@@ -983,14 +983,14 @@ class Writer:
         else:
             compressor = zlib.compressobj()
 
-        filterer = Filter(self.bitdepth * self.planes,
-                          self.interlace, self.height)
+        filt = Filter(self.bitdepth * self.planes,
+                      self.interlace, self.height)
         data = bytearray()
 
         #Filtering algorithms are applied to bytes, not to pixels,
         #regardless of the bit depth or color type of the image.
         def byteextend(rowbytes):
-            data.extend(filterer.do_filter(self.filter_type, rowbytes))
+            data.extend(filt.do_filter(self.filter_type, rowbytes))
 
         # Choose an extend function based on the bitdepth.  The extend
         # function packs/decomposes the pixel values into bytes and
@@ -1733,11 +1733,14 @@ class Reader:
         fmt = 'BH'[self.bitdepth > 8]
         a = array(fmt, [0]*vpr*self.height)
         source_offset = 0
-
+        filt = Filter(self.bitdepth * self.planes)
         for xstart, ystart, xstep, ystep in _adam7:
             if xstart >= self.width:
                 continue
-            filt = Filter(self.bitdepth * self.planes)
+            # The previous (reconstructed) scanline.  None at the
+            # beginning of a pass to indicate that there is no previous
+            # line.
+            filt.prev = None
             # Pixels per row (reduced pass image)
             ppr = int(math.ceil((self.width-xstart)/float(xstep)))
             # Row size in bytes for this pass.
@@ -1772,9 +1775,9 @@ class Reader:
             or may not share with argument"""
 
             if self.bitdepth == 8:
-                return raw
+                return array('B', raw)
             if self.bitdepth == 16:
-                # TODO: raw = tostring(raw)
+                raw = batostring(raw)
                 return array('H', struct.unpack('!%dH' % (len(raw)//2), raw))
             assert self.bitdepth < 8
             width = self.width
@@ -2332,9 +2335,13 @@ class Reader:
         typecode = 'BH'[meta['bitdepth'] > 8]
         maxval = 2**meta['bitdepth'] - 1
         maxbuffer = struct.pack('=' + typecode, maxval) * 4 * width
+
         def newarray():
             return array(typecode, maxbuffer)
-        filt = Filter()
+
+        # Not best way, but we have only array of bytes accelerated now
+        filt = BaseFilter() if typecode == 'B' else iBaseFilter()
+
         if meta['alpha'] and meta['greyscale']:
             # LA to RGBA
             def convert():
