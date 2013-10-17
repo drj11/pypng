@@ -370,6 +370,8 @@ class FormatError(Error):
 class ChunkError(FormatError):
     pass
 
+len_ba = len
+
 
 class BaseFilter:
     '''Basic methods of filtering and other byte manipulations
@@ -391,7 +393,7 @@ class BaseFilter:
         ai = 0
         # Loops starts at index fu.  Observe that the initial part
         # of the result is already filled in correctly with scanline.
-        for i in range(self.fu, len(result)):
+        for i in range(self.fu, len_ba(result)):
             x = scanline[i]
             a = result[ai]
             result[i] = (x + a) & 0xff
@@ -402,7 +404,7 @@ class BaseFilter:
         """Sub filter."""
 
         ai = 0
-        for i in range(self.fu, len(result)):
+        for i in range(self.fu, len_ba(result)):
             x = scanline[i]
             a = scanline[ai]
             result[i] = (x - a) & 0xff
@@ -411,7 +413,7 @@ class BaseFilter:
 
     def undo_filter_up(self, scanline, result):
         """Undo up filter."""
-        for i in range(len(result)):
+        for i in range(len_ba(result)):
             x = scanline[i]
             b = self.prev[i]
             result[i] = (x + b) & 0xff
@@ -420,7 +422,7 @@ class BaseFilter:
     def do_filter_up(self, scanline, result):
         """Up filter."""
 
-        for i in range(len(result)):
+        for i in range(len_ba(result)):
             x = scanline[i]
             b = self.prev[i]
             result[i] = (x - b) & 0xff
@@ -430,7 +432,7 @@ class BaseFilter:
         """Undo average filter."""
 
         ai = -self.fu
-        for i in range(len(result)):
+        for i in range(len_ba(result)):
             x = scanline[i]
             if ai < 0:
                 a = 0
@@ -445,7 +447,7 @@ class BaseFilter:
         """Average filter."""
 
         ai = -self.fu
-        for i in range(len(result)):
+        for i in range(len_ba(result)):
             x = scanline[i]
             if ai < 0:
                 a = 0
@@ -472,7 +474,7 @@ class BaseFilter:
         """Undo Paeth filter."""
 
         ai = -self.fu
-        for i in range(len(result)):
+        for i in range(len_ba(result)):
             x = scanline[i]
             if ai < 0:
                 a = c = 0
@@ -489,7 +491,7 @@ class BaseFilter:
 
         # http://www.w3.org/TR/PNG/#9Filter-type-4-Paeth
         ai = -self.fu
-        for i in range(len(result)):
+        for i in range(len_ba(result)):
             x = scanline[i]
             if ai < 0:
                 a = c = 0
@@ -509,7 +511,7 @@ class BaseFilter:
         # first line 'up' is the same as 'null', 'paeth' is the same
         # as 'sub', with only 'average' requiring any special case.
         if self.prev is None:
-            self.prev = newarray(len(line))
+            self.prev = newarray(len_ba(line))
 
         # Call appropriate filter algorithm.  Note that 0 has already
         # been dealt with.
@@ -546,7 +548,7 @@ class BaseFilter:
                 #return line
                 fa = 0
             elif filter_type == 3:
-                self.prev = newarray(len(line))
+                self.prev = newarray(len_ba(line))
             elif filter_type == 4:  # "paeth"
                 fa = 1
 
@@ -563,7 +565,7 @@ class BaseFilter:
     # Todo: color conversion functions should be moved
     # to a separate part in future
     def convert_la_to_rgba(self, row, result):
-        for i in range(len(row) // 3):
+        for i in range(len_ba(row) // 3):
             for j in range(3):
                 result[(4 * i) + j] = row[2 * i]
             result[(4 * i) + 3] = row[(2 * i) + 1]
@@ -573,7 +575,7 @@ class BaseFilter:
         """Convert a grayscale image to RGBA. This method assumes the alpha
         channel in result is already correctly initialized."""
 
-        for i in range(len(row) // 3):
+        for i in range(len_ba(row) // 3):
             for j in range(3):
                 result[(4 * i) + j] = row[i]
         return 0
@@ -582,7 +584,7 @@ class BaseFilter:
         """Convert an RGB image to RGBA. This method assumes the alpha
         channel in result is already correctly initialized."""
 
-        for i in range(len(row) // 3):
+        for i in range(len_ba(row) // 3):
             for j in range(3):
                 result[(4 * i) + j] = row[(3 * i) + j]
         return 0

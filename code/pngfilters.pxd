@@ -5,7 +5,7 @@ from cython.view cimport array as carray
 
 ctypedef unsigned char[::1] buf_arr
 
-cdef inline int len(buf_arr line):
+cdef inline int len_ba(buf_arr line):
 	return line.shape[0]
 	
 cdef inline buf_arr newarray(int length):
