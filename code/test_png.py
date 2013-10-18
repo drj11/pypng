@@ -469,11 +469,22 @@ class Test(unittest.TestCase):
 
     def testFlat(self):
         """Test read_flat."""
-        import hashlib
+
+        try:
+            from hashlib import md5 as md5_func
+        except ImportError:
+            # On Python 2.4 there is no hashlib,
+            # but there is special module for md5
+            import md5
+
+            def md5_func(string):
+                m = md5.new()
+                m.update(string)
+                return m
 
         r = png.Reader(bytes=pngsuite.basn0g02)
         x,y,pixel,meta = r.read_flat()
-        d = hashlib.md5(seqtobytes(pixel)).hexdigest()
+        d = md5_func(seqtobytes(pixel)).hexdigest()
         self.assertEqual(d, '255cd971ab8cd9e7275ff906e5041aa0')
     def testfromarray(self):
         img = png.from_array([[0, 0x33, 0x66], [0xff, 0xcc, 0x99]], 'L')

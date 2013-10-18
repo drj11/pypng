@@ -1245,7 +1245,10 @@ def write_chunks(out, chunks):
 class Filter(BaseFilter):
     def __init__(self, bitdepth=8, interlace=None, rows=None, prev=None):
         BaseFilter.__init__(self, bitdepth, interlace, rows, prev)
-        self.prev = None if prev is None else bytearray(prev)
+        if prev is None:
+            self.prev = None
+        else:
+            self.prev = bytearray(prev)
         self.interlace = interlace
         self.restarts = []
         if self.interlace:
@@ -2342,7 +2345,10 @@ class Reader:
             return array(typecode, maxbuffer)
 
         # Not best way, but we have only array of bytes accelerated now
-        filt = BaseFilter() if typecode == 'B' else iBaseFilter()
+        if typecode == 'B':
+            filt = BaseFilter()
+        else:
+            filt = iBaseFilter()
 
         if meta['alpha'] and meta['greyscale']:
             # LA to RGBA
@@ -2462,8 +2468,6 @@ except TypeError:
             if type(init) == str:
                 return map(ord, init)
             return list(init)
-        # Hacks for buffer will be broken in python 2.2
-        # So we must switch to native pngfilters instead of compiled
 
 # Further hacks to get it limping along on Python 2.2
 try:
