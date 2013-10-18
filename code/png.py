@@ -841,8 +841,6 @@ class Writer:
 
         self.color_planes = (3,1)[self.greyscale or self.colormap]
         self.planes = self.color_planes + self.alpha
-        # :todo: fix for bitdepth < 8
-        self.psize = (self.bitdepth/8) * self.planes
 
     def make_palette(self):
         """Create the byte sequences for a ``PLTE`` and if necessary a
