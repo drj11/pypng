@@ -2440,7 +2440,6 @@ def isinteger(x):
 try:
     array('B').extend([])
     array('B', array('B'))
-# :todo:(drj) Check that TypeError is correct for Python 2.3
 except TypeError:
     # Expect to get here on Python 2.3
     try:
