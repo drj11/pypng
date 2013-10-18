@@ -1,0 +1,3 @@
+LIBRARY pngfilters.pyd
+EXPORTS
+initpngfilters

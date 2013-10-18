@@ -377,8 +377,8 @@ class BaseFilter:
     '''Basic methods of filtering and other byte manipulations
 
     This part can be compile with Cython (see README.cython)
-    If you change this part - remove pngfilters.c file.
-    And if any other pngfilters.* except pngfilters.pxd - remove them too
+    Private methods are declared as 'cdef' (unavailible from python)
+    for this compilation, so don't just rename it.
     '''
 
     def __init__(self, bitdepth=8, interlace=None, rows=None, prev=None):
@@ -387,7 +387,7 @@ class BaseFilter:
         else:
             self.fu = 1
 
-    def undo_filter_sub(self, scanline, result):
+    def __undo_filter_sub(self, scanline, result):
         """Undo sub filter."""
 
         ai = 0
@@ -400,7 +400,7 @@ class BaseFilter:
             ai += 1
         return 0
 
-    def do_filter_sub(self, scanline, result):
+    def __do_filter_sub(self, scanline, result):
         """Sub filter."""
 
         ai = 0
@@ -411,7 +411,7 @@ class BaseFilter:
             ai += 1
         return 0
 
-    def undo_filter_up(self, scanline, result):
+    def __undo_filter_up(self, scanline, result):
         """Undo up filter."""
         for i in range(len_ba(result)):
             x = scanline[i]
@@ -419,7 +419,7 @@ class BaseFilter:
             result[i] = (x + b) & 0xff
         return 0
 
-    def do_filter_up(self, scanline, result):
+    def __do_filter_up(self, scanline, result):
         """Up filter."""
 
         for i in range(len_ba(result)):
@@ -428,7 +428,7 @@ class BaseFilter:
             result[i] = (x - b) & 0xff
         return 0
 
-    def undo_filter_average(self, scanline, result):
+    def __undo_filter_average(self, scanline, result):
         """Undo average filter."""
 
         ai = -self.fu
@@ -443,7 +443,7 @@ class BaseFilter:
             ai += 1
         return 0
 
-    def do_filter_average(self, scanline, result):
+    def __do_filter_average(self, scanline, result):
         """Average filter."""
 
         ai = -self.fu
@@ -458,7 +458,7 @@ class BaseFilter:
             ai += 1
         return 0
 
-    def _paeth(self, a, b, c):
+    def __paeth(self, a, b, c):
         p = a + b - c
         pa = abs(p - a)
         pb = abs(p - b)
@@ -470,7 +470,7 @@ class BaseFilter:
         else:
             return c
 
-    def undo_filter_paeth(self, scanline, result):
+    def __undo_filter_paeth(self, scanline, result):
         """Undo Paeth filter."""
 
         ai = -self.fu
@@ -482,11 +482,11 @@ class BaseFilter:
                 a = result[ai]
                 c = self.prev[ai]
             b = self.prev[i]
-            result[i] = (x + self._paeth(a, b, c)) & 0xff
+            result[i] = (x + self.__paeth(a, b, c)) & 0xff
             ai += 1
         return 0
 
-    def do_filter_paeth(self, scanline, result):
+    def __do_filter_paeth(self, scanline, result):
         """Paeth filter."""
 
         # http://www.w3.org/TR/PNG/#9Filter-type-4-Paeth
@@ -499,7 +499,7 @@ class BaseFilter:
                 a = scanline[ai]
                 c = self.prev[ai]
             b = self.prev[i]
-            result[i] = (x - self._paeth(a, b, c)) & 0xff
+            result[i] = (x - self.__paeth(a, b, c)) & 0xff
             ai += 1
         return 0
 
@@ -516,13 +516,13 @@ class BaseFilter:
         # Call appropriate filter algorithm.  Note that 0 has already
         # been dealt with.
         if filter_type == 1:
-            self.undo_filter_sub(line, result)
+            self.__undo_filter_sub(line, result)
         elif filter_type == 2:
-            self.undo_filter_up(line, result)
+            self.__undo_filter_up(line, result)
         elif filter_type == 3:
-            self.undo_filter_average(line, result)
+            self.__undo_filter_average(line, result)
         elif filter_type == 4:
-            self.undo_filter_paeth(line, result)
+            self.__undo_filter_paeth(line, result)
 
         # This will not work writing cython attributes from python
         # Only 'cython from cython' or 'python from python'
@@ -553,13 +553,13 @@ class BaseFilter:
                 fa = 1
 
         if fa == 1:
-            self.do_filter_sub(line, result)
+            self.__do_filter_sub(line, result)
         elif fa == 2:
-            self.do_filter_up(line, result)
+            self.__do_filter_up(line, result)
         elif fa == 3:
-            self.do_filter_average(line, result)
+            self.__do_filter_average(line, result)
         elif fa == 4:
-            self.do_filter_paeth(line, result)
+            self.__do_filter_paeth(line, result)
         return 0
 
     # Todo: color conversion functions should be moved
