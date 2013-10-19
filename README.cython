@@ -1,0 +1,12 @@
+Part of png.py can be compiled with Cython to achieve better performance.
+Compiled part is 'BaseFilter' class now.
+Compilation use 'pngfilters.pxd' file do declare types and override functions.
+
+When you use pypng without installation you may build cythonized code using
+"setup.py build_ext --inplace"
+
+If you do not want to install binary-compiled part you may skip compilation 
+using '--no-cython' option for setup.py.
+
+If you want to compile manually (e.g. to get html-annotation) 
+you can extract compiled part into 'pngfilters.py' using 'unimport.py'
