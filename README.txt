@@ -12,6 +12,17 @@ PyPNG Documentation: http://packages.python.org/pypng/
 PyPNG mailing list: http://groups.google.com/group/pypng-users
 
 
+QUICK START
+
+    import png
+    png.from_array([[255, 0, 0, 255],
+                    [0, 255, 255, 0]], 'L').save("small_smiley.png")
+
+After that, try "import png" then "help(png)".  Also,
+lickable HTML documentation appears in the html/ directory.  If HTML is
+no good then you could try the ReST sources in the man/ directory.
+
+
 INSTALLATION
 
 PyPNG requires Python version 2.3 (and that's all), or any compatible
@@ -36,13 +47,6 @@ following "curl" command should copy the latest version into your
 current directory:
 
 curl -O https://raw.github.com/drj11/pypng/master/code/png.py
-
-
-GETTING STARTED
-
-"import png" then "help(png)" should be a good place to start.  Also,
-lickable HTML documentation appears in the html/ directory.  If HTML is
-no good then you could try the ReST sources in the man/ directory.
 
 
 RELEASE NOTES
