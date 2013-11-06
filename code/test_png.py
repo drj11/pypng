@@ -470,8 +470,6 @@ class Test(unittest.TestCase):
         o = BytesIO()
         img.save(o)
     def testfromarrayIter(self):
-        import itertools
-
         i = itertools.islice(itertools.count(10), 20)
         i = itertools.imap(lambda x: [x, x, x], i)
         img = png.from_array(i, 'RGB;5', dict(height=20))
