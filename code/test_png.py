@@ -476,6 +476,12 @@ class Test(unittest.TestCase):
         img = png.from_array(i, 'RGB;5', dict(height=20))
         f = BytesIO()
         img.save(f)
+    def testfromarrayWrong(self):
+        try:
+            png.from_array([[1]], 'gray')
+        except png.Error:
+            return
+        assert 0, "Expected from_array() to raise png.Error exception"
 
     # numpy dependent tests.  These are skipped (with a message to
     # sys.stderr) if numpy cannot be imported.
