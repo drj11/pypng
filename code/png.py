@@ -1154,19 +1154,32 @@ def from_array(a, mode=None, info={}):
     # Syntax check mode string.
     bitdepth = None
     try:
-        mode = mode.split(';')
-        if len(mode) not in (1,2):
+        # Assign the 'L' or 'RGBA' part to `gotmode`.
+        if mode.startswith('L'):
+            gotmode = 'L'
+            mode = mode[1:]
+        elif mode.startswith('RGB'):
+            gotmode = 'RGB'
+            mode = mode[3:]
+        else:
             raise Error()
-        if mode[0] not in ('L', 'LA', 'RGB', 'RGBA'):
-            raise Error()
-        if len(mode) == 2:
+        if mode.startswith('A'):
+            gotmode += 'A'
+            mode = mode[1:]
+
+        # Skip any optional ';'
+        while mode.startswith(';'):
+            mode = mode[1:]
+
+        # Parse optional bitdepth
+        if mode:
             try:
-                bitdepth = int(mode[1])
+                bitdepth = int(mode)
             except (TypeError, ValueError):
                 raise Error()
     except Error:
         raise Error("mode string should be 'RGB' or 'L;16' or similar.")
-    mode = mode[0]
+    mode = gotmode
 
     # Get bitdepth from *mode* if possible.
     if bitdepth:

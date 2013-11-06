@@ -482,6 +482,8 @@ class Test(unittest.TestCase):
         except png.Error:
             return
         assert 0, "Expected from_array() to raise png.Error exception"
+    def testfromarrayShortMode(self):
+        png.from_array([[0,1],[2,3]], 'L2').save(BytesIO())
 
     # numpy dependent tests.  These are skipped (with a message to
     # sys.stderr) if numpy cannot be imported.
