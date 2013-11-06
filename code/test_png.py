@@ -458,6 +458,7 @@ class Test(unittest.TestCase):
         x,y,pixel,meta = r.read_flat()
         d = hashlib.md5(seqtobytes(pixel)).hexdigest()
         self.assertEqual(d, '255cd971ab8cd9e7275ff906e5041aa0')
+
     def testfromarray(self):
         img = png.from_array([[0, 0x33, 0x66], [0xff, 0xcc, 0x99]], 'L')
         img.save(BytesIO())
