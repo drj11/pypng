@@ -1,0 +1,54 @@
+#!/usr/bin/env python
+
+"""
+Convert png (stdin) to the raw 565 format used on the Kobo devices.
+"""
+
+# The raw format stores the pixels sequentially in top-left
+# reading order; each pixel is a 16-bit word packed into bytes
+# little-endian; the word stores (from high to low) 5 bits of
+# Red, 6 bits of Green, 5 bits of Blue:
+#  15   11 10      5 4     0
+# +-------+---------+-------+
+# |  Red  |  Green  |  Blue |
+# +-------+---------+-------+
+#  15         8 7          0
+#  \          / \          /
+#    byte N+1      byte N
+
+import struct
+import sys
+
+import png
+
+class Kobo565:
+
+    @staticmethod
+    def from_array(array):
+        return Kobo565(array)
+
+    def __init__(self, array):
+        self.array = array
+
+    def save(self, filename):
+        with open(filename, 'wb') as f:
+            for row in self.array:
+                for r, g, b in row:
+                   w = (r << 11) + (g << 5) + (b)
+                   f.write(struct.pack('<H', w))
+
+
+def main():
+    w, h, pixels, info = png.Reader(file=sys.stdin).asRGB()
+
+    a565 = [[conv565(*t) for t in group(row, 3)] for row in pixels]
+    Kobo565.from_array(a565).save("thing.raw")
+
+def group(i, n):
+    return zip(*[iter(i)]*3)
+
+def conv565(r, g, b):
+    return (r >> 3, g >> 2, b >> 3)
+
+if __name__ == '__main__':
+    main()
