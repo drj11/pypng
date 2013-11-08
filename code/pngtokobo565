@@ -19,9 +19,6 @@ input PNG works best. Note: image top-left is screen top-right.
 #  \          / \          /
 #    byte N+1      byte N
 
-import struct
-import sys
-
 import png
 
 class Kobo565:
@@ -33,12 +30,21 @@ class Kobo565:
     def __init__(self, array):
         self.array = array
 
-    def save(self, filename):
-        with open(filename, 'wb') as f:
+    def save(self, file):
+        import struct
+
+        close = lambda: None
+        if not hasattr(file, 'write'):
+            file = open(file, 'wb')
+            close = file.close
+
+        try:
             for row in self.array:
                 for r, g, b in row:
                    w = (r << 11) + (g << 5) + (b)
-                   f.write(struct.pack('<H', w))
+                   file.write(struct.pack('<H', w))
+        finally:
+            close()
 
 
 def triples(i):
@@ -54,10 +60,29 @@ def conv565(r, g, b):
     return (r >> 3, g >> 2, b >> 3)
 
 def main():
+    import sys
+    outname = None
+    arg = sys.argv[1:]
+    while arg:
+        if arg[0] == '-o':
+            outname = arg[1]
+            arg = arg[2:]
+        elif arg[0] == '--':
+            arg = arg[1:]
+            break
+        elif arg[0].startswith('-'):
+            raise Exception("Unknown option %r" % arg[0])
+        else:
+            break
+
     w, h, pixels, info = png.Reader(file=sys.stdin).asRGB()
 
     a565 = [[conv565(*t) for t in triples(row)] for row in pixels]
-    Kobo565.from_array(a565).save("thing.raw")
+    image = Kobo565.from_array(a565)
+    if outname is None:
+        image.save(sys.stdout)
+    else:
+        image.save(outname)
 
 if __name__ == '__main__':
     main()
