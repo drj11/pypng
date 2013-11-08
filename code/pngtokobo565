@@ -41,17 +41,17 @@ class Kobo565:
                    f.write(struct.pack('<H', w))
 
 
-def main():
-    w, h, pixels, info = png.Reader(file=sys.stdin).asRGB()
-
-    a565 = [[conv565(*t) for t in group(row, 3)] for row in pixels]
-    Kobo565.from_array(a565).save("thing.raw")
-
-def group(i, n):
+def triples(i):
     return zip(*[iter(i)]*3)
 
 def conv565(r, g, b):
     return (r >> 3, g >> 2, b >> 3)
+
+def main():
+    w, h, pixels, info = png.Reader(file=sys.stdin).asRGB()
+
+    a565 = [[conv565(*t) for t in triples(row)] for row in pixels]
+    Kobo565.from_array(a565).save("thing.raw")
 
 if __name__ == '__main__':
     main()
