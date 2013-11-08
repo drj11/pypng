@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 
 """
-Convert png (stdin) to the raw 565 format used on the Kobo devices.
+Convert PNG (stdin) to the raw 565 format used on the Kobo devices.
+
+On the 2013-era Kobo devices, the screen is 800x600 so this size
+input PNG works best. Note: image top-left is screen top-right.
 """
 
 # The raw format stores the pixels sequentially in top-left
