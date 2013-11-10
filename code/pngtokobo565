@@ -47,13 +47,13 @@ class Kobo565:
             close()
 
 
-def triples(i):
+def quads(i):
     """
-    [a, b, c, d, e, f, ...] -> [(a, b, c), (d, e, f)]
+    [a, b, c, d, e, f, g, h, ...] -> [(a, b, c, d), (e, f, g, h)]
     """
-    return zip(*[iter(i)]*3)
+    return zip(*[iter(i)]*4)
 
-def conv565(r, g, b):
+def conv565(r, g, b, a):
     """
     Convert to a triple in the range: (0 to 31, 0 to 63, 0 to 31).
     """
@@ -75,9 +75,9 @@ def main():
         else:
             break
 
-    w, h, pixels, info = png.Reader(file=sys.stdin).asRGB()
+    w, h, pixels, info = png.Reader(file=sys.stdin).asRGBA()
 
-    a565 = [[conv565(*t) for t in triples(row)] for row in pixels]
+    a565 = [[conv565(*t) for t in quads(row)] for row in pixels]
     image = Kobo565.from_array(a565)
     if outname is None:
         image.save(sys.stdout)
