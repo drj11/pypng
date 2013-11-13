@@ -1,0 +1,73 @@
+#!/usr/bin/env python
+
+"""
+Convert Kobo RGB 565 (stdin) to PNG (stdout).
+
+Assumes an 800x600 pixel input (compatible with 2013-era Kobo devices)
+Note: image top-left is screen top-right.
+"""
+
+# The raw format stores the pixels sequentially in top-left
+# reading order; each pixel is a 16-bit word packed into bytes
+# little-endian; the word stores (from high to low) 5 bits of
+# Red, 6 bits of Green, 5 bits of Blue:
+#  15   11 10      5 4     0
+# +-------+---------+-------+
+# |  Red  |  Green  |  Blue |
+# +-------+---------+-------+
+#  15         8 7          0
+#  \          / \          /
+#    byte N+1      byte N
+
+import struct
+
+import png
+
+class Kobo565:
+
+    @staticmethod
+    def make_array(fil):
+        """Convert RAW file *fil* to a 2D array."""
+        w = 800
+        h = 600
+        for i in range(h):
+          row = []
+          s = fil.read(w*2)
+          pixels = struct.unpack('<800H', s)
+          for p in pixels:
+            r = p >> 11
+            g = (p >> 5) & 0x3f
+            b = p & 0x1f
+            r = (r * 255) / 31.0
+            g = (g * 255) / 63.0
+            b = (b * 255) / 31.0
+            row.extend([int(round(x)) for x in [r, g, b]])
+          yield row
+
+
+def main():
+    import sys
+    outname = None
+    arg = sys.argv[1:]
+    while arg:
+        if arg[0] == '-o':
+            outname = arg[1]
+            arg = arg[2:]
+        elif arg[0] == '--':
+            arg = arg[1:]
+            break
+        elif arg[0].startswith('-'):
+            raise Exception("Unknown option %r" % arg[0])
+        else:
+            break
+
+    array = Kobo565.make_array(sys.stdin)
+    image = png.from_array(array, 'RGB', info=dict(height=600))
+
+    if outname is None:
+        image.save(sys.stdout)
+    else:
+        image.save(outname)
+
+if __name__ == '__main__':
+    main()
