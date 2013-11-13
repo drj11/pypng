@@ -1,9 +1,13 @@
 #!/usr/bin/env python
-# PNG Histogram
+
+# PNG Histogram.
 # Only really works on grayscale images.
+
+"""pnghist [<] grey.png > hist.png"""
 
 from array import array
 import getopt
+import sys
 
 import png
 
@@ -59,13 +63,20 @@ def hist(out, inp, verbose=None):
     w.write(out, genrow())
     if verbose: print >>verbose, level
 
+def usage(f):
+    f.write(__doc__ + "\n")
+
 def main(argv=None):
     import sys
 
     if argv is None:
         argv = sys.argv
     argv = argv[1:]
-    opt,arg = getopt.getopt(argv, '')
+    opt,arg = getopt.getopt(argv, '', ['help'])
+    for o,v in opt:
+      if o == '--help':
+        usage(sys.stdout)
+        return 0
 
     if len(arg) < 1:
         f = sys.stdin
@@ -74,4 +85,4 @@ def main(argv=None):
     hist(sys.stdout, f)
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
