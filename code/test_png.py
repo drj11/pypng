@@ -533,7 +533,7 @@ class Test(unittest.TestCase):
 
         pixels = numpy.array([[0,0x5555],[0x5555,0xaaaa]], numpy.uint16)
         img = png.from_array(pixels, 'L')
-        img.save('testnumpyL16.png')
+        img.save(BytesIO())
 
     def paeth(self, x, a, b, c):
         p = a + b - c
