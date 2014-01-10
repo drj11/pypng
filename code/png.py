@@ -387,6 +387,9 @@ class BaseFilter:
         else:
             self.fu = 1
 
+    # :todo:(drj) can someone please document why these methods
+    # all "return 0". KTHXBAI.
+
     def __undo_filter_sub(self, scanline, result):
         """Undo sub filter."""
 

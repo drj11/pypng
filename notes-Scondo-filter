@@ -1,8 +1,5 @@
 Cython instructions are unclear (and I don't care much).
 
-Why does __undo_filter_average etc "return 0"? (is it because
-of Cython?)
-
 The `fa` variable in filter_scanline is redundant. Just mutate
 filter_type instead.
 
