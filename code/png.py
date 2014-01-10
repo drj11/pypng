@@ -987,8 +987,6 @@ class Writer:
                       self.interlace, self.height)
         data = bytearray()
 
-        #Filtering algorithms are applied to bytes, not to pixels,
-        #regardless of the bit depth or color type of the image.
         def byteextend(rowbytes):
             data.extend(filt.do_filter(self.filter_type, rowbytes))
 
@@ -1297,6 +1295,10 @@ class Filter(BaseFilter):
         adaptive strategy with dict
         ('name' is reqired field, others may tune strategy)
         """
+
+        # Recall that filtering algorithms are applied to bytes,
+        # not to pixels, regardless of the bit depth or colour type
+        # of the image.
 
         line = bytearray(line)
         if isinstance(filter_type, int):
