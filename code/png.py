@@ -191,50 +191,53 @@ def isarray(x):
         # Because on Python 2.2 array.array is not a type.
         return False
 
-try:
-    array.tobytes
-except AttributeError:
-    try:  # see :pyver:old
-        array.tostring
-    except AttributeError:
-        def tostring(row):
-            l = len(row)
-            return struct.pack('%dB' % l, *row)
-    else:
-        def tostring(row):
-            """Convert row of bytes to string.  Expects `row` to be an
-            ``array``.
-            """
-            return row.tostring()
-else:
-    def tostring(row):
-        """ Python3 definition, array.tostring() is deprecated in Python3
-        """
-        return row.tobytes()
+# Define a bytearray_to_bytes() function.
+# The definition of this function changes according to what
+# version of Python we are on. This is the canonical version
+# (when both the bytearray and bytes types exist):
+def bytearray_to_bytes(src):
+    return bytes(src)
 
-#Bytearray are faster than array, but looks more like list
+# bytearray is faster than array('B'), so we prefer to use it
+# where available.
 try:
     bytearray
 except NameError:
-    #Bytearray appears in python 2.6
+    # bytearray does not exist. We're probably < Python 2.6 (the
+    # version in which bytearray appears).
     def bytearray(src=[]):
         return array('B', src)
 
     def newarray(length=0):
         return array('B', [0] * length)
 
-    batostring = tostring
+    def bytearray_to_bytes(row):
+        """Convert bytearray to bytes.  Recal that `row` will
+        actually be an ``array``.
+        """
+        return row.tostring()
+
+    try:  # see :pyver:old
+        array.tostring
+    except AttributeError:
+        # The above definition of bytearray_to_bytes doesn't
+        # work when array.tostring doesn't exist. :todo:(drj)
+        # What versions of Python is that then?
+        def bytesarray_to_bytes(row):
+            l = len(row)
+            return struct.pack('%dB' % l, *row)
+
 else:
+    # bytearray exists (>= Python 2.6).
     def newarray(length=0):
         return bytearray(length)
     try:
         bytes
     except NameError:
-        def batostring(src):
+        # bytearray exists, but bytes does not. :todo:(drj) when
+        # do we get here?
+        def bytearray_to_bytes(src):
             return str(src)
-    else:
-        def batostring(src):
-            return bytes(src)
 
 # Conditionally convert to bytes.  Works on Python 2 and Python 3.
 try:
@@ -854,8 +857,8 @@ class Writer:
             p.extend(x[0:3])
             if len(x) > 3:
                 t.append(x[3])
-        p = batostring(p)
-        t = batostring(t)
+        p = bytearray_to_bytes(p)
+        t = bytearray_to_bytes(t)
         if t:
             return p,t
         return p,None
@@ -1054,7 +1057,8 @@ class Writer:
         for i,row in enumrows:
             extend(row)
             if len(data) > self.chunk_limit:
-                compressed = compressor.compress(batostring(data))
+                compressed = compressor.compress(
+                  bytearray_to_bytes(data))
                 if len(compressed):
                     yield compressed
                 # Because of our very witty definition of ``extend``,
@@ -1063,7 +1067,7 @@ class Writer:
                 # fresh one (which would be my natural FP instinct).
                 del data[:]
         if len(data):
-            compressed = compressor.compress(batostring(data))
+            compressed = compressor.compress(bytearray_to_bytes(data))
         else:
             compressed = ''
         flushed = compressor.flush()
@@ -1790,9 +1794,10 @@ class Reader:
             or may not share with argument"""
 
             if self.bitdepth == 8:
+                # :todo:(drj) should we call bytearray_to_bytes here?
                 return array('B', raw)
             if self.bitdepth == 16:
-                raw = batostring(raw)
+                raw = bytearray_to_bytes(raw)
                 return array('H', struct.unpack('!%dH' % (len(raw)//2), raw))
             assert self.bitdepth < 8
             width = self.width
@@ -1815,7 +1820,7 @@ class Reader:
         if self.bitdepth == 8:
             return array('B', bytes)
         if self.bitdepth == 16:
-            bytes = batostring(bytes)
+            bytes = bytearray_to_bytes(bytes)
             return array('H',
               struct.unpack('!%dH' % (len(bytes)//2), bytes))
         assert self.bitdepth < 8
