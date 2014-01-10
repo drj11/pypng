@@ -14,8 +14,6 @@ iBaseFilter isn't necessary. Or is it? It's used later for
 
 Need documentation for filter_type in class Writer.
 
-"for idat in idat"! really!?
-
 Comment starting "#Filtering" should be moved.
 
 byteextend now applies filters. Rename appropriately.
