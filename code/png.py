@@ -910,11 +910,11 @@ class Writer:
         self.write_idat(outfile, self.idat(rows, packed))
         return self.irows
 
-    def write_idat(self, outfile, idat):
+    def write_idat(self, outfile, idat_sequence):
         """Write png with IDAT to file
 
-        'idat' should be iterable that produce IDAT chunks
-        compatible with 'Writer' configuration
+        `idat_sequence` should be iterable that produce IDAT chunks
+        compatible with `Writer` configuration.
         """
 
         # http://www.w3.org/TR/PNG/#5PNG-file-signature
@@ -969,7 +969,7 @@ class Writer:
                 write_chunk(outfile, 'bKGD',
                             struct.pack("!3H", *self.background))
 
-        for idat in idat:
+        for idat in idat_sequence:
             write_chunk(outfile, 'IDAT', idat)
         # http://www.w3.org/TR/PNG/#11IEND
         write_chunk(outfile, 'IEND')
