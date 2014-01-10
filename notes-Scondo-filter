@@ -1,0 +1,59 @@
+Cython instructions are unclear (and I don't care much).
+
+Is batostring necessary? (I think batostring and tostring are
+basically the same, we just need to work out which definition we
+need). For clarity the function is probably best name
+bytearray_to_string.
+
+len_ba silly; just get rid of it.
+
+Why does __undo_filter_average etc "return 0"? (is it because
+of Cython?)
+
+The `fa` variable in filter_scanline is redundant. Just mutate
+filter_type instead.
+
+convert_la_to_rgba seems very slow; ditto convert_l_to_rgba; and
+convert_rgb_to_rgba.
+
+iBaseFilter isn't necessary. Or is it? It's used later for
+16-bit images.
+
+Need documentation for filter_type in class Writer.
+
+What happened to self.psize?
+
+"for idat in idat"! really!?
+
+Comment starting "#Filtering" should be moved.
+
+byteextend now applies filters. Rename appropriately.
+
+The "Apply a scanline filter" comment seems to have gone.
+replace it.
+
+adapt_methods etc is badly commented.
+
+adapt_sum and adapt_entropy inconsistent style. Also, can we
+use min() with a key= argument (probably not in Python 2.2)
+
+"return array('B', raw)" should be bytearray?
+
+"typ != 'IDAT'" should not use a variable called "typ".
+
+Why have iteridat() and iterdecomp been renamed?
+
+"Note that order in list is not equal to filter number" yeah.
+well, perhaps it should be.
+
+in setup.py ...
+
+Instead of setupt I'd prefer "setuptools = False; try: import
+setuptools".
+
+Similarly, cythonize = False.  Hmm cythonize.
+
+from os.path import join. bletch.
+from lib2to3.main import main. bletch bletch.
+
+os.remove bare except: very very bad.
