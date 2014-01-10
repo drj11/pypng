@@ -1,10 +1,5 @@
 Cython instructions are unclear (and I don't care much).
 
-Is batostring necessary? (I think batostring and tostring are
-basically the same, we just need to work out which definition we
-need). For clarity the function is probably best name
-bytearray_to_string.
-
 len_ba silly; just get rid of it.
 
 Why does __undo_filter_average etc "return 0"? (is it because
