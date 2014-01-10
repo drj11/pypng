@@ -28,6 +28,7 @@ from array import array
 
 import png
 import pngsuite
+import sys
 
 from png import strtobytes      # Don't do this at home.
 
@@ -185,6 +186,15 @@ class Test(unittest.TestCase):
         row9 = list(pixels)[9]
         self.assertEqual(list(row9[0:8]),
                          [0xff, 0xdf, 0xff, 0xff, 0xff, 0xde, 0xff, 0xff])
+
+        # More testing: rescale and bitdepth > 8
+        r = png.Reader(BytesIO(pngsuite.basn2c16))
+        x, y, pixels, meta = r.asRGBA8()
+        # Test the pixels at row 9 columns 0 and 1.
+        row9 = list(pixels)[9]
+        self.assertEqual(list(row9[0:8]),
+                         [255, 181, 0, 255, 247, 181, 0, 255])
+
     def testLtoRGBA(self):
         "asRGBA() on grey source."""
         # Test for Issue 60
@@ -222,6 +232,7 @@ class Test(unittest.TestCase):
             straight = straight.read()[2]
             adam7 = adam7.read()[2]
             self.assertEqual(map(list, straight), map(list, adam7))
+
     def testAdam7write(self):
         """Adam7 interlace writing.
         For each test image in the PngSuite, write an interlaced
@@ -229,28 +240,34 @@ class Test(unittest.TestCase):
         """
         # Not such a great test, because the only way we can check what
         # we have written is to read it back again.
+        for filtertype in (0, 1, 2, 3, 4,\
+                           {'name': 'sum'},\
+                           {'name': 'entropy'}):
+            for name, bytes_ in pngsuite.png.iteritems():
+                # Only certain colour types supported for this test.
+                if name[3:5] not in ['n0', 'n2', 'n4', 'n6']:
+                    continue
+                it = png.Reader(bytes=bytes_)
+                x, y, pixels, meta = it.read()
+                # straightlaced is easier to filter, so we test interlaced
+                # using straight as reference
+                pngi = topngbytes('adam7wn' + name + '.png', pixels,
+                                  x=x, y=y, bitdepth=it.bitdepth,
+                                  greyscale=it.greyscale, alpha=it.alpha,
+                                  transparent=it.transparent,
+                                  interlace=False, filter_type=0)
 
-        for name,bytes in pngsuite.png.iteritems():
-            # Only certain colour types supported for this test.
-            if name[3:5] not in ['n0', 'n2', 'n4', 'n6']:
-                continue
-            it = png.Reader(bytes=bytes)
-            x,y,pixels,meta = it.read()
-            pngi = topngbytes('adam7wn'+name+'.png', pixels,
-              x=x, y=y, bitdepth=it.bitdepth,
-              greyscale=it.greyscale, alpha=it.alpha,
-              transparent=it.transparent,
-              interlace=False)
-            x,y,ps,meta = png.Reader(bytes=pngi).read()
-            it = png.Reader(bytes=bytes)
-            x,y,pixels,meta = it.read()
-            pngs = topngbytes('adam7wi'+name+'.png', pixels,
-              x=x, y=y, bitdepth=it.bitdepth,
-              greyscale=it.greyscale, alpha=it.alpha,
-              transparent=it.transparent,
-              interlace=True)
-            x,y,pi,meta = png.Reader(bytes=pngs).read()
-            self.assertEqual(map(list, ps), map(list, pi))
+                x, y, ps, meta = png.Reader(bytes=pngi).read()
+                it = png.Reader(bytes=bytes_)
+                x, y, pixels, meta = it.read()
+                pngs = topngbytes('adam7wi' + name + '.png', pixels,
+                                  x=x, y=y, bitdepth=it.bitdepth,
+                                  greyscale=it.greyscale, alpha=it.alpha,
+                                  transparent=it.transparent,
+                                  interlace=True, filter_type=filtertype)
+                x, y, pi, meta = png.Reader(bytes=pngs).read()
+                self.assertEqual(map(list, ps), map(list, pi))
+
     def testPGMin(self):
         """Test that the command line tool can read PGM files."""
         def do():
@@ -452,11 +469,22 @@ class Test(unittest.TestCase):
 
     def testFlat(self):
         """Test read_flat."""
-        import hashlib
+
+        try:
+            from hashlib import md5 as md5_func
+        except ImportError:
+            # On Python 2.4 there is no hashlib,
+            # but there is special module for md5
+            import md5
+
+            def md5_func(string):
+                m = md5.new()
+                m.update(string)
+                return m
 
         r = png.Reader(bytes=pngsuite.basn0g02)
         x,y,pixel,meta = r.read_flat()
-        d = hashlib.md5(seqtobytes(pixel)).hexdigest()
+        d = md5_func(seqtobytes(pixel)).hexdigest()
         self.assertEqual(d, '255cd971ab8cd9e7275ff906e5041aa0')
 
     def testfromarray(self):
@@ -550,66 +578,73 @@ class Test(unittest.TestCase):
 
     # test filters and unfilters
     def testFilterScanlineFirstLine(self):
-        fo = 3  # bytes per pixel
-        line = [30, 31, 32, 230, 231, 232]
-        out = png.filter_scanline(0, line, fo, None)  # none
-        self.assertEqual(list(out), [0, 30, 31, 32, 230, 231, 232])
-        out = png.filter_scanline(1, line, fo, None)  # sub
-        self.assertEqual(list(out), [1, 30, 31, 32, 200, 200, 200])
-        out = png.filter_scanline(2, line, fo, None)  # up
-        self.assertEqual(list(out), [2, 30, 31, 32, 230, 231, 232])
-        out = png.filter_scanline(3, line, fo, None)  # average
-        self.assertEqual(list(out), [3, 30, 31, 32, 215, 216, 216])
-        out = png.filter_scanline(4, line, fo, None)  # paeth
-        self.assertEqual(list(out), [
+        line = array('B', [30, 31, 32, 230, 231, 232])
+        filter_ = png.Filter(24, prev=None)
+        res = filter_.filter_all(line)
+
+        # none
+        self.assertEqual(list(res[0]), [0, 30, 31, 32, 230, 231, 232])
+        # sub
+        self.assertEqual(list(res[1]), [1, 30, 31, 32, 200, 200, 200])
+        # up
+        self.assertEqual(list(res[2]), [2, 30, 31, 32, 230, 231, 232])
+        # average  ! Note that order in list is not equal to filter number
+        self.assertEqual(list(res[4]), [3, 30, 31, 32, 215, 216, 216])
+        # paeth    ! Note that order in list is not equal to filter number
+        self.assertEqual(list(res[3]), [
             4, self.paeth(30, 0, 0, 0), self.paeth(31, 0, 0, 0),
             self.paeth(32, 0, 0, 0), self.paeth(230, 30, 0, 0),
             self.paeth(231, 31, 0, 0), self.paeth(232, 32, 0, 0)
             ])
+
     def testFilterScanline(self):
-        prev = [20, 21, 22, 210, 211, 212]
-        line = [30, 32, 34, 230, 233, 236]
-        fo = 3
-        out = png.filter_scanline(0, line, fo, prev)  # none
-        self.assertEqual(list(out), [0, 30, 32, 34, 230, 233, 236])
-        out = png.filter_scanline(1, line, fo, prev)  # sub
-        self.assertEqual(list(out), [1, 30, 32, 34, 200, 201, 202])
-        out = png.filter_scanline(2, line, fo, prev)  # up
-        self.assertEqual(list(out), [2, 10, 11, 12, 20, 22, 24])
-        out = png.filter_scanline(3, line, fo, prev)  # average
-        self.assertEqual(list(out), [3, 20, 22, 23, 110, 112, 113])
-        out = png.filter_scanline(4, line, fo, prev)  # paeth
-        self.assertEqual(list(out), [
+        prev = array('B', [20, 21, 22, 210, 211, 212])
+        line = array('B', [30, 32, 34, 230, 233, 236])
+        filter_ = png.Filter(24, prev=prev)
+        res = filter_.filter_all(line)
+        # None
+        self.assertEqual(list(res[0]), [0, 30, 32, 34, 230, 233, 236])
+        # sub
+        self.assertEqual(list(res[1]), [1, 30, 32, 34, 200, 201, 202])
+        # up
+        self.assertEqual(list(res[2]), [2, 10, 11, 12, 20, 22, 24])
+        # average  ! Note that order in list is not equal to filter number
+        self.assertEqual(list(res[4]), [3, 20, 22, 23, 110, 112, 113])
+        # paeth    ! Note that order in list is not equal to filter number
+        self.assertEqual(list(res[3]), [
             4, self.paeth(30, 0, 20, 0), self.paeth(32, 0, 21, 0),
             self.paeth(34, 0, 22, 0), self.paeth(230, 30, 210, 20),
             self.paeth(233, 32, 211, 21), self.paeth(236, 34, 212, 22)
             ])
+
     def testUnfilterScanline(self):
-        reader = png.Reader(bytes='')
-        reader.psize = 3
         scanprev = array('B', [20, 21, 22, 210, 211, 212])
         scanline = array('B', [30, 32, 34, 230, 233, 236])
-        def cp(a):
-            return array('B', a)
 
-        out = reader.undo_filter(0, cp(scanline), cp(scanprev))
+        def undo_filter(filter_type, line, prev):
+            filter_ = png.Filter(24, prev=prev)
+            line = array('B', line)
+            line.insert(0, filter_type)
+            return filter_.undo_filter(line)
+
+        out = undo_filter(0, scanline, scanprev)
         self.assertEqual(list(out), list(scanline))  # none
-        out = reader.undo_filter(1, cp(scanline), cp(scanprev))
+        out = undo_filter(1, scanline, scanprev)
         self.assertEqual(list(out), [30, 32, 34, 4, 9, 14])  # sub
-        out = reader.undo_filter(2, cp(scanline), cp(scanprev))
+        out = undo_filter(2, scanline, scanprev)
         self.assertEqual(list(out), [50, 53, 56, 184, 188, 192])  # up
-        out = reader.undo_filter(3, cp(scanline), cp(scanprev))
+        out = undo_filter(3, scanline, scanprev)
         self.assertEqual(list(out), [40, 42, 45, 99, 103, 108])  # average
-        out = reader.undo_filter(4, cp(scanline), cp(scanprev))
+        out = undo_filter(4, scanline, scanprev)
         self.assertEqual(list(out), [50, 53, 56, 184, 188, 192])  # paeth
+
     def testUnfilterScanlinePaeth(self):
         # This tests more edge cases in the paeth unfilter
-        reader = png.Reader(bytes='')
-        reader.psize = 3
         scanprev = array('B', [2, 0, 0, 0, 9, 11])
-        scanline = array('B', [6, 10, 9, 100, 101, 102])
+        scanline = array('B', [4, 6, 10, 9, 100, 101, 102])
+        filter_ = png.Filter(24, prev=scanprev)
 
-        out = reader.undo_filter(4, scanline, scanprev)
+        out = filter_.undo_filter(scanline)
         self.assertEqual(list(out), [8, 10, 9, 108, 111, 113])  # paeth
 
 def group(s, n):
