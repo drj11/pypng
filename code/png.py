@@ -377,7 +377,7 @@ class BaseFilter:
     '''Basic methods of filtering and other byte manipulations
 
     This part can be compile with Cython (see README.cython)
-    Private methods are declared as 'cdef' (unavailible from python)
+    Private methods are declared as 'cdef' (unavailable from python)
     for this compilation, so don't just rename it.
     '''
 
