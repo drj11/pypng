@@ -73,14 +73,31 @@ def prepare3():
     distribute for Python 3, then we don't need to run this.
     """
 
+    import os.path
+    import shutil
+    from lib2to3.main import main
+
     try:
         os.mkdir('code3')
     except OSError:
         pass
-    from os.path import join
-    from lib2to3.main import main
+
+    # The old package_dir, containing Python 2 code.
+    package_dir = conf['package_dir']['']
+    def package_file(name):
+        """Prepend the package_dir directory to a filename."""
+        return os.path.join(package_dir, name)
+
+    # Convert Python 2 to Python 3 code.
+
+    # pngsuite doesn't get copied by 2to3 because it needs no
+    # changes.
+    shutil.copy(package_file('pngsuite.py'), 'code3')
+
     main("lib2to3.fixes", ["-w", "-n", "-o", "code3",
-                           join(conf['package_dir'][''], 'png.py')])
+                           package_file('png.py'),
+                           package_file('test_png.py'),
+                           package_file('pngsuite.py')])
 
     # As we use package_dir for cython too we must copy type declaration
     try:
@@ -90,8 +107,8 @@ def prepare3():
     # We are in python 3 if we get here so use const from python3
     if os.name == 'posix' or os.name == 'mac' or\
         (os.name == 'nt' and sys.version_info[1] >= 2):
-        os.link(join(conf['package_dir'][''], 'pngfilters.pxd'),
-                join('code3', 'pngfilters.pxd'))
+        os.link(package_file('pngfilters.pxd'),
+                os.path.join('code3', 'pngfilters.pxd'))
     else:
         cython = False
     conf['package_dir'] = {'': 'code3'}
