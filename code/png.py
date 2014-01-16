@@ -390,7 +390,7 @@ class BaseFilter:
     # :todo:(drj) can someone please document why these methods
     # all "return 0". KTHXBAI.
 
-    def __undo_filter_sub(self, scanline, result):
+    def _undo_filter_sub(self, scanline, previous, result):
         """Undo sub filter."""
 
         ai = 0
@@ -414,11 +414,11 @@ class BaseFilter:
             ai += 1
         return 0
 
-    def __undo_filter_up(self, scanline, result):
+    def _undo_filter_up(self, scanline, previous, result):
         """Undo up filter."""
         for i in range(len(result)):
             x = scanline[i]
-            b = self.prev[i]
+            b = previous[i]
             result[i] = (x + b) & 0xff
         return 0
 
@@ -431,7 +431,7 @@ class BaseFilter:
             result[i] = (x - b) & 0xff
         return 0
 
-    def __undo_filter_average(self, scanline, result):
+    def _undo_filter_average(self, scanline, previous, result):
         """Undo average filter."""
 
         ai = -self.fu
@@ -441,7 +441,7 @@ class BaseFilter:
                 a = 0
             else:
                 a = result[ai]
-            b = self.prev[i]
+            b = previous[i]
             result[i] = (x + ((a + b) >> 1)) & 0xff
             ai += 1
         return 0
@@ -473,11 +473,10 @@ class BaseFilter:
         else:
             return c
 
-    def __undo_filter_paeth(self, scanline, result):
+    def _undo_filter_paeth(self, scanline, previous, result):
         """Undo Paeth filter."""
 
         ai = -self.fu
-        previous = self.prev
         for i in range(len(result)):
             x = scanline[i]
             if ai < 0:
@@ -530,13 +529,13 @@ class BaseFilter:
         # Call appropriate filter algorithm.  Note that 0 has already
         # been dealt with.
         if filter_type == 1:
-            self.__undo_filter_sub(line, result)
+            self._undo_filter_sub(line, result)
         elif filter_type == 2:
-            self.__undo_filter_up(line, result)
+            self._undo_filter_up(line, result)
         elif filter_type == 3:
-            self.__undo_filter_average(line, result)
+            self._undo_filter_average(line, result)
         elif filter_type == 4:
-            self.__undo_filter_paeth(line, result)
+            self._undo_filter_paeth(line, result)
 
         # This will not work writing cython attributes from python
         # Only 'cython from cython' or 'python from python'
@@ -1345,8 +1344,30 @@ class Filter(BaseFilter):
             raise FormatError('Invalid PNG Filter Type.'
               '  See http://www.w3.org/TR/2003/REC-PNG-20031110/#9Filters .')
 
-        result = bytearray(scanline)
-        self.unfilter_scanline(filter_type, scanline, result)
+        result = scanline
+
+        # For the first line of a pass, synthesize a dummy previous
+        # line.  An alternative approach would be to observe that on the
+        # first line 'up' is the same as 'null', 'paeth' is the same
+        # as 'sub', with only 'average' requiring any special case.
+        if self.prev is None:
+            self.prev = newarray(len(scanline))
+
+        # Call appropriate filter algorithm.  Note that 0 has already
+        # been dealt with.
+        if filter_type == 1:
+            self._undo_filter_sub(scanline, self.prev, result)
+        elif filter_type == 2:
+            self._undo_filter_up(scanline, self.prev, result)
+        elif filter_type == 3:
+            self._undo_filter_average(scanline, self.prev, result)
+        elif filter_type == 4:
+            self._undo_filter_paeth(scanline, self.prev, result)
+
+        # This will not work writing cython attributes from python
+        # Only 'cython from cython' or 'python from python'
+        self.prev[:] = result
+
         return result
 
 
