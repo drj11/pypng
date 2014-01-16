@@ -1328,16 +1328,14 @@ class Filter(BaseFilter):
                 self.prev = None
         return res
 
-    def undo_filter(self, scanline):
+    def undo_filter(self, filter_type, scanline):
         """Undo the filter for a scanline.  `scanline` is a sequence of
-        bytes including the initial filter type byte.
+        bytes that does not include the initial filter type byte.
 
         The scanline will have the effects of filtering removed, and the
         result will be returned as a fresh sequence of bytes.
         """
 
-        filter_type = scanline[0]
-        scanline = bytearray(scanline[1:])
         if filter_type == 0:
             self.prev = bytearray(scanline)
             return scanline
@@ -1866,9 +1864,10 @@ class Reader:
         for some in raw:
             a.extend(some)
             while len(a) >= rb + 1:
-                scanline = a[:rb + 1]
+                filter_type = a[0]
+                scanline = a[1:rb + 1]
                 del a[:rb + 1]
-                yield filt.undo_filter(scanline)
+                yield filt.undo_filter(filter_type, scanline)
 
         if len(a) != 0:
             # :file:format We get here with a file format error:
