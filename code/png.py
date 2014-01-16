@@ -485,7 +485,17 @@ class BaseFilter:
                 a = result[ai]
                 c = self.prev[ai]
             b = self.prev[i]
-            result[i] = (x + self.__paeth(a, b, c)) & 0xff
+            p = a + b - c
+            pa = abs(p - a)
+            pb = abs(p - b)
+            pc = abs(p - c)
+            if pa <= pb and pa <= pc:
+                pr = a
+            elif pb <= pc:
+                pr = b
+            else:
+                pr = c
+            result[i] = (x + pr) & 0xff
             ai += 1
         return 0
 
