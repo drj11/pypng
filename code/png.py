@@ -477,14 +477,15 @@ class BaseFilter:
         """Undo Paeth filter."""
 
         ai = -self.fu
+        previous = self.prev
         for i in range(len(result)):
             x = scanline[i]
             if ai < 0:
                 a = c = 0
             else:
                 a = result[ai]
-                c = self.prev[ai]
-            b = self.prev[i]
+                c = previous[ai]
+            b = previous[i]
             p = a + b - c
             pa = abs(p - a)
             pb = abs(p - b)
