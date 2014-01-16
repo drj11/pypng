@@ -1777,9 +1777,10 @@ class Reader:
             # Row size in bytes for this pass.
             row_size = int(math.ceil(self.psize * ppr))
             for y in range(ystart, self.height, ystep):
-                scanline = raw[source_offset:source_offset + row_size + 1]
+                filter_type = raw[source_offset]
+                scanline = raw[source_offset + 1:source_offset + row_size + 1]
                 source_offset += (row_size + 1)
-                recon = filt.undo_filter(scanline)
+                recon = filt.undo_filter(filter_type, scanline)
                 # Convert so that there is one element per pixel value
                 flat = self.serialtoflat(recon, ppr)
                 if xstep == 1:

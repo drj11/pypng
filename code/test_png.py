@@ -624,8 +624,7 @@ class Test(unittest.TestCase):
         def undo_filter(filter_type, line, prev):
             filter_ = png.Filter(24, prev=prev)
             line = array('B', line)
-            line.insert(0, filter_type)
-            return filter_.undo_filter(line)
+            return filter_.undo_filter(filter_type, line)
 
         out = undo_filter(0, scanline, scanprev)
         self.assertEqual(list(out), list(scanline))  # none
@@ -644,7 +643,7 @@ class Test(unittest.TestCase):
         scanline = array('B', [4, 6, 10, 9, 100, 101, 102])
         filter_ = png.Filter(24, prev=scanprev)
 
-        out = filter_.undo_filter(scanline)
+        out = filter_.undo_filter(scanline[0], scanline[1:])
         self.assertEqual(list(out), [8, 10, 9, 108, 111, 113])  # paeth
 
 def group(s, n):
