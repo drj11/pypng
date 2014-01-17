@@ -2,10 +2,12 @@
 # opposed to tests which produce output files that are externally
 # validated).  Primarily they are unittests.
 
-# Note that it is difficult to internally validate the results of
-# writing a PNG file.  The only thing we can do is read it back in
-# again, which merely checks consistency, not that the PNG file we
-# produce is valid.
+# There is a read/write asymmetry: It is fairly easy to
+# internally validate the results of reading a PNG file because we
+# can know what pixels it should produce, but when writing a PNG
+# file many choices are possible. The only thing we can do is read
+# it back in again, which merely checks consistency, not that the
+# PNG file we produce is valid.
 
 # Run the tests from the command line:
 #   python -c 'import test_png;test_png.runTest()'
