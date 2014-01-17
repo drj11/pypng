@@ -516,32 +516,6 @@ class BaseFilter:
             ai += 1
         return 0
 
-    def unfilter_scanline(self, filter_type, line, result):
-        """Undo the filter for a scanline."""
-
-        # For the first line of a pass, synthesize a dummy previous
-        # line.  An alternative approach would be to observe that on the
-        # first line 'up' is the same as 'null', 'paeth' is the same
-        # as 'sub', with only 'average' requiring any special case.
-        if self.prev is None:
-            self.prev = newarray(len(line))
-
-        # Call appropriate filter algorithm.  Note that 0 has already
-        # been dealt with.
-        if filter_type == 1:
-            self._undo_filter_sub(line, result)
-        elif filter_type == 2:
-            self._undo_filter_up(line, result)
-        elif filter_type == 3:
-            self._undo_filter_average(line, result)
-        elif filter_type == 4:
-            self._undo_filter_paeth(line, result)
-
-        # This will not work writing cython attributes from python
-        # Only 'cython from cython' or 'python from python'
-        self.prev[:] = result
-        return 0
-
     def filter_scanline(self, filter_type, line, result):
         """Apply a scanline filter to a scanline.
         `filter_type` specifies the filter type (0 to 4)
