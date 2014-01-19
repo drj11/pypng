@@ -614,6 +614,24 @@ class Test(unittest.TestCase):
         out = reader.undo_filter(4, scanline, scanprev)
         self.assertEqual(list(out), [8, 10, 9, 108, 111, 113])  # paeth
 
+    def testModifyRows(self):
+        # Tests that the rows yielded by the pixels generator
+        # can be safely modified.
+        # drj didn't expect this test to pass... but it does.
+        k = 'f02n0g08'
+        r1 = png.Reader(bytes=pngsuite.png[k])
+        r2 = png.Reader(bytes=pngsuite.png[k])
+        _,_,pixels1,info1 = r1.asDirect()
+        _,_,pixels2,info2 = r2.asDirect()
+        print info1
+        print info2
+        for row1, row2 in zip(pixels1, pixels2):
+            self.assertEqual(row1, row2)
+            for i in range(len(row1)):
+                row1[i] = 11117 % (i + 1)
+
+
+
 def group(s, n):
     # See http://www.python.org/doc/2.6/library/functions.html#zip
     return zip(*[iter(s)]*n)
