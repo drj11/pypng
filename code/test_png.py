@@ -118,7 +118,7 @@ class Test(unittest.TestCase):
     def helperLN(self, n):
         mask = (1 << n) - 1
         # Use small chunk_limit so that multiple chunk writing is
-        # tested.  Making it a test for Issue 20.
+        # tested.  Making it a test for Issue 20 (googlecode).
         w = png.Writer(15, 17, greyscale=True, bitdepth=n, chunk_limit=99)
         f = BytesIO()
         w.write_array(f, array('B', map(mask.__and__, range(1, 256))))
@@ -179,7 +179,7 @@ class Test(unittest.TestCase):
         self.assertEqual(map(list, pixels), map(list, flat))
     def testRGBtoRGBA(self):
         "asRGBA8() on colour type 2 source."""
-        # Test for Issue 26
+        # Test for Issue 26 (googlecode)
         # Also test that png.Reader can take a "file-like" object.
         r = png.Reader(BytesIO(pngsuite.basn2c08))
         x,y,pixels,meta = r.asRGBA8()
@@ -189,7 +189,7 @@ class Test(unittest.TestCase):
                          [0xff, 0xdf, 0xff, 0xff, 0xff, 0xde, 0xff, 0xff])
     def testLtoRGBA(self):
         "asRGBA() on grey source."""
-        # Test for Issue 60
+        # Test for Issue 60 (googlecode)
         r = png.Reader(bytes=pngsuite.basi0g08)
         x,y,pixels,meta = r.asRGBA()
         row9 = list(list(pixels)[9])
@@ -197,7 +197,7 @@ class Test(unittest.TestCase):
           [222, 222, 222, 255, 221, 221, 221, 255])
     def testCtrns(self):
         "Test colour type 2 and tRNS chunk."
-        # Test for Issue 25
+        # Test for Issue 25 (googlecode)
         r = png.Reader(bytes=pngsuite.tbrn2c08)
         x,y,pixels,meta = r.asRGBA8()
         # I just happen to know that the first pixel is transparent.
@@ -374,7 +374,7 @@ class Test(unittest.TestCase):
     def testPackedIter(self):
         """Test iterator for row when using write_packed.
 
-        Indicative for Issue 47.
+        Indicative for Issue 47 (googlecode).
         """
         w = png.Writer(16, 2, greyscale=True, alpha=False, bitdepth=1)
         o = BytesIO()
