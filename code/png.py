@@ -1799,7 +1799,10 @@ class Reader:
             or may not share with argument"""
 
             if self.bitdepth == 8:
-                # :todo:(drj) should we call bytearray_to_bytes here?
+                # This is required to be an array('B') for
+                # various asDirect() conversions to work.
+                # Sadly, because raw is a bytearray() we need to
+                # convert, and it costs us 8% to do so.
                 return array('B', raw)
             if self.bitdepth == 16:
                 raw = bytearray_to_bytes(raw)
