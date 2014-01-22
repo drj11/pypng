@@ -223,7 +223,7 @@ except NameError:
         # The above definition of bytearray_to_bytes doesn't
         # work when array.tostring doesn't exist. :todo:(drj)
         # What versions of Python is that then?
-        def bytesarray_to_bytes(row):
+        def bytearray_to_bytes(row):
             l = len(row)
             return struct.pack('%dB' % l, *row)
 
