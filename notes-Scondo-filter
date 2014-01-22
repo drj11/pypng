@@ -1,3 +1,6 @@
+bytearray causes an 8% penalty (in 8-bit images) due to
+reallocating each row. It is considered harmful.
+
 Cython instructions are unclear (and I don't care much).
 
 The `fa` variable in filter_scanline is redundant. Just mutate
@@ -21,7 +24,7 @@ adapt_methods etc is badly commented.
 adapt_sum and adapt_entropy inconsistent style. Also, can we
 use min() with a key= argument (probably not in Python 2.2)
 
-"return array('B', raw)" should be bytearray?
+"return array('B', raw)" should be bytearray? (actually no)
 
 "typ != 'IDAT'" should not use a variable called "typ".
 
