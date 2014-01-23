@@ -22,6 +22,7 @@ except ImportError:
     from StringIO import StringIO as BytesIO
 import itertools
 import struct
+import sys
 # http://www.python.org/doc/2.4.4/lib/module-unittest.html
 import unittest
 import zlib
