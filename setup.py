@@ -15,7 +15,7 @@ import sys
 
 def get_version():
     from os.path import dirname, join
-    for line in open(join(dirname(__file__), 'code/png.py')):
+    for line in open(join(dirname(__file__), "code", "png.py")):
         if '__version__' in line:
             version = line.split('"')[1]
             break
@@ -63,7 +63,7 @@ def prepare3():
         os.mkdir('code3')
     except OSError:
         pass
-    os.system("2to3 -w -n -o code3 code/png.py")
+    os.system("2to3 -w -n -o code3 " + os.path.join("code", "png.py"))
     conf['package_dir'] = {'':'code3'}
       
 if __name__ == '__main__':
