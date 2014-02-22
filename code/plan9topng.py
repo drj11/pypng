@@ -18,6 +18,9 @@ import re
 # http://www.python.org/doc/2.3.5/lib/module-sys.html
 import sys
 
+class Error(Exception):
+    """Some sort of Plan 9 image error."""
+
 def block(s, n):
     # See http://www.python.org/doc/2.6.2/library/functions.html#zip
     return zip(*[iter(s)]*n)
@@ -242,7 +245,7 @@ def deblock(f) :
   row = int(f.read(12))
   size = int(f.read(12))
   if not (0 <= size <= 6000) :
-    raise 'block has invalid size; not a Plan 9 image file?'
+    raise Error('block has invalid size; not a Plan 9 image file?')
 
   # Since each block is at most 6000 bytes we may as well read it all in
   # one go.
@@ -276,7 +279,7 @@ def deblock(f) :
     # which to start indexing.
     offset = ~offset + len(o)
     if offset < 0 :
-      raise 'byte offset indexes off the begininning of the output buffer; not a Plan 9 image file?'
+      raise Error('byte offset indexes off the begininning of the output buffer; not a Plan 9 image file?')
     for j in range(l) :
       o.append(o[offset+j])
   return row,''.join(o)
