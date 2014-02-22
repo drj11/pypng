@@ -63,7 +63,8 @@ def prepare3():
         os.mkdir('code3')
     except OSError:
         pass
-    os.system("2to3 -w -n -o code3 " + os.path.join("code", "png.py"))
+    # Note: -W was added in 2.7.3.
+    os.system("2to3 -w -W -n -o code3 code")
     conf['package_dir'] = {'':'code3'}
       
 if __name__ == '__main__':
