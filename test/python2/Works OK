@@ -7,4 +7,4 @@ then
 fi
 
 export PYTHONPATH=../../code
-$py2 -c 'import png; png.runTest()'
+$py2 -c 'import test_png; test_png.runTest()'
