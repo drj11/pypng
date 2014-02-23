@@ -64,7 +64,10 @@ def prepare3():
     except OSError:
         pass
     # Note: -W was added in 2.7.3.
-    os.system("2to3 -w -W -n -o code3 code")
+    from lib2to3.main import main
+    main("lib2to3.fixes", ["-w", "-W", "-n", "-o", "code3",
+                           conf['package_dir']['']])
+
     conf['package_dir'] = {'':'code3'}
       
 if __name__ == '__main__':
