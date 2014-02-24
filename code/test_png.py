@@ -618,7 +618,6 @@ class Test(unittest.TestCase):
     def testModifyRows(self):
         # Tests that the rows yielded by the pixels generator
         # can be safely modified.
-        # drj didn't expect this test to pass... but it does.
         k = 'f02n0g08'
         r1 = png.Reader(bytes=pngsuite.png[k])
         r2 = png.Reader(bytes=pngsuite.png[k])
@@ -626,7 +625,7 @@ class Test(unittest.TestCase):
         _,_,pixels2,info2 = r2.asDirect()
         print info1
         print info2
-        for row1, row2 in zip(pixels1, pixels2):
+        for row1, row2 in itertools.izip(pixels1, pixels2):
             self.assertEqual(row1, row2)
             for i in range(len(row1)):
                 row1[i] = 11117 % (i + 1)
