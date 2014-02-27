@@ -185,6 +185,12 @@ def main(argv=None):
     else:
         message = sys.stdin.read()
         out = sys.stdout
+        # on Windows it is necessary to switch stdout to binary mode
+        # to avoid \n translation
+        if sys.platform == "win32":
+          import os, msvcrt
+          msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
+
     render(message, out)
 
 if __name__ == '__main__':
