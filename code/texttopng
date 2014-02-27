@@ -14,7 +14,7 @@ from array import array
 import itertools
 
 def usage(fil):
-    fil.write("texttopng [--help] text")
+    fil.write("texttopng [-h|--help] text")
 
 font = {
   32: '0000000000000000',
@@ -171,7 +171,7 @@ def main(argv=None):
         argv = sys.argv
     for i,a in enumerate(sys.argv):
         if a.startswith('-'):
-            if a == '--help':
+            if a == '--help' or a == '-h':
                 usage(sys.stdout)
                 sys.exit(0)
             else:
