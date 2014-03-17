@@ -14,7 +14,7 @@ from array import array
 import itertools
 
 def usage(fil):
-    fil.write("texttopng [-h|--help] text")
+    fil.write("texttopng [-h|--help] text\n")
 
 font = {
   32: '0000000000000000',
@@ -169,9 +169,9 @@ def main(argv=None):
 
     if argv is None:
         argv = sys.argv
-    for i,a in enumerate(sys.argv):
+    for a in argv:
         if a.startswith('-'):
-            if a == '--help' or a == '-h':
+            if a in ('-h', '--help'):
                 usage(sys.stdout)
                 sys.exit(0)
             else:
@@ -187,9 +187,10 @@ def main(argv=None):
         out = sys.stdout
         # on Windows it is necessary to switch stdout to binary mode
         # to avoid \n translation
+        # http://stackoverflow.com/questions/2374427/python-2-x-write-binary-output-to-stdout
         if sys.platform == "win32":
-          import os, msvcrt
-          msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
+            import os, msvcrt
+            msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
 
     render(message, out)
 
