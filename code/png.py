@@ -390,6 +390,18 @@ class BaseFilter:
     # :todo:(drj) can someone please document why these methods
     # all "return 0". KTHXBAI.
 
+    def _undo_filter_sub(self, scanline, previous, result):
+        """Undo sub filter."""
+
+        ai = 0
+        # Loops starts at index fu.  Observe that the initial part
+        # of the result is already filled in correctly with scanline.
+        for i in range(self.fu, len(result)):
+            x = scanline[i]
+            a = result[ai]
+            result[i] = (x + a) & 0xff
+            ai += 1
+        return 0
 
     def __do_filter_sub(self, scanline, result):
         """Sub filter."""
@@ -402,6 +414,14 @@ class BaseFilter:
             ai += 1
         return 0
 
+    def _undo_filter_up(self, scanline, previous, result):
+        """Undo up filter."""
+        for i in range(len(result)):
+            x = scanline[i]
+            b = previous[i]
+            result[i] = (x + b) & 0xff
+        return 0
+
     def __do_filter_up(self, scanline, result):
         """Up filter."""
 
@@ -409,6 +429,21 @@ class BaseFilter:
             x = scanline[i]
             b = self.prev[i]
             result[i] = (x - b) & 0xff
+        return 0
+
+    def _undo_filter_average(self, scanline, previous, result):
+        """Undo average filter."""
+
+        ai = -self.fu
+        for i in range(len(result)):
+            x = scanline[i]
+            if ai < 0:
+                a = 0
+            else:
+                a = result[ai]
+            b = previous[i]
+            result[i] = (x + ((a + b) >> 1)) & 0xff
+            ai += 1
         return 0
 
     def __do_filter_average(self, scanline, result):
@@ -437,6 +472,32 @@ class BaseFilter:
             return b
         else:
             return c
+
+    def _undo_filter_paeth(self, scanline, previous, result):
+        """Undo Paeth filter."""
+
+        ai = -self.fu
+        for i in range(len(result)):
+            x = scanline[i]
+            if ai < 0:
+                a = c = 0
+            else:
+                a = result[ai]
+                c = previous[ai]
+            b = previous[i]
+            p = a + b - c
+            pa = abs(p - a)
+            pb = abs(p - b)
+            pc = abs(p - c)
+            if pa <= pb and pa <= pc:
+                pr = a
+            elif pb <= pc:
+                pr = b
+            else:
+                pr = c
+            result[i] = (x + pr) & 0xff
+            ai += 1
+        return 0
 
     def __do_filter_paeth(self, scanline, result):
         """Paeth filter."""
@@ -520,64 +581,6 @@ try:
     from pngfilters import BaseFilter
 except ImportError:
     BaseFilter = iBaseFilter
-
-def _undo_filter_sub(fu, scanline, previous, result):
-    """Undo sub filter."""
-
-    ai = 0
-    # Loops starts at index fu.  Observe that the initial part
-    # of the result is already filled in correctly with scanline.
-    for i in range(fu, len(result)):
-        x = scanline[i]
-        a = result[ai]
-        result[i] = (x + a) & 0xff
-        ai += 1
-
-def _undo_filter_up(fu_, scanline, previous, result):
-    """Undo up filter."""
-    for i in range(len(result)):
-        x = scanline[i]
-        b = previous[i]
-        result[i] = (x + b) & 0xff
-
-def _undo_filter_average(fu, scanline, previous, result):
-    """Undo average filter."""
-
-    ai = -fu
-    for i in range(len(result)):
-        x = scanline[i]
-        if ai < 0:
-            a = 0
-        else:
-            a = result[ai]
-        b = previous[i]
-        result[i] = (x + ((a + b) >> 1)) & 0xff
-        ai += 1
-
-def _undo_filter_paeth(fu, scanline, previous, result):
-    """Undo Paeth filter."""
-
-    ai = -fu
-    for i in range(len(result)):
-        x = scanline[i]
-        if ai < 0:
-            a = c = 0
-        else:
-            a = result[ai]
-            c = previous[ai]
-        b = previous[i]
-        p = a + b - c
-        pa = abs(p - a)
-        pb = abs(p - b)
-        pc = abs(p - c)
-        if pa <= pb and pa <= pc:
-            pr = a
-        elif pb <= pc:
-            pr = b
-        else:
-            pr = c
-        result[i] = (x + pr) & 0xff
-        ai += 1
 
 
 class Writer:
@@ -1327,13 +1330,13 @@ class Filter(BaseFilter):
         # Call appropriate filter algorithm.  Note that 0 has already
         # been dealt with.
         if filter_type == 1:
-            _undo_filter_sub(self.fu, scanline, self.prev, result)
+            self._undo_filter_sub(scanline, self.prev, result)
         elif filter_type == 2:
-            _undo_filter_up(self.fu, scanline, self.prev, result)
+            self._undo_filter_up(scanline, self.prev, result)
         elif filter_type == 3:
-            _undo_filter_average(self.fu, scanline, self.prev, result)
+            self._undo_filter_average(scanline, self.prev, result)
         elif filter_type == 4:
-            _undo_filter_paeth(self.fu, scanline, self.prev, result)
+            self._undo_filter_paeth(scanline, self.prev, result)
 
         # This will not work writing cython attributes from python
         # Only 'cython from cython' or 'python from python'
