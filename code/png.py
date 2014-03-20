@@ -387,9 +387,6 @@ class BaseFilter:
         else:
             self.fu = 1
 
-    # :todo:(drj) can someone please document why these methods
-    # all "return 0". KTHXBAI.
-
     def _undo_filter_sub(self, scanline, previous, result):
         """Undo sub filter."""
 
@@ -401,7 +398,6 @@ class BaseFilter:
             a = result[ai]
             result[i] = (x + a) & 0xff
             ai += 1
-        return 0
 
     def __do_filter_sub(self, scanline, result):
         """Sub filter."""
@@ -412,7 +408,6 @@ class BaseFilter:
             a = scanline[ai]
             result[i] = (x - a) & 0xff
             ai += 1
-        return 0
 
     def _undo_filter_up(self, scanline, previous, result):
         """Undo up filter."""
@@ -420,7 +415,6 @@ class BaseFilter:
             x = scanline[i]
             b = previous[i]
             result[i] = (x + b) & 0xff
-        return 0
 
     def __do_filter_up(self, scanline, result):
         """Up filter."""
@@ -429,7 +423,6 @@ class BaseFilter:
             x = scanline[i]
             b = self.prev[i]
             result[i] = (x - b) & 0xff
-        return 0
 
     def _undo_filter_average(self, scanline, previous, result):
         """Undo average filter."""
@@ -444,7 +437,6 @@ class BaseFilter:
             b = previous[i]
             result[i] = (x + ((a + b) >> 1)) & 0xff
             ai += 1
-        return 0
 
     def __do_filter_average(self, scanline, result):
         """Average filter."""
@@ -459,7 +451,6 @@ class BaseFilter:
             b = self.prev[i]
             result[i] = (x - ((a + b) >> 1)) & 0xff
             ai += 1
-        return 0
 
     def __paeth(self, a, b, c):
         p = a + b - c
@@ -497,7 +488,6 @@ class BaseFilter:
                 pr = c
             result[i] = (x + pr) & 0xff
             ai += 1
-        return 0
 
     def __do_filter_paeth(self, scanline, result):
         """Paeth filter."""
@@ -514,7 +504,6 @@ class BaseFilter:
             b = self.prev[i]
             result[i] = (x - self.__paeth(a, b, c)) & 0xff
             ai += 1
-        return 0
 
     def filter_scanline(self, filter_type, line, result):
         """Apply a scanline filter to a scanline.
@@ -547,7 +536,6 @@ class BaseFilter:
             self.__do_filter_average(line, result)
         elif fa == 4:
             self.__do_filter_paeth(line, result)
-        return 0
 
     # Todo: color conversion functions should be moved
     # to a separate part in future
@@ -556,7 +544,6 @@ class BaseFilter:
             for j in range(3):
                 result[(4 * i) + j] = row[2 * i]
             result[(4 * i) + 3] = row[(2 * i) + 1]
-        return 0
 
     def convert_l_to_rgba(self, row, result):
         """Convert a grayscale image to RGBA. This method assumes the alpha
@@ -565,7 +552,6 @@ class BaseFilter:
         for i in range(len(row) // 3):
             for j in range(3):
                 result[(4 * i) + j] = row[i]
-        return 0
 
     def convert_rgb_to_rgba(self, row, result):
         """Convert an RGB image to RGBA. This method assumes the alpha
@@ -574,7 +560,7 @@ class BaseFilter:
         for i in range(len(row) // 3):
             for j in range(3):
                 result[(4 * i) + j] = row[(3 * i) + j]
-        return 0
+
 
 iBaseFilter = BaseFilter  # 'i' means 'internal'
 try:
