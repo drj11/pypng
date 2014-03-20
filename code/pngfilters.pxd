@@ -38,13 +38,10 @@ cdef class BaseFilter:
 	@cython.locals(ai = cython.int, i=cython.int, x=cython.uchar, a=cython.uchar, b=cython.uchar)                         
 	cdef void __do_filter_average(self, unsigned char[::1] scanline, unsigned char[::1] result)
 
-	@cython.locals(pa=cython.int, pb=cython.int, pc=cython.int, p=cython.int)
-	cdef unsigned char __paeth(self, unsigned char a, unsigned char b, unsigned char c)
-
 	@cython.locals(ai = cython.int, i=cython.int, x=cython.uchar, a=cython.uchar, b=cython.uchar, c=cython.uchar, pa=cython.uchar, pb=cython.uchar, pc=cython.uchar, pr=cython.uchar, p=cython.uchar)
 	cpdef _undo_filter_paeth(self, buf_arr scanline, buf_arr previous, buf_arr result)
 
-	@cython.locals(ai = cython.int, i=cython.int, x=cython.uchar, a=cython.uchar, b=cython.uchar, c=cython.uchar)
+	@cython.locals(ai = cython.int, i=cython.int, x=cython.uchar, a=cython.uchar, b=cython.uchar, c=cython.uchar, pa=cython.uchar, pb=cython.uchar, pc=cython.uchar, pr=cython.uchar, p=cython.uchar)
 	cdef void __do_filter_paeth(self, unsigned char[::1] scanline, unsigned char[::1] result)
 
 	@cython.locals(fa = cython.int)

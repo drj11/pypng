@@ -452,18 +452,6 @@ class BaseFilter:
             result[i] = (x - ((a + b) >> 1)) & 0xff
             ai += 1
 
-    def __paeth(self, a, b, c):
-        p = a + b - c
-        pa = abs(p - a)
-        pb = abs(p - b)
-        pc = abs(p - c)
-        if pa <= pb and pa <= pc:
-            return a
-        elif pb <= pc:
-            return b
-        else:
-            return c
-
     def _undo_filter_paeth(self, scanline, previous, result):
         """Undo Paeth filter."""
 
@@ -502,7 +490,17 @@ class BaseFilter:
                 a = scanline[ai]
                 c = self.prev[ai]
             b = self.prev[i]
-            result[i] = (x - self.__paeth(a, b, c)) & 0xff
+            p = a + b - c
+            pa = abs(p - a)
+            pb = abs(p - b)
+            pc = abs(p - c)
+            if pa <= pb and pa <= pc:
+                pr = a
+            elif pb <= pc:
+                pr = b
+            else:
+                pr = c
+            result[i] = (x - pr) & 0xff
             ai += 1
 
     def filter_scanline(self, filter_type, line, result):
