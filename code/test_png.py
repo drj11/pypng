@@ -623,8 +623,6 @@ class Test(unittest.TestCase):
         r2 = png.Reader(bytes=pngsuite.png[k])
         _,_,pixels1,info1 = r1.asDirect()
         _,_,pixels2,info2 = r2.asDirect()
-        print info1
-        print info2
         for row1, row2 in itertools.izip(pixels1, pixels2):
             self.assertEqual(row1, row2)
             for i in range(len(row1)):
