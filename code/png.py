@@ -1612,11 +1612,13 @@ class Reader:
         """
 
         def asvalues(raw):
-            """Convert a row of raw bytes into a flat row.  Result may
-            or may not share with argument"""
+            """Convert a row of raw bytes into a flat row.  Result will
+            be a freshly allocated object, not shared with
+            argument.
+            """
 
             if self.bitdepth == 8:
-                return raw
+                return array('B', raw)
             if self.bitdepth == 16:
                 raw = tostring(raw)
                 return array('H', struct.unpack('!%dH' % (len(raw)//2), raw))
