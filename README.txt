@@ -54,6 +54,12 @@ RELEASE NOTES
 (For issues see https://github.com/drj11/pypng/issues?state=open )
 
 
+Committed but not yet released:
+
+Converting to PNMs was broken in Python 3; this is now fixed.
+Github issue 26: https://github.com/drj11/pypng/issues/26
+
+
 Release 0.0.17
 
 Various fixes when running on Python 3 and Windows. Merging pull
