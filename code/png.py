@@ -2590,7 +2590,7 @@ def write_pnm(file, width, height, pixels, meta):
         else:
             # PPM
             fmt = 'P6'
-        file.write('%s %d %d %d\n' % (fmt, width, height, maxval))
+        header = '%s %d %d %d\n' % (fmt, width, height, maxval)
     if planes in (2,4):
         # PAM
         # See http://netpbm.sourceforge.net/doc/pam.html
@@ -2598,9 +2598,10 @@ def write_pnm(file, width, height, pixels, meta):
             tupltype = 'GRAYSCALE_ALPHA'
         else:
             tupltype = 'RGB_ALPHA'
-        file.write('P7\nWIDTH %d\nHEIGHT %d\nDEPTH %d\nMAXVAL %d\n'
-                   'TUPLTYPE %s\nENDHDR\n' %
-                   (width, height, planes, maxval, tupltype))
+        header = ('P7\nWIDTH %d\nHEIGHT %d\nDEPTH %d\nMAXVAL %d\n'
+                  'TUPLTYPE %s\nENDHDR\n' %
+                  (width, height, planes, maxval, tupltype))
+    file.write(header.encode('ascii'))
     # Values per row
     vpr = planes * width
     # struct format
