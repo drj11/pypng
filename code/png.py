@@ -145,7 +145,7 @@ And now, my famous members
 # http://www.python.org/doc/2.2.3/whatsnew/node5.html
 from __future__ import generators
 
-__version__ = "0.0.16"
+__version__ = "0.0.17"
 
 from array import array
 try: # See :pyver:old
