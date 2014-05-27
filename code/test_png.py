@@ -632,3 +632,6 @@ class Test(unittest.TestCase):
 def group(s, n):
     # See http://www.python.org/doc/2.6/library/functions.html#zip
     return zip(*[iter(s)]*n)
+
+if __name__ == '__main__':
+    unittest.main(__name__)
