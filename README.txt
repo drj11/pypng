@@ -54,6 +54,13 @@ RELEASE NOTES
 (For issues see https://github.com/drj11/pypng/issues?state=open )
 
 
+Release 0.0.17
+
+Various fixes when running on Python 3 and Windows. Merging pull
+requests from github.com/ironfroggy and github.com/techtonik,
+and merging by hand a commit from github.com/Scondo.
+
+
 Release 0.0.16
 
 Compatible with nose: `nosetests png.py` now works.
