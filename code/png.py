@@ -527,7 +527,7 @@ class Writer:
             bitdepth = int(8*bytes_per_sample)
         del bytes_per_sample
         if not isinteger(bitdepth) or bitdepth < 1 or 16 < bitdepth:
-            raise ValueError("bitdepth (%r) must be a postive integer <= 16" %
+            raise ValueError("bitdepth (%r) must be a positive integer <= 16" %
               bitdepth)
 
         self.rescale = None
@@ -1902,8 +1902,8 @@ class Reader:
             be an iterator that yields the ``IDAT`` chunk data.
             """
 
-            # Currently, with no max_length paramter to decompress, this
-            # routine will do one yield per IDAT chunk.  So not very
+            # Currently, with no max_length parameter to decompress,
+            # this routine will do one yield per IDAT chunk: Not very
             # incremental.
             d = zlib.decompressobj()
             # Each IDAT chunk is passed to the decompressor, then any
