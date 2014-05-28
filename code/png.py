@@ -637,12 +637,12 @@ class Writer:
             fmt = 'BH'[self.bitdepth > 8]
             a = array(fmt, itertools.chain(*rows))
             return self.write_array(outfile, a)
-        else:
-            nrows = self.write_passes(outfile, rows)
-            if nrows != self.height:
-                raise ValueError(
-                  "rows supplied (%d) does not match height (%d)" %
-                  (nrows, self.height))
+
+        nrows = self.write_passes(outfile, rows)
+        if nrows != self.height:
+            raise ValueError(
+              "rows supplied (%d) does not match height (%d)" %
+              (nrows, self.height))
 
     def write_passes(self, outfile, rows, packed=False):
         """
@@ -1030,9 +1030,12 @@ def filter_scanline(type, line, fo, prev=None):
             pa = abs(p - a)
             pb = abs(p - b)
             pc = abs(p - c)
-            if pa <= pb and pa <= pc: Pr = a
-            elif pb <= pc: Pr = b
-            else: Pr = c
+            if pa <= pb and pa <= pc:
+                Pr = a
+            elif pb <= pc:
+                Pr = b
+            else:
+                Pr = c
 
             x = (x - Pr) & 0xff
             out.append(x)
