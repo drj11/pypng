@@ -25,9 +25,9 @@ no good then you could try the ReST sources in the man/ directory.
 
 INSTALLATION
 
-PyPNG requires Python version 2.3 (and that's all), or any compatible
-higher version.  It works best on Python 2.4 and above.  It can be used
-on Python 2.2, but some things do not work.
+PyPNG requires Python version 2.4 (and that's all), or any compatible
+higher version.  It can be used on Python 2.3, but some things may not
+work.
 
 PyPNG also works on Python 3.x if you use the 2to3 tool which it should
 do automatically (this support is very recent, and preliminary).
@@ -55,6 +55,9 @@ RELEASE NOTES
 
 
 Committed but not yet released:
+
+Python 2.4 is a minimum required version as reported by
+https://github.com/ghewgill/pyqver
 
 Converting to PNMs was broken in Python 3; this is now fixed.
 Github issue 26: https://github.com/drj11/pypng/issues/26
