@@ -1,0 +1,22 @@
+Source: pypng
+Maintainer: David Jones <drj@pobox.com>
+Section: python
+Priority: optional
+Build-Depends: python-setuptools (>= 0.6b3), python-all (>= 2.6.6-3), debhelper (>= 9)
+Standards-Version: 3.9.1
+
+Package: python-pypng
+Architecture: all
+Depends: ${misc:Depends}, ${python:Depends}
+Description: Pure Python PNG image encoder/decoder
+ .
+ PyPNG allows PNG image files to be read and written using pure Python.
+ .
+ It's available from github.com
+ https://github.com/drj11/pypng
+ .
+ Documentation is kindly hosted by PyPI
+ http://pythonhosted.org/pypng/
+ (and also available in the download tarball).
+ .
+
