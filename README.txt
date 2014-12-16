@@ -46,7 +46,7 @@ that you can copy png.py into your application and distribute it.  The
 following "curl" command should copy the latest version into your
 current directory:
 
-curl -O https://raw.github.com/drj11/pypng/master/code/png.py
+curl -LO https://raw.github.com/drj11/pypng/master/code/png.py
 
 
 RELEASE NOTES
