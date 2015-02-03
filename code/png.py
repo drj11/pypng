@@ -325,7 +325,7 @@ def check_color(c, greyscale, which):
         return c
     if greyscale:
         try:
-            l = len(c)
+            len(c)
         except TypeError:
             c = (c,)
         if len(c) != 1:
