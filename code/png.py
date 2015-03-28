@@ -160,6 +160,7 @@ import sys
 import zlib
 # http://www.python.org/doc/2.4.4/lib/module-warnings.html
 import warnings
+import time
 try:
     # `cpngfilters` is a Cython module: it must be compiled by
     # Cython for this import to work.
@@ -377,9 +378,8 @@ class Writer:
                  colormap=None,
                  maxval=None,
                  chunk_limit=2**20,
-                 x_pixels_per_unit = None,
-                 y_pixels_per_unit = None,
-                 unit_is_meter = False):
+                 resolutions = (None,None,None),
+                 timestamp_now = None):
         """
         Create a PNG encoder object.
 
@@ -410,13 +410,6 @@ class Writer:
           Create an interlaced image.
         chunk_limit
           Write multiple ``IDAT`` chunks to save memory.
-        x_pixels_per_unit (pHYs chunk)
-          Number of pixels a unit along the x axis
-        y_pixels_per_unit (pHYs chunk)
-          Number of pixels a unit along the y axis    
-          With x_pixel_unit, give the pixel size ratio
-        unit_is_meter (pHYs chunk)
-          Indicates if unit is meter or not
 
         The image size (in pixels) can be specified either by using the
         `width` and `height` arguments, or with the single `size`
@@ -505,6 +498,26 @@ class Writer:
         `chunk_limit` is used to limit the amount of memory used whilst
         compressing the image.  In order to avoid using large amounts of
         memory, multiple ``IDAT`` chunks may be created.
+
+        `resolutions`:
+            tuple used to set the resolution of the image on x and y axis.
+            resolutions is (x_pixels_per_unit, y_pixels_per_unit, is_meter)
+            These parameters, if defined, are used to write the ``pHYs`` chunk
+            in the .png file
+            default value: (None, None, None)
+            x_pixels_per_unit (pHYs chunk)
+              Number of pixels a unit along the x axis
+            y_pixels_per_unit (pHYs chunk)
+              Number of pixels a unit along the y axis    
+              With x_pixel_unit, give the pixel size ratio
+            is_meter (pHYs chunk)
+              Indicates if unit is meter or not
+
+        `timestamp_now`:
+            Used to set the writing time of the .png file (``tIME`` chunk)
+            None (default value): no tIME chunk is written to the .png file
+            False: .png UTC writing time is used int tIME chunk
+            True: constructor UTC calling time is used in tIME chunk
         """
 
         # At the moment the `planes` argument is ignored;
@@ -599,9 +612,6 @@ class Writer:
         self.chunk_limit = chunk_limit
         self.interlace = bool(interlace)
         self.palette = check_palette(palette)
-        self.x_pixels_per_unit = x_pixels_per_unit
-        self.y_pixels_per_unit = y_pixels_per_unit
-        self.unit_is_meter = bool(unit_is_meter)
 
         self.color_type = 4*self.alpha + 2*(not greyscale) + 1*self.colormap
         assert self.color_type in (0,2,3,4,6)
@@ -610,6 +620,39 @@ class Writer:
         self.planes = self.color_planes + self.alpha
         # :todo: fix for bitdepth < 8
         self.psize = (self.bitdepth/8) * self.planes
+
+        # Set pixel physical size using `pHYs` chunk
+        self.set_resolutions(*resolutions)
+
+        # Indicates that time must be save in the .png file
+        self.apply_timestamp(timestamp_now)
+
+    def set_resolutions(self, x_pixels_per_unit, y_pixels_per_unit, is_meter):
+        """
+        Set the resolution of the image on x and y axis.
+        x_pixels_per_unit (pHYs chunk)
+          Number of pixels a unit along the x axis
+        y_pixels_per_unit (pHYs chunk)
+          Number of pixels a unit along the y axis    
+          With x_pixel_unit, give the pixel size ratio
+        is_meter (pHYs chunk)
+          Indicates if unit is meter or not
+        """
+        self.x_pixels_per_unit = x_pixels_per_unit
+        self.y_pixels_per_unit = y_pixels_per_unit
+        self.is_meter = is_meter
+
+    def apply_timestamp(self, now = None):
+        """
+        Tells the Writer to UTC time stamp the .png file at write time
+        If now is True, the UTC calling time of this method is used
+        """
+        if now == False:
+            self.timestamp = True
+        elif now == True:
+            self.timestamp = time.gmtime()[:6]
+        else:
+            self.timestamp = None
 
     def make_palette(self):
         """Create the byte sequences for a ``PLTE`` and if necessary a
@@ -730,8 +773,20 @@ class Writer:
 
         # http://www.w3.org/TR/PNG/#11pHYs
         if self.x_pixels_per_unit is not None and self.y_pixels_per_unit is not None:
-            tup = (self.x_pixels_per_unit, self.y_pixels_per_unit, int(self.unit_is_meter))
-            write_chunk(outfile, 'pHYs', struct.pack("!LLB",*tup))
+            try:
+                lst = [int(self.x_pixels_per_unit)] 
+                lst.append(int(self.y_pixels_per_unit)) 
+            except (ValueError, TypeError):
+                raise Error("x_pixels_per_unit and y_pixels_per_unit should be integer")
+            
+            lst.append(bool(self.is_meter)) 
+            write_chunk(outfile, 'pHYs', struct.pack("!LLB",*lst))
+
+        # http://www.w3.org/TR/PNG/#11tIME
+        if self.timestamp is not None:
+            if self.timestamp is True:
+                self.apply_timestamp(True)
+            write_chunk(outfile,'tIME',struct.pack("!H5B",*self.timestamp))
 
         # http://www.w3.org/TR/PNG/#11IDAT
         if self.compression is not None:
@@ -1402,6 +1457,11 @@ class Reader:
         else:
             raise TypeError("expecting filename, file or bytes array")
 
+        # These values are optionaly set in a .png file
+        self.x_pixels_per_unit = None
+        self.y_pixels_per_unit = None
+        self.is_meter = None
+        self.timestamp = None
 
     def chunk(self, seek=None, lenient=False):
         """
@@ -1768,7 +1828,7 @@ class Reader:
     def process_chunk(self, lenient=False):
         """Process the next chunk and its data.  This only processes the
         following chunk types, all others are ignored: ``IHDR``,
-        ``PLTE``, ``bKGD``, ``tRNS``, ``gAMA``, ``sBIT``, ``pHYs``.
+        ``PLTE``, ``bKGD``, ``tRNS``, ``gAMA``, ``sBIT``, ``pHYs``, ``tIME``.
 
         If the optional `lenient` argument evaluates to True,
         checksum failures will raise warnings rather than exceptions.
@@ -1894,7 +1954,15 @@ class Reader:
         if len(data) != struct.calcsize(fmt):
             raise FormatError("pHYs chunk has incorrect length.")
         self.x_pixels_per_unit, self.y_pixels_per_unit, unit = struct.unpack(fmt,data)
-        self.unit_is_meter = bool(unit)
+        self.is_meter = bool(unit)
+
+    def _process_tIME(self, data):
+        # http://www.w3.org/TR/PNG/#11pHYs
+        self.time = data
+        fmt = "!H5B"
+        if len(data) != struct.calcsize(fmt):
+            raise FormatError("tIME chunk has incorrect length.")
+        self.timestamp = struct.unpack(fmt,data)
 
     def read(self, lenient=False):
         """

@@ -637,6 +637,44 @@ class Test(unittest.TestCase):
         meta = dict(alpha=False, greyscale=True, bitdepth=2, planes=1)
         png.write_pnm(o, w, h, pixels, meta)
 
+    def testPHYSParams(self):
+        """ Consistency write/read test of pHYs chunk """
+        pixels = [range(0,8)] * 8
+        size = (len(pixels[0]), len(pixels))
+        dpm_tests = [((None,None,None),(None,None,None))]
+        dpm_tests.append(((None,None,True),(None,None,None)))
+        dpm_tests.append(((1000,None,True),(None,None,None)))
+        dpm_tests.append(((None,1000,True),(None,None,None)))
+        dpm_tests.append(((1000,None,None),(None,None,None)))
+        dpm_tests.append(((None,1000,None),(None,None,None)))
+        dpm_tests.append(((2000,1000,None),(2000,1000,False)))
+        dpm_tests.append(((2000,1000,False),(2000,1000,False)))
+        dpm_tests.append(((1000,2000,True),(1000,2000,True)))
+        dpm = tuple((int(dpi / 0.00254) for dpi in (72.0, 300.0))) + (True,)
+        dpm_tests.append((dpm, dpm))
+        for value, expected in dpm_tests:
+            p = dict(size = size, resolutions = value)
+            io = BytesIO()
+            png.Writer(**p).write(io,pixels)
+            io.seek(0)
+            r = png.Reader(file = io)
+            r.read()
+            dpm_read =(r.x_pixels_per_unit, r.y_pixels_per_unit, r.is_meter)
+            self.assertEqual(expected,dpm_read)
+
+
+    def testTIMEChunkIO(self):
+        """ Consistency write/read test of tIME chunk """
+        pixels = [range(0,8)] * 8
+        io = BytesIO()
+        p = dict(size = (len(pixels[0]), len(pixels)), timestamp_now = True)
+        w = png.Writer(**p)
+        w.write(io,pixels)
+        io.seek(0)
+        r = png.Reader(file = io)
+        r.read()
+        self.assertEqual(w.timestamp,r.timestamp)
+        
 def group(s, n):
     # See http://www.python.org/doc/2.6/library/functions.html#zip
     return zip(*[iter(s)]*n)
