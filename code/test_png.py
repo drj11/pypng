@@ -179,7 +179,7 @@ class Test(unittest.TestCase):
         flat = map(lambda row: itertools.chain(*row), boxed)
         self.assertEqual(map(list, pixels), map(list, flat))
     def testRGBtoRGBA(self):
-        "asRGBA8() on colour type 2 source."""
+        """asRGBA8() on colour type 2 source."""
         # Test for Issue 26 (googlecode)
         # Also test that png.Reader can take a "file-like" object.
         r = png.Reader(BytesIO(pngsuite.basn2c08))
@@ -189,7 +189,7 @@ class Test(unittest.TestCase):
         self.assertEqual(list(row9[0:8]),
                          [0xff, 0xdf, 0xff, 0xff, 0xff, 0xde, 0xff, 0xff])
     def testLtoRGBA(self):
-        "asRGBA() on grey source."""
+        """asRGBA() on grey source."""
         # Test for Issue 60 (googlecode)
         r = png.Reader(bytes=pngsuite.basi0g08)
         x,y,pixels,meta = r.asRGBA()
