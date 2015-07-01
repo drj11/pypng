@@ -1416,7 +1416,7 @@ class Reader:
                   % (type, length))
             checksum = self.file.read(4)
             if len(checksum) != 4:
-                raise ValueError('Chunk %s too short for checksum.' % type)
+                raise ChunkError('Chunk %s too short for checksum.' % type)
             if seek and type != seek:
                 continue
             verify = zlib.crc32(strtobytes(type))

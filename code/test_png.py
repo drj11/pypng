@@ -411,6 +411,36 @@ class Test(unittest.TestCase):
 
         r = png.Reader(bytes=pngsuite.basi0g01[:8])
         self.assertRaises(png.FormatError, r.asDirect)
+    def testChun(self):
+        """
+        Chunk doesn't have length and type.
+        """
+        r = png.Reader(bytes=pngsuite.basi0g01[:13])
+        try:
+            r.asDirect()
+        except Exception as e:
+            self.assertIsInstance(e, png.FormatError)
+            self.assertIn('chunk length', str(e))
+    def testChunkShort(self):
+        """
+        Chunk that is too short.
+        """
+        r = png.Reader(bytes=pngsuite.basi0g01[:21])
+        try:
+            r.asDirect()
+        except Exception as e:
+            self.assertIsInstance(e, png.ChunkError)
+            self.assertIn('too short', str(e))
+    def testNoChecksum(self):
+        """
+        Chunk that's too small to contain a checksum.
+        """
+        r = png.Reader(bytes=pngsuite.basi0g01[:29])
+        try:
+            r.asDirect()
+        except Exception as e:
+            self.assertIsInstance(e, png.ChunkError)
+            self.assertIn('checksum', str(e))
     def testExtraPixels(self):
         """Test file that contains too many pixels."""
 
