@@ -541,6 +541,7 @@ class Writer:
               bitdepth)
 
         self.rescale = None
+        palette = check_palette(palette)
         if palette:
             if bitdepth not in (1,2,4,8):
                 raise ValueError("with palette, bitdepth must be 1, 2, 4, or 8")
@@ -598,7 +599,7 @@ class Writer:
         self.compression = compression
         self.chunk_limit = chunk_limit
         self.interlace = bool(interlace)
-        self.palette = check_palette(palette)
+        self.palette = palette
         self.x_pixels_per_unit = x_pixels_per_unit
         self.y_pixels_per_unit = y_pixels_per_unit
         self.unit_is_meter = bool(unit_is_meter)
