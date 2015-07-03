@@ -567,6 +567,25 @@ class Test(unittest.TestCase):
         pixels = numpy.array([[0,0x5555],[0x5555,0xaaaa]], numpy.uint16)
         img = png.from_array(pixels, 'L')
         img.save(BytesIO())
+    def testNumpyPalette(self):
+        """numpy palette."""
+
+        try:
+            import numpy
+        except ImportError:
+            print >>sys.stderr, "skipping numpy test"
+            return
+
+        s = ['110010010011',
+             '101011010100',
+             '110010110101',
+             '100010010011']
+
+        s = map(lambda x: map(int, x), s)
+
+        palette = [(0x55,0x55,0x55), (0xff,0x99,0x99)]
+        pnp = numpy.array(palette) # creates a 2x3 array
+        w = png.Writer(len(s[0]), len(s), palette=pnp, bitdepth=1)
 
     def paeth(self, x, a, b, c):
         p = a + b - c
