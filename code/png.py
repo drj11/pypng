@@ -376,7 +376,10 @@ class Writer:
                  planes=None,
                  colormap=None,
                  maxval=None,
-                 chunk_limit=2**20):
+                 chunk_limit=2**20,
+                 x_pixels_per_unit = None,
+                 y_pixels_per_unit = None,
+                 unit_is_meter = False):
         """
         Create a PNG encoder object.
 
@@ -407,6 +410,13 @@ class Writer:
           Create an interlaced image.
         chunk_limit
           Write multiple ``IDAT`` chunks to save memory.
+        x_pixels_per_unit (pHYs chunk)
+          Number of pixels a unit along the x axis
+        y_pixels_per_unit (pHYs chunk)
+          Number of pixels a unit along the y axis    
+          With x_pixel_unit, give the pixel size ratio
+        unit_is_meter (pHYs chunk)
+          Indicates if unit is meter or not
 
         The image size (in pixels) can be specified either by using the
         `width` and `height` arguments, or with the single `size`
@@ -589,6 +599,9 @@ class Writer:
         self.chunk_limit = chunk_limit
         self.interlace = bool(interlace)
         self.palette = check_palette(palette)
+        self.x_pixels_per_unit = x_pixels_per_unit
+        self.y_pixels_per_unit = y_pixels_per_unit
+        self.unit_is_meter = bool(unit_is_meter)
 
         self.color_type = 4*self.alpha + 2*(not greyscale) + 1*self.colormap
         assert self.color_type in (0,2,3,4,6)
@@ -714,6 +727,11 @@ class Writer:
             else:
                 write_chunk(outfile, 'bKGD',
                             struct.pack("!3H", *self.background))
+
+        # http://www.w3.org/TR/PNG/#11pHYs
+        if self.x_pixels_per_unit is not None and self.y_pixels_per_unit is not None:
+            tup = (self.x_pixels_per_unit, self.y_pixels_per_unit, int(self.unit_is_meter))
+            write_chunk(outfile, 'pHYs', struct.pack("!LLB",*tup))
 
         # http://www.w3.org/TR/PNG/#11IDAT
         if self.compression is not None:
@@ -1750,7 +1768,7 @@ class Reader:
     def process_chunk(self, lenient=False):
         """Process the next chunk and its data.  This only processes the
         following chunk types, all others are ignored: ``IHDR``,
-        ``PLTE``, ``bKGD``, ``tRNS``, ``gAMA``, ``sBIT``.
+        ``PLTE``, ``bKGD``, ``tRNS``, ``gAMA``, ``sBIT``, ``pHYs``.
 
         If the optional `lenient` argument evaluates to True,
         checksum failures will raise warnings rather than exceptions.
@@ -1868,6 +1886,15 @@ class Reader:
         if (self.colormap and len(data) != 3 or
             not self.colormap and len(data) != self.planes):
             raise FormatError("sBIT chunk has incorrect length.")
+
+    def _process_pHYs(self, data):
+        # http://www.w3.org/TR/PNG/#11pHYs
+        self.phys = data
+        fmt = "!LLB"
+        if len(data) != struct.calcsize(fmt):
+            raise FormatError("pHYs chunk has incorrect length.")
+        self.x_pixels_per_unit, self.y_pixels_per_unit, unit = struct.unpack(fmt,data)
+        self.unit_is_meter = bool(unit)
 
     def read(self, lenient=False):
         """
