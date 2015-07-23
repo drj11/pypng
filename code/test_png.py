@@ -465,6 +465,11 @@ class Test(unittest.TestCase):
     def testfromarray(self):
         img = png.from_array([[0, 0x33, 0x66], [0xff, 0xcc, 0x99]], 'L')
         img.save(BytesIO())
+    def testfromarray3D(self):
+        img = png.from_array(
+            [[[0, 0, 0], [255, 0, 0]],
+             [[255, 0, 0], [0, 0, 0]]], 'RGB')
+        img.save(BytesIO())
     def testfromarrayL16(self):
         img = png.from_array(group(range(2**16), 256), 'L;16')
         img.save(BytesIO())
