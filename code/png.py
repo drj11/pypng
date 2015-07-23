@@ -1263,8 +1263,9 @@ def from_array(a, mode=None, info={}):
             width = len(row) // planes
         info['width'] = width
 
-    # Not implemented yet
-    assert not threed
+    if threed:
+        # Flatten the threed rows
+        a = (itertools.chain.from_iterable(x) for x in a)
 
     if 'bitdepth' not in info:
         try:
