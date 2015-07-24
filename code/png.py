@@ -48,8 +48,8 @@ For help, type ``import png; help(png)`` in your python interpreter.
 A good place to start is the :class:`Reader` and :class:`Writer`
 classes.
 
-Requires Python 2.3.  Limited support is available for Python 2.2, but
-not everything works.  Best with Python 2.4 and higher.  Installation is
+Requires Python 2.4.  Support is available for Python 2.3, but
+not everything may work.  Installation is
 trivial, but see the ``README.txt`` file (with the source distribution)
 for details.
 
@@ -142,9 +142,6 @@ And now, my famous members
 --------------------------
 """
 
-# http://www.python.org/doc/2.2.3/whatsnew/node5.html
-from __future__ import generators
-
 __version__ = "0.0.17"
 
 from array import array
@@ -191,15 +188,7 @@ def group(s, n):
     return zip(*[iter(s)]*n)
 
 def isarray(x):
-    """Same as ``isinstance(x, array)`` except on Python 2.2, where it
-    always returns ``False``.  This helps PyPNG work on Python 2.2.
-    """
-
-    try:
-        return isinstance(x, array)
-    except TypeError:
-        # Because on Python 2.2 array.array is not a type.
-        return False
+    return isinstance(x, array)
 
 try:
     array.tobytes
@@ -2291,19 +2280,15 @@ def isinteger(x):
 
 # === Legacy Version Support ===
 
-# :pyver:old:  PyPNG works on Python versions 2.3 and 2.2, but not
+# :pyver:old:  PyPNG works on Python versions 2.3, but not
 # without some awkward problems.  Really PyPNG works on Python 2.4 (and
-# above); it works on Pythons 2.3 and 2.2 by virtue of fixing up
+# above); it works on Pythons 2.3 by virtue of fixing up
 # problems here.  It's a bit ugly (which is why it's hidden down here).
 #
 # Generally the strategy is one of pretending that we're running on
 # Python 2.4 (or above), and patching up the library support on earlier
-# versions so that it looks enough like Python 2.4.  When it comes to
-# Python 2.2 there is one thing we cannot patch: extended slices
-# http://www.python.org/doc/2.3/whatsnew/section-slices.html.
-# Instead we simply declare that features that are implemented using
-# extended slices will not work on Python 2.2.
-#
+# versions so that it looks enough like Python 2.4.
+
 # In order to work on Python 2.3 we fix up a recurring annoyance involving
 # the array type.  In Python 2.3 an array cannot be initialised with an
 # array, and it cannot be extended with a list (or other sequence).
@@ -2311,17 +2296,12 @@ def isinteger(x):
 # normally tolerate this sort of behaviour, here we "shim" a replacement
 # for array into place (and hope no-one notices).  You never read this.
 #
-# In an amusing case of warty hacks on top of warty hacks... the array
-# shimming we try and do only works on Python 2.3 and above (you can't
-# subclass array.array in Python 2.2).  So to get it working on Python
-# 2.2 we go for something much simpler and (probably) way slower.
 try:
     array('B').extend([])
     array('B', array('B'))
 # :todo:(drj) Check that TypeError is correct for Python 2.3
 except TypeError:
-    # Expect to get here on Python 2.3
-    try:
+        # Expect to get here on Python 2.3
         class _array_shim(array):
             true_array = array
             def __new__(cls, typecode, init=None):
@@ -2340,23 +2320,8 @@ except TypeError:
                     extension = list(extension)
                 return super_extend(self.true_array(self.typecode, extension))
         array = _array_shim
-    except TypeError:
-        # Expect to get here on Python 2.2
-        def array(typecode, init=()):
-            if type(init) == str:
-                return map(ord, init)
-            return list(init)
 
-# Further hacks to get it limping along on Python 2.2
-try:
-    enumerate
-except NameError:
-    def enumerate(seq):
-        i=0
-        for x in seq:
-            yield i,x
-            i += 1
-
+# Further hacks to get it limping along on Python 2.3
 try:
     reversed
 except NameError:
