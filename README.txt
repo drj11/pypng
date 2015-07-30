@@ -56,6 +56,9 @@ RELEASE NOTES
 
 Committed but not yet released:
 
+Thanks to github.com/sean-duffy `.from_array()` can now take a 3D
+array.
+
 Converting to PNMs was broken in Python 3; this is now fixed.
 Github issue 26: https://github.com/drj11/pypng/issues/26
 
