@@ -142,24 +142,20 @@ And now, my famous members
 --------------------------
 """
 
-# http://www.python.org/doc/2.2.3/whatsnew/node5.html
-from __future__ import generators
-
 __version__ = "0.0.18"
 
-from array import array
-try: # See :pyver:old
-    import itertools
-except ImportError:
-    pass
+import itertools
 import math
 # http://www.python.org/doc/2.4.4/lib/module-operator.html
 import operator
 import struct
 import sys
-import zlib
 # http://www.python.org/doc/2.4.4/lib/module-warnings.html
 import warnings
+import zlib
+
+from array import array
+
 try:
     # `cpngfilters` is a Cython module: it must be compiled by
     # Cython for this import to work.
@@ -191,49 +187,13 @@ def group(s, n):
     return zip(*[iter(s)]*n)
 
 def isarray(x):
-    """Same as ``isinstance(x, array)`` except on Python 2.2, where it
-    always returns ``False``.  This helps PyPNG work on Python 2.2.
-    """
+    return isinstance(x, array)
 
-    try:
-        return isinstance(x, array)
-    except TypeError:
-        # Because on Python 2.2 array.array is not a type.
-        return False
+def tostring(row):
+    return row.tostring()
 
-try:
-    array.tobytes
-except AttributeError:
-    try:  # see :pyver:old
-        array.tostring
-    except AttributeError:
-        def tostring(row):
-            l = len(row)
-            return struct.pack('%dB' % l, *row)
-    else:
-        def tostring(row):
-            """Convert row of bytes to string.  Expects `row` to be an
-            ``array``.
-            """
-            return row.tostring()
-else:
-    def tostring(row):
-        """ Python3 definition, array.tostring() is deprecated in Python3
-        """
-        return row.tobytes()
-
-# Conditionally convert to bytes.  Works on Python 2 and Python 3.
-try:
-    bytes('', 'ascii')
-    def strtobytes(x): return bytes(x, 'iso8859-1')
-    def bytestostr(x): return str(x, 'iso8859-1')
-except (NameError, TypeError):
-    # We get NameError when bytes() does not exist (most Python
-    # 2.x versions), and TypeError when bytes() exists but is on
-    # Python 2.x (when it is an alias for str() and takes at most
-    # one argument).
-    strtobytes = str
-    bytestostr = str
+strtobytes = str
+bytestostr = str
 
 def interleave_planes(ipixels, apixels, ipsize, apsize):
     """
@@ -2287,100 +2247,6 @@ def isinteger(x):
         return int(x) == x
     except (TypeError, ValueError):
         return False
-
-
-# === Legacy Version Support ===
-
-# :pyver:old:  PyPNG works on Python versions 2.3 and 2.2, but not
-# without some awkward problems.  Really PyPNG works on Python 2.4 (and
-# above); it works on Pythons 2.3 and 2.2 by virtue of fixing up
-# problems here.  It's a bit ugly (which is why it's hidden down here).
-#
-# Generally the strategy is one of pretending that we're running on
-# Python 2.4 (or above), and patching up the library support on earlier
-# versions so that it looks enough like Python 2.4.  When it comes to
-# Python 2.2 there is one thing we cannot patch: extended slices
-# http://www.python.org/doc/2.3/whatsnew/section-slices.html.
-# Instead we simply declare that features that are implemented using
-# extended slices will not work on Python 2.2.
-#
-# In order to work on Python 2.3 we fix up a recurring annoyance involving
-# the array type.  In Python 2.3 an array cannot be initialised with an
-# array, and it cannot be extended with a list (or other sequence).
-# Both of those are repeated issues in the code.  Whilst I would not
-# normally tolerate this sort of behaviour, here we "shim" a replacement
-# for array into place (and hope no-one notices).  You never read this.
-#
-# In an amusing case of warty hacks on top of warty hacks... the array
-# shimming we try and do only works on Python 2.3 and above (you can't
-# subclass array.array in Python 2.2).  So to get it working on Python
-# 2.2 we go for something much simpler and (probably) way slower.
-try:
-    array('B').extend([])
-    array('B', array('B'))
-# :todo:(drj) Check that TypeError is correct for Python 2.3
-except TypeError:
-    # Expect to get here on Python 2.3
-    try:
-        class _array_shim(array):
-            true_array = array
-            def __new__(cls, typecode, init=None):
-                super_new = super(_array_shim, cls).__new__
-                it = super_new(cls, typecode)
-                if init is None:
-                    return it
-                it.extend(init)
-                return it
-            def extend(self, extension):
-                super_extend = super(_array_shim, self).extend
-                if isinstance(extension, self.true_array):
-                    return super_extend(extension)
-                if not isinstance(extension, (list, str)):
-                    # Convert to list.  Allows iterators to work.
-                    extension = list(extension)
-                return super_extend(self.true_array(self.typecode, extension))
-        array = _array_shim
-    except TypeError:
-        # Expect to get here on Python 2.2
-        def array(typecode, init=()):
-            if type(init) == str:
-                return map(ord, init)
-            return list(init)
-
-# Further hacks to get it limping along on Python 2.2
-try:
-    enumerate
-except NameError:
-    def enumerate(seq):
-        i=0
-        for x in seq:
-            yield i,x
-            i += 1
-
-try:
-    reversed
-except NameError:
-    def reversed(l):
-        l = list(l)
-        l.reverse()
-        for x in l:
-            yield x
-
-try:
-    itertools
-except NameError:
-    class _dummy_itertools:
-        pass
-    itertools = _dummy_itertools()
-    def _itertools_imap(f, seq):
-        for x in seq:
-            yield f(x)
-    itertools.imap = _itertools_imap
-    def _itertools_chain(*iterables):
-        for it in iterables:
-            for element in it:
-                yield element
-    itertools.chain = _itertools_chain
 
 
 # === Support for users without Cython ===
