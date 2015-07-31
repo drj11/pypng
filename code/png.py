@@ -192,9 +192,6 @@ def isarray(x):
 def tostring(row):
     return row.tostring()
 
-strtobytes = str
-bytestostr = str
-
 def interleave_planes(ipixels, apixels, ipsize, apsize):
     """
     Interleave (colour) planes, e.g. RGB + A = RGBA.
@@ -783,7 +780,7 @@ class Writer:
         if len(data):
             compressed = compressor.compress(tostring(data))
         else:
-            compressed = strtobytes('')
+            compressed = b''
         flushed = compressor.flush()
         if len(compressed) or len(flushed):
             write_chunk(outfile, 'IDAT', compressed + flushed)
@@ -935,7 +932,7 @@ class Writer:
                             pixels[offset+i:end_offset:skip]
                     yield row
 
-def write_chunk(outfile, tag, data=strtobytes('')):
+def write_chunk(outfile, tag, data=b''):
     """
     Write a PNG chunk to the output file, including length and
     checksum.
@@ -943,7 +940,7 @@ def write_chunk(outfile, tag, data=strtobytes('')):
 
     # http://www.w3.org/TR/PNG/#5Chunk-layout
     outfile.write(struct.pack("!I", len(data)))
-    tag = strtobytes(tag)
+    tag = bytes(tag)
     outfile.write(tag)
     outfile.write(data)
     checksum = zlib.crc32(tag)
@@ -1399,7 +1396,7 @@ class Reader:
                 raise ChunkError('Chunk %s too short for checksum.' % type)
             if seek and type != seek:
                 continue
-            verify = zlib.crc32(strtobytes(type))
+            verify = zlib.crc32(bytes(type))
             verify = zlib.crc32(data, verify)
             # Whether the output from zlib.crc32 is signed or not varies
             # according to hideous implementation details, see
@@ -1722,7 +1719,7 @@ class Reader:
             raise FormatError(
               'End of file whilst reading chunk length and type.')
         length,type = struct.unpack('!I4s', x)
-        type = bytestostr(type)
+        type = str(type)
         if length > 2**31-1:
             raise FormatError('Chunk %s is too large: %d.' % (type,length))
         return length,type
@@ -2357,20 +2354,19 @@ def read_pam_header(infile):
     header = dict()
     while True:
         l = infile.readline().strip()
-        if l == strtobytes('ENDHDR'):
+        if l == b'ENDHDR':
             break
         if not l:
             raise EOFError('PAM ended prematurely')
-        if l[0] == strtobytes('#'):
+        if l[0] == b'#':
             continue
         l = l.split(None, 1)
         if l[0] not in header:
             header[l[0]] = l[1]
         else:
-            header[l[0]] += strtobytes(' ') + l[1]
+            header[l[0]] += b' ' + l[1]
 
-    required = ['WIDTH', 'HEIGHT', 'DEPTH', 'MAXVAL']
-    required = [strtobytes(x) for x in required]
+    required = [b'WIDTH', b'HEIGHT', b'DEPTH', b'MAXVAL']
     WIDTH,HEIGHT,DEPTH,MAXVAL = required
     present = [x for x in required if x in header]
     if len(present) != len(required):
@@ -2387,7 +2383,7 @@ def read_pam_header(infile):
           'WIDTH, HEIGHT, DEPTH, MAXVAL must all be positive integers')
     return 'P7', width, height, depth, maxval
 
-def read_pnm_header(infile, supported=('P5','P6')):
+def read_pnm_header(infile, supported=(b'P5', b'P6')):
     """
     Read a PNM header, returning (format,width,height,depth,maxval).
     `width` and `height` are in pixels.  `depth` is the number of
@@ -2399,15 +2395,13 @@ def read_pnm_header(infile, supported=('P5','P6')):
     # Generally, see http://netpbm.sourceforge.net/doc/ppm.html
     # and http://netpbm.sourceforge.net/doc/pam.html
 
-    supported = [strtobytes(x) for x in supported]
-
     # Technically 'P7' must be followed by a newline, so by using
     # rstrip() we are being liberal in what we accept.  I think this
     # is acceptable.
     type = infile.read(3).rstrip()
     if type not in supported:
         raise NotImplementedError('file format %s not supported' % type)
-    if type == strtobytes('P7'):
+    if type == b'P7':
         # PAM header parsing is completely different.
         return read_pam_header(infile)
     # Expected number of tokens in header (3 for P4, 4 for P6)
@@ -2444,7 +2438,7 @@ def read_pnm_header(infile, supported=('P5','P6')):
         # This is bonkers; I've never seen it; and it's a bit awkward to
         # code good lexers in Python (no goto).  So we break on such
         # cases.
-        token = strtobytes('')
+        token = b''
         while c.isdigit():
             token += c
             c = getc()
@@ -2463,7 +2457,7 @@ def read_pnm_header(infile, supported=('P5','P6')):
     if type in pbm:
         # synthesize a MAXVAL
         header.append(1)
-    depth = (1,3)[type == strtobytes('P6')]
+    depth = (1,3)[type == b'P6']
     return header[0], header[1], header[2], depth, header[3]
 
 def write_pnm(file, width, height, pixels, meta):

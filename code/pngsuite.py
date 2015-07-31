@@ -7,8 +7,6 @@
 use ``pngsuite.png`` to get a dict() of them all.
 """
 
-from png import strtobytes
-
 def _dehex(s):
     """Liberally convert from hex string to binary string."""
     import re
@@ -18,7 +16,7 @@ def _dehex(s):
     s = re.sub(r'[^a-fA-F\d]', '', s)
     # binscii.unhexlify works in Python 2 and Python 3 (unlike
     # thing.decode('hex')).
-    return binascii.unhexlify(strtobytes(s))
+    return binascii.unhexlify(bytes(s))
 
 # Copies of PngSuite test files taken
 # from http://www.schaik.com/pngsuite/pngsuite_bas_png.html
