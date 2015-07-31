@@ -1,13 +1,13 @@
 Release Procedure
 =================
 
-Extremely draft.
+You'll need Docker. And twine.
 
 At top-level...
 
 Edit ``png.py`` for new version number.  Then ``git commit`` this.
 
-Get release notes into ``README.txt`` somehow.
+Get release notes into ``README.md`` somehow.
 
 Get the latest git change hash::
 
@@ -27,24 +27,9 @@ and push:
 
     git push --tags
 
-Change to a directory where you can checkout a fresh copy of the sources
-into a subdirectory.  You can delete it later if you want.
+Run the shell script that drives Docker:
 
-Checkout the particular revision of the source::
-
-    git clone git://github.com/drj11/pypng.git pypng-$PYPNG_VERSION
-    cd pypng-$PYPNG_VERSION
-    git checkout pypng-$PYPNG_VERSION
-
-(note the above cd's into the subdirectory)
-  
-Build the documentation (you will need sphinx installed)::
-
-    python build.py
-
-Make source distribution using Python distutils::
-
-    python setup.py sdist
+    sh dock
 
 It's possible at this point that you might want to smoke-test the actual
 release binary.  Let's assume that the release binary is good to go.
@@ -64,7 +49,7 @@ documentation zip file. (Often doesn't work, because of buggy server.)
 
 Upload to PyPI:
 
-    python setup.py sdist upload
+    twine upload dist/*.tar.gz
 
 (If it complains about "you must be identified" then use
 "python setup.py register" first)
@@ -74,6 +59,3 @@ cd back into your main development directory::
     cd ../pypng
 
 Make a record in ``release/index.txt``
-
-Upload ``dist/pypng-$PYPNG_VERSION.tar.gz`` to github (this
-isn't necessary, right?).

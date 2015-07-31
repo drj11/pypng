@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# Builds pypng distruction and documentation files.
+# Using docker.
+
+set -e
+set -u
+
+. ./pypng-version
+docker build -t pypng-build -f build.Dockerfile .
+mkdir -p dist
+docker run pypng-build cat /pypng/dist/pypng-$PYPNG_VERSION.tar.gz > dist/pypng-$PYPNG_VERSION.tar.gz
+docker run pypng-build /usr/bin/zip -r - . > dist/pypng-$PYPNG_VERSION-doc.zip
