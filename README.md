@@ -19,9 +19,9 @@ particular png.py is a Python module written entirely in Python.
     png.from_array([[255, 0, 0, 255],
                     [0, 255, 255, 0]], 'L').save("small_smiley.png")
 
-After that, try "import png" then "help(png)".  Also,
-lickable HTML documentation appears in the html/ directory.  If HTML is
-no good then you could try the ReST sources in the man/ directory.
+After that, try `import png` then `help(png)`.  Also,
+lickable HTML documentation appears in the `html/` directory.  If HTML is
+no good then you could try the ReST sources in the `man/` directory.
 
 
 ## INSTALLATION
@@ -37,17 +37,17 @@ PyPNG comes with a setup.py script to use with distutils.  After
 unpacking the distribution, cd into the directory and execute the
 command:
 
-python setup.py install
+    python setup.py install
 
-The png module will be installed; "import png" will allow you to use it
+The `png` module will be installed; `import png` will allow you to use it
 from your Python programs.
 
-Alternatively, you can copy code/png.py wherever you like.  It's intended
-that you can copy png.py into your application and distribute it.  The
-following "curl" command should copy the latest version into your
+Alternatively, you can copy `code/png.py` wherever you like.  It's intended
+that you can copy `png.py` into your application and distribute it.  The
+following `curl` command should copy the latest version into your
 current directory:
 
-curl -LO https://raw.github.com/drj11/pypng/master/code/png.py
+    curl -LO https://raw.github.com/drj11/pypng/master/code/png.py
 
 
 ## RELEASE NOTES
@@ -188,7 +188,7 @@ The following issues have been fixed:
 
 ### Release 0.0.7
 
-Better documentation (in html/ex.html mostly) for NumPy integration.
+Better documentation (in `html/ex.html` mostly) for NumPy integration.
 
 The following issues have been fixed:
 
@@ -257,14 +257,14 @@ Stuff happened.
 
 ## MANIFEST
 
-.../ - top-level crud (like this README, and setup.py).
-.../code/ - the Python code.
-.../html/ - lickable manuals (generated).
-.../man/ - manuals (in source/plain-text).
-.../proc/ - documented procedures (release procedure).
+- .../ - top-level crud (like this README, and setup.py).
+- .../code/ - the Python code.
+- .../html/ - lickable manuals (generated).
+- .../man/ - manuals (in source/plain-text).
+- .../proc/ - documented procedures (release procedure).
 
 
 ## REFERENCES
 
-Python: www.python.org
-PNG: http://www.w3.org/TR/PNG/
+- Python: www.python.org
+- PNG: http://www.w3.org/TR/PNG/
