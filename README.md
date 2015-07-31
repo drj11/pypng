@@ -26,9 +26,8 @@ no good then you could try the ReST sources in the `man/` directory.
 
 ## INSTALLATION
 
-PyPNG requires Python version 2.3 (and that's all), or any compatible
-higher version.  It works best on Python 2.4 and above.  It can be used
-on Python 2.2, but some things do not work.
+PyPNG requires Python version 2.7 (and that's all), or any compatible
+higher version.
 
 PyPNG also works on Python 3.x if you use the 2to3 tool which it should
 do automatically (this support is very recent, and preliminary).
