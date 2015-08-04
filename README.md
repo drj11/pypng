@@ -3,7 +3,7 @@
 drj@pobox.com
 
 
-#' INTRODUCTION
+# INTRODUCTION
 
 PyPNG provides Python code for encoding/decoding PNG files.  In
 particular png.py is a Python module written entirely in Python.
