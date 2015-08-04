@@ -638,7 +638,7 @@ class Writer:
         outfile.write(_signature)
 
         # http://www.w3.org/TR/PNG/#11IHDR
-        write_chunk(outfile, 'IHDR',
+        write_chunk(outfile, b'IHDR',
                     struct.pack("!2I5B", self.width, self.height,
                                 self.bitdepth, self.color_type,
                                 0, 0, self.interlace))
@@ -646,13 +646,13 @@ class Writer:
         # See :chunk:order
         # http://www.w3.org/TR/PNG/#11gAMA
         if self.gamma is not None:
-            write_chunk(outfile, 'gAMA',
+            write_chunk(outfile, b'gAMA',
                         struct.pack("!L", int(round(self.gamma*1e5))))
 
         # See :chunk:order
         # http://www.w3.org/TR/PNG/#11sBIT
         if self.rescale:
-            write_chunk(outfile, 'sBIT',
+            write_chunk(outfile, b'sBIT',
                 struct.pack('%dB' % self.planes,
                             *[self.rescale[0]]*self.planes))
         
@@ -662,34 +662,34 @@ class Writer:
         # See http://www.w3.org/TR/PNG/#5ChunkOrdering
         if self.palette:
             p,t = self.make_palette()
-            write_chunk(outfile, 'PLTE', p)
+            write_chunk(outfile, b'PLTE', p)
             if t:
                 # tRNS chunk is optional. Only needed if palette entries
                 # have alpha.
-                write_chunk(outfile, 'tRNS', t)
+                write_chunk(outfile, b'tRNS', t)
 
         # http://www.w3.org/TR/PNG/#11tRNS
         if self.transparent is not None:
             if self.greyscale:
-                write_chunk(outfile, 'tRNS',
+                write_chunk(outfile, b'tRNS',
                             struct.pack("!1H", *self.transparent))
             else:
-                write_chunk(outfile, 'tRNS',
+                write_chunk(outfile, b'tRNS',
                             struct.pack("!3H", *self.transparent))
 
         # http://www.w3.org/TR/PNG/#11bKGD
         if self.background is not None:
             if self.greyscale:
-                write_chunk(outfile, 'bKGD',
+                write_chunk(outfile, b'bKGD',
                             struct.pack("!1H", *self.background))
             else:
-                write_chunk(outfile, 'bKGD',
+                write_chunk(outfile, b'bKGD',
                             struct.pack("!3H", *self.background))
 
         # http://www.w3.org/TR/PNG/#11pHYs
         if self.x_pixels_per_unit is not None and self.y_pixels_per_unit is not None:
             tup = (self.x_pixels_per_unit, self.y_pixels_per_unit, int(self.unit_is_meter))
-            write_chunk(outfile, 'pHYs', struct.pack("!LLB",*tup))
+            write_chunk(outfile, b'pHYs', struct.pack("!LLB",*tup))
 
         # http://www.w3.org/TR/PNG/#11IDAT
         if self.compression is not None:
@@ -771,7 +771,7 @@ class Writer:
             if len(data) > self.chunk_limit:
                 compressed = compressor.compress(tostring(data))
                 if len(compressed):
-                    write_chunk(outfile, 'IDAT', compressed)
+                    write_chunk(outfile, b'IDAT', compressed)
                 # Because of our very witty definition of ``extend``,
                 # above, we must re-use the same ``data`` object.  Hence
                 # we use ``del`` to empty this one, rather than create a
@@ -783,9 +783,9 @@ class Writer:
             compressed = b''
         flushed = compressor.flush()
         if len(compressed) or len(flushed):
-            write_chunk(outfile, 'IDAT', compressed + flushed)
+            write_chunk(outfile, b'IDAT', compressed + flushed)
         # http://www.w3.org/TR/PNG/#11IEND
-        write_chunk(outfile, 'IEND')
+        write_chunk(outfile, b'IEND')
         return i+1
 
     def write_array(self, outfile, pixels):
@@ -940,7 +940,6 @@ def write_chunk(outfile, tag, data=b''):
 
     # http://www.w3.org/TR/PNG/#5Chunk-layout
     outfile.write(struct.pack("!I", len(data)))
-    tag = bytes(tag)
     outfile.write(tag)
     outfile.write(data)
     checksum = zlib.crc32(tag)
@@ -1309,6 +1308,13 @@ class _readable:
         self.offset += n
         return r
 
+try:
+    str(b'dummy', 'ascii')
+except TypeError:
+    as_str = str
+else:
+    def as_str(x):
+        return str(x, 'ascii')
 
 class Reader:
     """
@@ -1396,7 +1402,7 @@ class Reader:
                 raise ChunkError('Chunk %s too short for checksum.' % type)
             if seek and type != seek:
                 continue
-            verify = zlib.crc32(bytes(type))
+            verify = zlib.crc32(type)
             verify = zlib.crc32(data, verify)
             # Whether the output from zlib.crc32 is signed or not varies
             # according to hideous implementation details, see
@@ -1701,7 +1707,7 @@ class Reader:
                 if self.atchunk is None:
                     raise FormatError(
                       'This PNG file has no IDAT chunks.')
-            if self.atchunk[1] == 'IDAT':
+            if self.atchunk[1] == b'IDAT':
                 return
             self.process_chunk(lenient=lenient)
 
@@ -1719,7 +1725,6 @@ class Reader:
             raise FormatError(
               'End of file whilst reading chunk length and type.')
         length,type = struct.unpack('!I4s', x)
-        type = str(type)
         if length > 2**31-1:
             raise FormatError('Chunk %s is too large: %d.' % (type,length))
         return length,type
@@ -1734,7 +1739,7 @@ class Reader:
         """
 
         type, data = self.chunk(lenient=lenient)
-        method = '_process_' + type
+        method = '_process_' + as_str(type)
         m = getattr(self, method, None)
         if m:
             m(data)
@@ -1875,12 +1880,12 @@ class Reader:
                     type, data = self.chunk(lenient=lenient)
                 except ValueError, e:
                     raise ChunkError(e.args[0])
-                if type == 'IEND':
+                if type == b'IEND':
                     # http://www.w3.org/TR/PNG/#11IEND
                     break
-                if type != 'IDAT':
+                if type != b'IDAT':
                     continue
-                # type == 'IDAT'
+                # type == b'IDAT'
                 # http://www.w3.org/TR/PNG/#11IDAT
                 if self.colormap and not self.plte:
                     warnings.warn("PLTE chunk is required before IDAT chunk")
@@ -2406,7 +2411,7 @@ def read_pnm_header(infile, supported=(b'P5', b'P6')):
         return read_pam_header(infile)
     # Expected number of tokens in header (3 for P4, 4 for P6)
     expected = 4
-    pbm = ('P1', 'P4')
+    pbm = (b'P1', b'P4')
     if type in pbm:
         expected = 3
     header = [type]
@@ -2429,7 +2434,7 @@ def read_pnm_header(infile, supported=(b'P5', b'P6')):
             c = getc()
         # Skip comments.
         while c == '#':
-            while c not in '\n\r':
+            while c not in b'\n\r':
                 c = getc()
         if not c.isdigit():
             raise Error('unexpected character %s found in header' % c)
@@ -2594,7 +2599,7 @@ def _main(argv):
     else:
         # Encode PNM to PNG
         format, width, height, depth, maxval = \
-          read_pnm_header(infile, ('P5','P6','P7'))
+          read_pnm_header(infile, (b'P5',b'P6',b'P7'))
         # When it comes to the variety of input formats, we do something
         # rather rude.  Observe that L, LA, RGB, RGBA are the 4 colour
         # types supported by PNG and that they correspond to 1, 2, 3, 4
