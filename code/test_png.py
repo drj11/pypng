@@ -14,12 +14,6 @@
 # If you have nose installed you can use that:
 #   nosetests .
 
-# (For an in-memory binary file IO object) We use BytesIO where
-# available, otherwise we use StringIO, but name it BytesIO.
-try:
-    from io import BytesIO
-except ImportError:
-    from StringIO import StringIO as BytesIO
 import itertools
 import struct
 import sys
@@ -28,6 +22,7 @@ import unittest
 import zlib
 
 from array import array
+from io import BytesIO
 
 import png
 import pngsuite
