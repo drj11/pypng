@@ -1429,7 +1429,7 @@ class Reader:
         while True:
             t,v = self.chunk()
             yield t,v
-            if t == 'IEND':
+            if t == b'IEND':
                 break
 
     def undo_filter(self, filter_type, scanline, previous):

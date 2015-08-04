@@ -442,11 +442,12 @@ class Test(unittest.TestCase):
         except Exception as e:
             self.assertIsInstance(e, png.ChunkError)
             self.assertIn('checksum', str(e))
+
     def testExtraPixels(self):
         """Test file that contains too many pixels."""
 
         def eachchunk(chunk):
-            if chunk[0] != 'IDAT':
+            if chunk[0] != b'IDAT':
                 return chunk
             data = zlib.decompress(chunk[1])
             data += b'\x00garbage'
@@ -454,9 +455,10 @@ class Test(unittest.TestCase):
             chunk = (chunk[0], data)
             return chunk
         self.assertRaises(png.FormatError, self.helperFormat, eachchunk)
+
     def testNotEnoughPixels(self):
         def eachchunk(chunk):
-            if chunk[0] != 'IDAT':
+            if chunk[0] != b'IDAT':
                 return chunk
             # Remove last byte.
             data = zlib.decompress(chunk[1])
@@ -464,6 +466,7 @@ class Test(unittest.TestCase):
             data = zlib.compress(data)
             return (chunk[0], data)
         self.assertRaises(png.FormatError, self.helperFormat, eachchunk)
+
     def helperFormat(self, f):
         r = png.Reader(bytes=pngsuite.basn0g01)
         o = BytesIO()
@@ -473,9 +476,10 @@ class Test(unittest.TestCase):
         png.write_chunks(o, newchunks())
         r = png.Reader(bytes=o.getvalue())
         return list(r.asDirect()[2])
+
     def testBadFilter(self):
         def eachchunk(chunk):
-            if chunk[0] != 'IDAT':
+            if chunk[0] != b'IDAT':
                 return chunk
             data = zlib.decompress(chunk[1])
             # Corrupt the first filter byte
