@@ -14,12 +14,6 @@
 # If you have nose installed you can use that:
 #   nosetests .
 
-# (For an in-memory binary file IO object) We use BytesIO where
-# available, otherwise we use StringIO, but name it BytesIO.
-try:
-    from io import BytesIO
-except ImportError:
-    from StringIO import StringIO as BytesIO
 import itertools
 import struct
 import sys
@@ -28,11 +22,10 @@ import unittest
 import zlib
 
 from array import array
+from io import BytesIO
 
 import png
 import pngsuite
-
-from png import strtobytes      # Don't do this at home.
 
 
 def runTest():
@@ -105,7 +98,10 @@ def seqtobytes(s):
     plastering over Python 2 / Python 3 cracks.
     """
 
-    return strtobytes(''.join(chr(x) for x in s))
+    fmt = "{}B".format(len(s))
+
+    return struct.pack(fmt, *s)
+
 
 class Test(unittest.TestCase):
     # This member is used by the superclass.  If we don't define a new
@@ -259,8 +255,8 @@ class Test(unittest.TestCase):
         def do():
             return png._main(['testPGMin'])
         s = BytesIO()
-        s.write(strtobytes('P5 2 2 3\n'))
-        s.write(strtobytes('\x00\x01\x02\x03'))
+        s.write(b'P5 2 2 3\n')
+        s.write(b'\x00\x01\x02\x03')
         s.flush()
         s.seek(0)
         o = BytesIO()
@@ -274,8 +270,8 @@ class Test(unittest.TestCase):
         def do():
             return png._main(['testPAMin'])
         s = BytesIO()
-        s.write(strtobytes('P7\nWIDTH 3\nHEIGHT 1\nDEPTH 4\nMAXVAL 255\n'
-                'TUPLTYPE RGB_ALPHA\nENDHDR\n'))
+        s.write(b'P7\nWIDTH 3\nHEIGHT 1\nDEPTH 4\nMAXVAL 255\n'
+                b'TUPLTYPE RGB_ALPHA\nENDHDR\n')
         # The pixels in flat row flat pixel format
         flat =  [255,0,0,255, 0,255,0,120, 0,0,255,30]
         asbytes = seqtobytes(flat)
@@ -293,8 +289,8 @@ class Test(unittest.TestCase):
         """Create an LA image with bitdepth 4."""
         bytes = topngbytes('la4.png', [[5, 12]], 1, 1,
           greyscale=True, alpha=True, bitdepth=4)
-        sbit = png.Reader(bytes=bytes).chunk('sBIT')[1]
-        self.assertEqual(sbit, strtobytes('\x04\x04'))
+        sbit = png.Reader(bytes=bytes).chunk(b'sBIT')[1]
+        self.assertEqual(sbit, b'\x04\x04')
     def testPal(self):
         """Test that a palette PNG returns the palette in info."""
         r = png.Reader(bytes=pngsuite.basn3p04)
@@ -338,7 +334,7 @@ class Test(unittest.TestCase):
         def do():
             return png._main(['testPNMsbit'])
         s = BytesIO()
-        s.write(strtobytes('P6 8 1 1\n'))
+        s.write(b'P6 8 1 1\n')
         for pixel in range(8):
             s.write(struct.pack('<I', (0x4081*pixel)&0x10101)[:3])
         s.flush()
@@ -346,8 +342,8 @@ class Test(unittest.TestCase):
         o = BytesIO()
         _redirect_io(s, o, do)
         r = png.Reader(bytes=o.getvalue())
-        sbit = r.chunk('sBIT')[1]
-        self.assertEqual(sbit, strtobytes('\x01\x01\x01'))
+        sbit = r.chunk(b'sBIT')[1]
+        self.assertEqual(sbit, b'\x01\x01\x01')
     def testLtrns0(self):
         """Create greyscale image with tRNS chunk."""
         return self.helperLtrns(0)
@@ -441,21 +437,23 @@ class Test(unittest.TestCase):
         except Exception as e:
             self.assertIsInstance(e, png.ChunkError)
             self.assertIn('checksum', str(e))
+
     def testExtraPixels(self):
         """Test file that contains too many pixels."""
 
         def eachchunk(chunk):
-            if chunk[0] != 'IDAT':
+            if chunk[0] != b'IDAT':
                 return chunk
             data = zlib.decompress(chunk[1])
-            data += strtobytes('\x00garbage')
+            data += b'\x00garbage'
             data = zlib.compress(data)
             chunk = (chunk[0], data)
             return chunk
         self.assertRaises(png.FormatError, self.helperFormat, eachchunk)
+
     def testNotEnoughPixels(self):
         def eachchunk(chunk):
-            if chunk[0] != 'IDAT':
+            if chunk[0] != b'IDAT':
                 return chunk
             # Remove last byte.
             data = zlib.decompress(chunk[1])
@@ -463,6 +461,7 @@ class Test(unittest.TestCase):
             data = zlib.compress(data)
             return (chunk[0], data)
         self.assertRaises(png.FormatError, self.helperFormat, eachchunk)
+
     def helperFormat(self, f):
         r = png.Reader(bytes=pngsuite.basn0g01)
         o = BytesIO()
@@ -472,13 +471,14 @@ class Test(unittest.TestCase):
         png.write_chunks(o, newchunks())
         r = png.Reader(bytes=o.getvalue())
         return list(r.asDirect()[2])
+
     def testBadFilter(self):
         def eachchunk(chunk):
-            if chunk[0] != 'IDAT':
+            if chunk[0] != b'IDAT':
                 return chunk
             data = zlib.decompress(chunk[1])
             # Corrupt the first filter byte
-            data = strtobytes('\x99') + data[1:]
+            data = b'\x99' + data[1:]
             data = zlib.compress(data)
             return (chunk[0], data)
         self.assertRaises(png.FormatError, self.helperFormat, eachchunk)

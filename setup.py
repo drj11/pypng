@@ -39,7 +39,8 @@ http://pythonhosted.org/pypng/
     author_email='drj@pobox.com',
     url='https://github.com/drj11/pypng',
     package_dir={'':'code'},
-    py_modules=['png'],
+    py_modules=['png', 'test_png', 'pngsuite'],
+    test_suite="test_png",
     classifiers=[
       'Topic :: Multimedia :: Graphics',
       'Topic :: Software Development :: Libraries :: Python Modules',
@@ -53,23 +54,6 @@ http://pythonhosted.org/pypng/
 conf['download_url'] = \
   'https://github.com/drj11/pypng/archive/%(name)s-%(version)s.tar.gz' % conf
 
-def prepare3():
-    """Prepare files for installing on Python 3.  If you have
-    distribute for Python 3, then we don't need to run this.
-    """
-    import os
-
-    try:
-        os.mkdir('code3')
-    except OSError:
-        pass
-    # Note: -W was added in 2.7.3.
-    from lib2to3.main import main
-    main("lib2to3.fixes", ["-w", "-W", "-n", "-o", "code3",
-                           conf['package_dir']['']])
-
-    conf['package_dir'] = {'':'code3'}
-      
 if __name__ == '__main__':
     try:
         # http://peak.telecommunity.com/DevCenter/setuptools#basic-use

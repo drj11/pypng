@@ -142,24 +142,20 @@ And now, my famous members
 --------------------------
 """
 
-# http://www.python.org/doc/2.2.3/whatsnew/node5.html
-from __future__ import generators
-
 __version__ = "0.0.18"
 
-from array import array
-try: # See :pyver:old
-    import itertools
-except ImportError:
-    pass
+import itertools
 import math
 # http://www.python.org/doc/2.4.4/lib/module-operator.html
 import operator
 import struct
 import sys
-import zlib
 # http://www.python.org/doc/2.4.4/lib/module-warnings.html
 import warnings
+import zlib
+
+from array import array
+
 try:
     # `cpngfilters` is a Cython module: it must be compiled by
     # Cython for this import to work.
@@ -191,49 +187,10 @@ def group(s, n):
     return zip(*[iter(s)]*n)
 
 def isarray(x):
-    """Same as ``isinstance(x, array)`` except on Python 2.2, where it
-    always returns ``False``.  This helps PyPNG work on Python 2.2.
-    """
+    return isinstance(x, array)
 
-    try:
-        return isinstance(x, array)
-    except TypeError:
-        # Because on Python 2.2 array.array is not a type.
-        return False
-
-try:
-    array.tobytes
-except AttributeError:
-    try:  # see :pyver:old
-        array.tostring
-    except AttributeError:
-        def tostring(row):
-            l = len(row)
-            return struct.pack('%dB' % l, *row)
-    else:
-        def tostring(row):
-            """Convert row of bytes to string.  Expects `row` to be an
-            ``array``.
-            """
-            return row.tostring()
-else:
-    def tostring(row):
-        """ Python3 definition, array.tostring() is deprecated in Python3
-        """
-        return row.tobytes()
-
-# Conditionally convert to bytes.  Works on Python 2 and Python 3.
-try:
-    bytes('', 'ascii')
-    def strtobytes(x): return bytes(x, 'iso8859-1')
-    def bytestostr(x): return str(x, 'iso8859-1')
-except (NameError, TypeError):
-    # We get NameError when bytes() does not exist (most Python
-    # 2.x versions), and TypeError when bytes() exists but is on
-    # Python 2.x (when it is an alias for str() and takes at most
-    # one argument).
-    strtobytes = str
-    bytestostr = str
+def tostring(row):
+    return row.tostring()
 
 def interleave_planes(ipixels, apixels, ipsize, apsize):
     """
@@ -681,7 +638,7 @@ class Writer:
         outfile.write(_signature)
 
         # http://www.w3.org/TR/PNG/#11IHDR
-        write_chunk(outfile, 'IHDR',
+        write_chunk(outfile, b'IHDR',
                     struct.pack("!2I5B", self.width, self.height,
                                 self.bitdepth, self.color_type,
                                 0, 0, self.interlace))
@@ -689,13 +646,13 @@ class Writer:
         # See :chunk:order
         # http://www.w3.org/TR/PNG/#11gAMA
         if self.gamma is not None:
-            write_chunk(outfile, 'gAMA',
+            write_chunk(outfile, b'gAMA',
                         struct.pack("!L", int(round(self.gamma*1e5))))
 
         # See :chunk:order
         # http://www.w3.org/TR/PNG/#11sBIT
         if self.rescale:
-            write_chunk(outfile, 'sBIT',
+            write_chunk(outfile, b'sBIT',
                 struct.pack('%dB' % self.planes,
                             *[self.rescale[0]]*self.planes))
         
@@ -705,34 +662,34 @@ class Writer:
         # See http://www.w3.org/TR/PNG/#5ChunkOrdering
         if self.palette:
             p,t = self.make_palette()
-            write_chunk(outfile, 'PLTE', p)
+            write_chunk(outfile, b'PLTE', p)
             if t:
                 # tRNS chunk is optional. Only needed if palette entries
                 # have alpha.
-                write_chunk(outfile, 'tRNS', t)
+                write_chunk(outfile, b'tRNS', t)
 
         # http://www.w3.org/TR/PNG/#11tRNS
         if self.transparent is not None:
             if self.greyscale:
-                write_chunk(outfile, 'tRNS',
+                write_chunk(outfile, b'tRNS',
                             struct.pack("!1H", *self.transparent))
             else:
-                write_chunk(outfile, 'tRNS',
+                write_chunk(outfile, b'tRNS',
                             struct.pack("!3H", *self.transparent))
 
         # http://www.w3.org/TR/PNG/#11bKGD
         if self.background is not None:
             if self.greyscale:
-                write_chunk(outfile, 'bKGD',
+                write_chunk(outfile, b'bKGD',
                             struct.pack("!1H", *self.background))
             else:
-                write_chunk(outfile, 'bKGD',
+                write_chunk(outfile, b'bKGD',
                             struct.pack("!3H", *self.background))
 
         # http://www.w3.org/TR/PNG/#11pHYs
         if self.x_pixels_per_unit is not None and self.y_pixels_per_unit is not None:
             tup = (self.x_pixels_per_unit, self.y_pixels_per_unit, int(self.unit_is_meter))
-            write_chunk(outfile, 'pHYs', struct.pack("!LLB",*tup))
+            write_chunk(outfile, b'pHYs', struct.pack("!LLB",*tup))
 
         # http://www.w3.org/TR/PNG/#11IDAT
         if self.compression is not None:
@@ -814,7 +771,7 @@ class Writer:
             if len(data) > self.chunk_limit:
                 compressed = compressor.compress(tostring(data))
                 if len(compressed):
-                    write_chunk(outfile, 'IDAT', compressed)
+                    write_chunk(outfile, b'IDAT', compressed)
                 # Because of our very witty definition of ``extend``,
                 # above, we must re-use the same ``data`` object.  Hence
                 # we use ``del`` to empty this one, rather than create a
@@ -823,12 +780,12 @@ class Writer:
         if len(data):
             compressed = compressor.compress(tostring(data))
         else:
-            compressed = strtobytes('')
+            compressed = b''
         flushed = compressor.flush()
         if len(compressed) or len(flushed):
-            write_chunk(outfile, 'IDAT', compressed + flushed)
+            write_chunk(outfile, b'IDAT', compressed + flushed)
         # http://www.w3.org/TR/PNG/#11IEND
-        write_chunk(outfile, 'IEND')
+        write_chunk(outfile, b'IEND')
         return i+1
 
     def write_array(self, outfile, pixels):
@@ -975,7 +932,7 @@ class Writer:
                             pixels[offset+i:end_offset:skip]
                     yield row
 
-def write_chunk(outfile, tag, data=strtobytes('')):
+def write_chunk(outfile, tag, data=b''):
     """
     Write a PNG chunk to the output file, including length and
     checksum.
@@ -983,7 +940,6 @@ def write_chunk(outfile, tag, data=strtobytes('')):
 
     # http://www.w3.org/TR/PNG/#5Chunk-layout
     outfile.write(struct.pack("!I", len(data)))
-    tag = strtobytes(tag)
     outfile.write(tag)
     outfile.write(data)
     checksum = zlib.crc32(tag)
@@ -1352,6 +1308,13 @@ class _readable:
         self.offset += n
         return r
 
+try:
+    str(b'dummy', 'ascii')
+except TypeError:
+    as_str = str
+else:
+    def as_str(x):
+        return str(x, 'ascii')
 
 class Reader:
     """
@@ -1439,7 +1402,7 @@ class Reader:
                 raise ChunkError('Chunk %s too short for checksum.' % type)
             if seek and type != seek:
                 continue
-            verify = zlib.crc32(strtobytes(type))
+            verify = zlib.crc32(type)
             verify = zlib.crc32(data, verify)
             # Whether the output from zlib.crc32 is signed or not varies
             # according to hideous implementation details, see
@@ -1466,7 +1429,7 @@ class Reader:
         while True:
             t,v = self.chunk()
             yield t,v
-            if t == 'IEND':
+            if t == b'IEND':
                 break
 
     def undo_filter(self, filter_type, scanline, previous):
@@ -1744,7 +1707,7 @@ class Reader:
                 if self.atchunk is None:
                     raise FormatError(
                       'This PNG file has no IDAT chunks.')
-            if self.atchunk[1] == 'IDAT':
+            if self.atchunk[1] == b'IDAT':
                 return
             self.process_chunk(lenient=lenient)
 
@@ -1762,7 +1725,6 @@ class Reader:
             raise FormatError(
               'End of file whilst reading chunk length and type.')
         length,type = struct.unpack('!I4s', x)
-        type = bytestostr(type)
         if length > 2**31-1:
             raise FormatError('Chunk %s is too large: %d.' % (type,length))
         return length,type
@@ -1777,7 +1739,7 @@ class Reader:
         """
 
         type, data = self.chunk(lenient=lenient)
-        method = '_process_' + type
+        method = '_process_' + as_str(type)
         m = getattr(self, method, None)
         if m:
             m(data)
@@ -1918,12 +1880,12 @@ class Reader:
                     type, data = self.chunk(lenient=lenient)
                 except ValueError, e:
                     raise ChunkError(e.args[0])
-                if type == 'IEND':
+                if type == b'IEND':
                     # http://www.w3.org/TR/PNG/#11IEND
                     break
-                if type != 'IDAT':
+                if type != b'IDAT':
                     continue
-                # type == 'IDAT'
+                # type == b'IDAT'
                 # http://www.w3.org/TR/PNG/#11IDAT
                 if self.colormap and not self.plte:
                     warnings.warn("PLTE chunk is required before IDAT chunk")
@@ -2289,100 +2251,6 @@ def isinteger(x):
         return False
 
 
-# === Legacy Version Support ===
-
-# :pyver:old:  PyPNG works on Python versions 2.3 and 2.2, but not
-# without some awkward problems.  Really PyPNG works on Python 2.4 (and
-# above); it works on Pythons 2.3 and 2.2 by virtue of fixing up
-# problems here.  It's a bit ugly (which is why it's hidden down here).
-#
-# Generally the strategy is one of pretending that we're running on
-# Python 2.4 (or above), and patching up the library support on earlier
-# versions so that it looks enough like Python 2.4.  When it comes to
-# Python 2.2 there is one thing we cannot patch: extended slices
-# http://www.python.org/doc/2.3/whatsnew/section-slices.html.
-# Instead we simply declare that features that are implemented using
-# extended slices will not work on Python 2.2.
-#
-# In order to work on Python 2.3 we fix up a recurring annoyance involving
-# the array type.  In Python 2.3 an array cannot be initialised with an
-# array, and it cannot be extended with a list (or other sequence).
-# Both of those are repeated issues in the code.  Whilst I would not
-# normally tolerate this sort of behaviour, here we "shim" a replacement
-# for array into place (and hope no-one notices).  You never read this.
-#
-# In an amusing case of warty hacks on top of warty hacks... the array
-# shimming we try and do only works on Python 2.3 and above (you can't
-# subclass array.array in Python 2.2).  So to get it working on Python
-# 2.2 we go for something much simpler and (probably) way slower.
-try:
-    array('B').extend([])
-    array('B', array('B'))
-# :todo:(drj) Check that TypeError is correct for Python 2.3
-except TypeError:
-    # Expect to get here on Python 2.3
-    try:
-        class _array_shim(array):
-            true_array = array
-            def __new__(cls, typecode, init=None):
-                super_new = super(_array_shim, cls).__new__
-                it = super_new(cls, typecode)
-                if init is None:
-                    return it
-                it.extend(init)
-                return it
-            def extend(self, extension):
-                super_extend = super(_array_shim, self).extend
-                if isinstance(extension, self.true_array):
-                    return super_extend(extension)
-                if not isinstance(extension, (list, str)):
-                    # Convert to list.  Allows iterators to work.
-                    extension = list(extension)
-                return super_extend(self.true_array(self.typecode, extension))
-        array = _array_shim
-    except TypeError:
-        # Expect to get here on Python 2.2
-        def array(typecode, init=()):
-            if type(init) == str:
-                return map(ord, init)
-            return list(init)
-
-# Further hacks to get it limping along on Python 2.2
-try:
-    enumerate
-except NameError:
-    def enumerate(seq):
-        i=0
-        for x in seq:
-            yield i,x
-            i += 1
-
-try:
-    reversed
-except NameError:
-    def reversed(l):
-        l = list(l)
-        l.reverse()
-        for x in l:
-            yield x
-
-try:
-    itertools
-except NameError:
-    class _dummy_itertools:
-        pass
-    itertools = _dummy_itertools()
-    def _itertools_imap(f, seq):
-        for x in seq:
-            yield f(x)
-    itertools.imap = _itertools_imap
-    def _itertools_chain(*iterables):
-        for it in iterables:
-            for element in it:
-                yield element
-    itertools.chain = _itertools_chain
-
-
 # === Support for users without Cython ===
 
 try:
@@ -2491,20 +2359,19 @@ def read_pam_header(infile):
     header = dict()
     while True:
         l = infile.readline().strip()
-        if l == strtobytes('ENDHDR'):
+        if l == b'ENDHDR':
             break
         if not l:
             raise EOFError('PAM ended prematurely')
-        if l[0] == strtobytes('#'):
+        if l[0] == b'#':
             continue
         l = l.split(None, 1)
         if l[0] not in header:
             header[l[0]] = l[1]
         else:
-            header[l[0]] += strtobytes(' ') + l[1]
+            header[l[0]] += b' ' + l[1]
 
-    required = ['WIDTH', 'HEIGHT', 'DEPTH', 'MAXVAL']
-    required = [strtobytes(x) for x in required]
+    required = [b'WIDTH', b'HEIGHT', b'DEPTH', b'MAXVAL']
     WIDTH,HEIGHT,DEPTH,MAXVAL = required
     present = [x for x in required if x in header]
     if len(present) != len(required):
@@ -2521,7 +2388,7 @@ def read_pam_header(infile):
           'WIDTH, HEIGHT, DEPTH, MAXVAL must all be positive integers')
     return 'P7', width, height, depth, maxval
 
-def read_pnm_header(infile, supported=('P5','P6')):
+def read_pnm_header(infile, supported=(b'P5', b'P6')):
     """
     Read a PNM header, returning (format,width,height,depth,maxval).
     `width` and `height` are in pixels.  `depth` is the number of
@@ -2533,20 +2400,18 @@ def read_pnm_header(infile, supported=('P5','P6')):
     # Generally, see http://netpbm.sourceforge.net/doc/ppm.html
     # and http://netpbm.sourceforge.net/doc/pam.html
 
-    supported = [strtobytes(x) for x in supported]
-
     # Technically 'P7' must be followed by a newline, so by using
     # rstrip() we are being liberal in what we accept.  I think this
     # is acceptable.
     type = infile.read(3).rstrip()
     if type not in supported:
         raise NotImplementedError('file format %s not supported' % type)
-    if type == strtobytes('P7'):
+    if type == b'P7':
         # PAM header parsing is completely different.
         return read_pam_header(infile)
     # Expected number of tokens in header (3 for P4, 4 for P6)
     expected = 4
-    pbm = ('P1', 'P4')
+    pbm = (b'P1', b'P4')
     if type in pbm:
         expected = 3
     header = [type]
@@ -2569,7 +2434,7 @@ def read_pnm_header(infile, supported=('P5','P6')):
             c = getc()
         # Skip comments.
         while c == '#':
-            while c not in '\n\r':
+            while c not in b'\n\r':
                 c = getc()
         if not c.isdigit():
             raise Error('unexpected character %s found in header' % c)
@@ -2578,7 +2443,7 @@ def read_pnm_header(infile, supported=('P5','P6')):
         # This is bonkers; I've never seen it; and it's a bit awkward to
         # code good lexers in Python (no goto).  So we break on such
         # cases.
-        token = strtobytes('')
+        token = b''
         while c.isdigit():
             token += c
             c = getc()
@@ -2597,7 +2462,7 @@ def read_pnm_header(infile, supported=('P5','P6')):
     if type in pbm:
         # synthesize a MAXVAL
         header.append(1)
-    depth = (1,3)[type == strtobytes('P6')]
+    depth = (1,3)[type == b'P6']
     return header[0], header[1], header[2], depth, header[3]
 
 def write_pnm(file, width, height, pixels, meta):
@@ -2734,7 +2599,7 @@ def _main(argv):
     else:
         # Encode PNM to PNG
         format, width, height, depth, maxval = \
-          read_pnm_header(infile, ('P5','P6','P7'))
+          read_pnm_header(infile, (b'P5',b'P6',b'P7'))
         # When it comes to the variety of input formats, we do something
         # rather rude.  Observe that L, LA, RGB, RGBA are the 4 colour
         # types supported by PNG and that they correspond to 1, 2, 3, 4
