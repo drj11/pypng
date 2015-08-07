@@ -45,7 +45,7 @@ http://pythonhosted.org/pypng/
       'Topic :: Multimedia :: Graphics',
       'Topic :: Software Development :: Libraries :: Python Modules',
       'Programming Language :: Python',
-      'Programming Language :: Python :: 2.3',
+      'Programming Language :: Python :: 2.7',
       'Programming Language :: Python :: 3',
       'License :: OSI Approved :: MIT License',
       'Operating System :: OS Independent',
