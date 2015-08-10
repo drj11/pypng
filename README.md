@@ -54,7 +54,7 @@ current directory:
 (For issues see https://github.com/drj11/pypng/issues?state=open )
 
 
-### Committed but not yet released:
+### Release 0.0.18
 
 Thanks to github.com/sean-duffy `.from_array()` can now take a 3D
 array.
