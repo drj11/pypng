@@ -1387,7 +1387,7 @@ class Reader:
             # http://www.w3.org/TR/PNG/#5Chunk-layout
             if not self.atchunk:
                 self.atchunk = self.chunklentype()
-            length,type = self.atchunk
+            length, type = self.atchunk
             self.atchunk = None
             data = self.file.read(length)
             if len(data) != length:
