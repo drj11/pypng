@@ -1061,7 +1061,7 @@ def from_array(a, mode=None, info={}):
     dimensional arrays the first axis is the height, but the second axis
     is ``width*channels``, so an RGB image that is 16 pixels high and 8
     wide will use a 2-dimensional array that is 16x24 (each row will be
-    8*3==24 sample values).
+    8*3 = 24 sample values).
 
     *mode* is a string that specifies the image colour format in a
     PIL-style mode.  It can be:
