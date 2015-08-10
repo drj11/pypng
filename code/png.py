@@ -1380,7 +1380,7 @@ class Reader:
         that in general the order of chunks in PNGs is unspecified, so
         using `seek` can cause you to miss chunks.
 
-        If the optional `lenient` argument evaluates to True,
+        If the optional `lenient` argument evaluates to `True`,
         checksum failures will raise warnings rather than exceptions.
         """
 
@@ -1695,7 +1695,7 @@ class Reader:
         chunks that precede the ``IDAT`` chunk are read and either
         processed for metadata or discarded.
 
-        If the optional `lenient` argument evaluates to True, checksum
+        If the optional `lenient` argument evaluates to `True`, checksum
         failures will raise warnings rather than exceptions.
         """
 
@@ -1734,7 +1734,7 @@ class Reader:
         following chunk types, all others are ignored: ``IHDR``,
         ``PLTE``, ``bKGD``, ``tRNS``, ``gAMA``, ``sBIT``, ``pHYs``.
 
-        If the optional `lenient` argument evaluates to True,
+        If the optional `lenient` argument evaluates to `True`,
         checksum failures will raise warnings rather than exceptions.
         """
 
