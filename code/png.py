@@ -1105,7 +1105,7 @@ def from_array(a, mode=None, info={}):
 
     The *info* parameter is a dictionary that can be used to specify
     metadata (in the same style as the arguments to the
-    :class:``png.Writer`` class).  For this function the keys that are
+    :class:`png.Writer` class).  For this function the keys that are
     useful are:
     
     height
