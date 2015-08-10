@@ -415,13 +415,14 @@ class Writer:
         is slightly different; it would be awkward to press the
         `bitdepth` argument into service for this.)
 
-        The `palette` option, when specified, causes a colour mapped
-        image to be created: the PNG colour type is set to 3; greyscale
-        must not be set; alpha must not be set; transparent must not be
-        set; the bit depth must be 1,2,4, or 8.  When a colour mapped
-        image is created, the pixel values are palette indexes and
-        the `bitdepth` argument specifies the size of these indexes
-        (not the size of the colour values in the palette).
+        The `palette` option, when specified, causes a colour
+        mapped image to be created: the PNG colour type is set to 3;
+        `greyscale` must not be set; `alpha` must not be set;
+        `transparent` must not be set; the bit depth must be 1,2,4,
+        or 8.  When a colour mapped image is created, the pixel values
+        are palette indexes and the `bitdepth` argument specifies the
+        size of these indexes (not the size of the colour values in
+        the palette).
 
         The palette argument value should be a sequence of 3- or
         4-tuples.  3-tuples specify RGB palette entries; 4-tuples
@@ -439,7 +440,7 @@ class Writer:
         a simple integer (or singleton tuple) for a greyscale image.
 
         If specified, the `gamma` parameter must be a positive number
-        (generally, a float).  A ``gAMA`` chunk will be created.
+        (generally, a `float`).  A ``gAMA`` chunk will be created.
         Note that this will not change the values of the pixels as
         they appear in the PNG file, they are assumed to have already
         been converted appropriately for the gamma specified.
