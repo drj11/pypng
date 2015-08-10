@@ -59,7 +59,7 @@ if __name__ == '__main__':
         from setuptools import setup
         # distribute is probably installed, so use_2to3 should work
         conf['use_2to3'] = True
-        test_suite="test_png",
+        conf['test_suite'] = "test_png"
     except ImportError:
         # http://docs.python.org/release/2.4.4/dist/setup-script.html
         from distutils.core import setup
