@@ -370,13 +370,16 @@ class Writer:
           Create an interlaced image.
         chunk_limit
           Write multiple ``IDAT`` chunks to save memory.
-        x_pixels_per_unit (pHYs chunk)
-          Number of pixels a unit along the x axis
-        y_pixels_per_unit (pHYs chunk)
-          Number of pixels a unit along the y axis    
-          With x_pixel_unit, give the pixel size ratio
-        unit_is_meter (pHYs chunk)
-          Indicates if unit is meter or not
+        x_pixels_per_unit
+          Number of pixels a unit along the x axis (write a
+          `pHYs` chunk).
+        y_pixels_per_unit
+          Number of pixels a unit along the y axis (write a
+          `pHYs` chunk). Along with `x_pixel_unit`, this gives
+          the pixel size ratio.
+        unit_is_meter
+          `True` to indicate that the unit (for the `pHYs`
+          chunk) is metre.
 
         The image size (in pixels) can be specified either by using the
         `width` and `height` arguments, or with the single `size`
