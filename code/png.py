@@ -1049,13 +1049,6 @@ def from_array(a, mode=None, info={}):
     array.  One application of this function is easy PIL-style saving:
     ``png.from_array(pixels, 'L').save('foo.png')``.
 
-    .. note :
-
-      The use of the term *3-dimensional* is for marketing purposes
-      only.  It doesn't actually work.  Please bear with us.  Meanwhile
-      enjoy the complimentary snacks (on request) and please use a
-      2-dimensional array.
-    
     Unless they are specified using the *info* parameter, the PNG's
     height and width are taken from the array size.  For a 3 dimensional
     array the first axis is the height; the second axis is the width;
