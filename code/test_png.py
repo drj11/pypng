@@ -126,7 +126,7 @@ class Test(unittest.TestCase):
         self.assertEqual(x, 15)
         self.assertEqual(y, 17)
         self.assertEqual(list(itertools.chain(*pixels)),
-                         map(mask.__and__, range(1,256)))
+                         [mask & x for x in range(1,256)])
     def testL8(self):
         return self.helperLN(8)
     def testL4(self):
@@ -155,7 +155,8 @@ class Test(unittest.TestCase):
         x,y,pixels,meta = r.asRGB8()
         self.assertEqual(x, 1)
         self.assertEqual(y, 4)
-        self.assertEqual(map(list, pixels), map(list, [a, b, b, c]))
+        self.assertEqual([list(row) for row in pixels],
+          [list(row) for row in [a, b, b, c]])
     def testPtrns(self):
         "Test colour type 3 and tRNS chunk (and 4-bit palette)."
         a = (50,99,50,50)
@@ -175,7 +176,8 @@ class Test(unittest.TestCase):
         e = e+(255,)
         boxed = [(e,d,c),(d,c,a),(c,a,b)]
         flat = map(lambda row: itertools.chain(*row), boxed)
-        self.assertEqual(map(list, pixels), map(list, flat))
+        self.assertEqual([list(row) for row in pixels],
+          [list(row) for row in flat])
     def testRGBtoRGBA(self):
         """asRGBA8() on colour type 2 source."""
         # Test for Issue 26 (googlecode)
@@ -222,7 +224,8 @@ class Test(unittest.TestCase):
             # "interlace" member differs.  Lame.
             straight = straight.read()[2]
             adam7 = adam7.read()[2]
-            self.assertEqual(map(list, straight), map(list, adam7))
+            self.assertEqual([list(row) for row in straight],
+              [list(row) for row in adam7])
     def testAdam7write(self):
         """Adam7 interlace writing.
         For each test image in the PngSuite, write an interlaced
@@ -231,7 +234,7 @@ class Test(unittest.TestCase):
         # Not such a great test, because the only way we can check what
         # we have written is to read it back again.
 
-        for name,bytes in pngsuite.png.iteritems():
+        for name,bytes in pngsuite.png.items():
             # Only certain colour types supported for this test.
             if name[3:5] not in ['n0', 'n2', 'n4', 'n6']:
                 continue
@@ -251,7 +254,8 @@ class Test(unittest.TestCase):
               transparent=it.transparent,
               interlace=True)
             x,y,pi,meta = png.Reader(bytes=pngs).read()
-            self.assertEqual(map(list, ps), map(list, pi))
+            self.assertEqual([list(row) for row in ps],
+              [list(row) for row in pi])
     def testPGMin(self):
         """Test that the command line tool can read PGM files."""
         def do():
@@ -512,7 +516,7 @@ class Test(unittest.TestCase):
         img.save(o)
     def testfromarrayIter(self):
         i = itertools.islice(itertools.count(10), 20)
-        i = itertools.imap(lambda x: [x, x, x], i)
+        i = ([x, x, x] for x in i)
         img = png.from_array(i, 'RGB;5', dict(height=20))
         f = BytesIO()
         img.save(f)
@@ -588,7 +592,7 @@ class Test(unittest.TestCase):
              '110010110101',
              '100010010011']
 
-        s = map(lambda x: map(int, x), s)
+        s = [[int(p) for p in row] for row in s]
 
         palette = [(0x55,0x55,0x55), (0xff,0x99,0x99)]
         pnp = numpy.array(palette) # creates a 2x3 array
@@ -679,7 +683,8 @@ class Test(unittest.TestCase):
         r2 = png.Reader(bytes=pngsuite.png[k])
         _,_,pixels1,info1 = r1.asDirect()
         _,_,pixels2,info2 = r2.asDirect()
-        for row1, row2 in itertools.izip(pixels1, pixels2):
+        izip = getattr(itertools, 'izip', zip)
+        for row1, row2 in izip(pixels1, pixels2):
             self.assertEqual(row1, row2)
             for i in range(len(row1)):
                 row1[i] = 11117 % (i + 1)
@@ -695,7 +700,7 @@ class Test(unittest.TestCase):
 
 def group(s, n):
     # See http://www.python.org/doc/2.6/library/functions.html#zip
-    return zip(*[iter(s)]*n)
+    return list(zip(*[iter(s)]*n))
 
 if __name__ == '__main__':
     unittest.main(__name__)
