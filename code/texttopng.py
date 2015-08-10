@@ -123,7 +123,7 @@ def char(i):
     i = ord(i)
     if i not in font:
         return [(0,)]*8
-    return map(lambda row: (ord(row),), font[i].decode('hex'))
+    return [(ord(row),) for row in font[i].decode('hex')]
 
 def texttoraster(m):
     """Convert the string *m* to a raster image. Any newlines
@@ -153,8 +153,8 @@ def linetoraster(m):
     # Assumes monospaced font.
     x = 8*len(m)
     y = 8
-    return x,y,itertools.imap(lambda row: itertools.chain(*row),
-                              zip(*map(char, m)))
+    return x,y,[itertools.chain(*row) for row in
+                              zip(*map(char, m))]
 
 def render(message, out):
     import png
