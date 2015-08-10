@@ -14,6 +14,8 @@
 # If you have nose installed you can use that:
 #   nosetests .
 
+from __future__ import print_function
+
 import itertools
 import struct
 import sys
@@ -42,7 +44,7 @@ def topngbytes(name, rows, x, y, **k):
 
     import os
 
-    print name
+    print(name)
     f = BytesIO()
     w = png.Writer(x, y, **k)
     w.write(f, rows)
@@ -212,7 +214,7 @@ class Test(unittest.TestCase):
             candi = candidate.replace('n', 'i')
             if candi not in pngsuite.png:
                 continue
-            print 'adam7 read', candidate
+            print('adam7 read', candidate)
             straight = png.Reader(bytes=pngsuite.png[candidate])
             adam7 = png.Reader(bytes=pngsuite.png[candi])
             # Just compare the pixels.  Ignore x,y (because they're
@@ -531,7 +533,7 @@ class Test(unittest.TestCase):
         try:
             import numpy
         except ImportError:
-            print >>sys.stderr, "skipping numpy test"
+            print("skipping numpy test", file=sys.stderr)
             return
 
         rows = [map(numpy.uint16, range(0,0x10000,0x5555))]
@@ -543,7 +545,7 @@ class Test(unittest.TestCase):
         try:
             import numpy
         except ImportError:
-            print >>sys.stderr, "skipping numpy test"
+            print("skipping numpy test", file=sys.stderr)
             return
 
         rows = [map(numpy.uint8, range(0,0x100,0x55))]
@@ -555,7 +557,7 @@ class Test(unittest.TestCase):
         try:
             import numpy
         except ImportError:
-            print >>sys.stderr, "skipping numpy test"
+            print("skipping numpy test", file=sys.stderr)
             return
 
         rows = [map(numpy.bool, [0,1])]
@@ -566,7 +568,7 @@ class Test(unittest.TestCase):
         try:
             import numpy
         except ImportError:
-            print >>sys.stderr, "skipping numpy test"
+            print("skipping numpy test", file=sys.stderr)
             return
 
         pixels = numpy.array([[0,0x5555],[0x5555,0xaaaa]], numpy.uint16)
@@ -578,7 +580,7 @@ class Test(unittest.TestCase):
         try:
             import numpy
         except ImportError:
-            print >>sys.stderr, "skipping numpy test"
+            print("skipping numpy test", file=sys.stderr)
             return
 
         s = ['110010010011',
