@@ -1367,9 +1367,9 @@ class Reader:
     def chunk(self, seek=None, lenient=False):
         """
         Read the next PNG chunk from the input file; returns a
-        (*type*,*data*) tuple.  *type* is the chunk's type as a string
-        (all PNG chunk types are 4 characters long).  *data* is the
-        chunk's data content, as a string.
+        (*type*, *data*) tuple.  *type* is the chunk's type as a
+        byte string (all PNG chunk types are 4 bytes long).
+        *data* is the chunk's data content, as a byte string.
 
         If the optional `seek` argument is
         specified then it will keep reading chunks until it either runs
