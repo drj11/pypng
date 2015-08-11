@@ -370,13 +370,16 @@ class Writer:
           Create an interlaced image.
         chunk_limit
           Write multiple ``IDAT`` chunks to save memory.
-        x_pixels_per_unit (pHYs chunk)
-          Number of pixels a unit along the x axis
-        y_pixels_per_unit (pHYs chunk)
-          Number of pixels a unit along the y axis    
-          With x_pixel_unit, give the pixel size ratio
-        unit_is_meter (pHYs chunk)
-          Indicates if unit is meter or not
+        x_pixels_per_unit
+          Number of pixels a unit along the x axis (write a
+          `pHYs` chunk).
+        y_pixels_per_unit
+          Number of pixels a unit along the y axis (write a
+          `pHYs` chunk). Along with `x_pixel_unit`, this gives
+          the pixel size ratio.
+        unit_is_meter
+          `True` to indicate that the unit (for the `pHYs`
+          chunk) is metre.
 
         The image size (in pixels) can be specified either by using the
         `width` and `height` arguments, or with the single `size`
@@ -412,13 +415,14 @@ class Writer:
         is slightly different; it would be awkward to press the
         `bitdepth` argument into service for this.)
 
-        The `palette` option, when specified, causes a colour mapped
-        image to be created: the PNG colour type is set to 3; greyscale
-        must not be set; alpha must not be set; transparent must not be
-        set; the bit depth must be 1,2,4, or 8.  When a colour mapped
-        image is created, the pixel values are palette indexes and
-        the `bitdepth` argument specifies the size of these indexes
-        (not the size of the colour values in the palette).
+        The `palette` option, when specified, causes a colour
+        mapped image to be created: the PNG colour type is set to 3;
+        `greyscale` must not be set; `alpha` must not be set;
+        `transparent` must not be set; the bit depth must be 1,2,4,
+        or 8.  When a colour mapped image is created, the pixel values
+        are palette indexes and the `bitdepth` argument specifies the
+        size of these indexes (not the size of the colour values in
+        the palette).
 
         The palette argument value should be a sequence of 3- or
         4-tuples.  3-tuples specify RGB palette entries; 4-tuples
@@ -436,7 +440,7 @@ class Writer:
         a simple integer (or singleton tuple) for a greyscale image.
 
         If specified, the `gamma` parameter must be a positive number
-        (generally, a float).  A ``gAMA`` chunk will be created.
+        (generally, a `float`).  A ``gAMA`` chunk will be created.
         Note that this will not change the values of the pixels as
         they appear in the PNG file, they are assumed to have already
         been converted appropriately for the gamma specified.
@@ -1057,7 +1061,7 @@ def from_array(a, mode=None, info={}):
     dimensional arrays the first axis is the height, but the second axis
     is ``width*channels``, so an RGB image that is 16 pixels high and 8
     wide will use a 2-dimensional array that is 16x24 (each row will be
-    8*3==24 sample values).
+    8*3 = 24 sample values).
 
     *mode* is a string that specifies the image colour format in a
     PIL-style mode.  It can be:
@@ -1101,7 +1105,7 @@ def from_array(a, mode=None, info={}):
 
     The *info* parameter is a dictionary that can be used to specify
     metadata (in the same style as the arguments to the
-    :class:``png.Writer`` class).  For this function the keys that are
+    :class:`png.Writer` class).  For this function the keys that are
     useful are:
     
     height
@@ -1367,9 +1371,9 @@ class Reader:
     def chunk(self, seek=None, lenient=False):
         """
         Read the next PNG chunk from the input file; returns a
-        (*type*,*data*) tuple.  *type* is the chunk's type as a string
-        (all PNG chunk types are 4 characters long).  *data* is the
-        chunk's data content, as a string.
+        (*type*, *data*) tuple.  *type* is the chunk's type as a
+        byte string (all PNG chunk types are 4 bytes long).
+        *data* is the chunk's data content, as a byte string.
 
         If the optional `seek` argument is
         specified then it will keep reading chunks until it either runs
@@ -1377,7 +1381,7 @@ class Reader:
         that in general the order of chunks in PNGs is unspecified, so
         using `seek` can cause you to miss chunks.
 
-        If the optional `lenient` argument evaluates to True,
+        If the optional `lenient` argument evaluates to `True`,
         checksum failures will raise warnings rather than exceptions.
         """
 
@@ -1387,7 +1391,7 @@ class Reader:
             # http://www.w3.org/TR/PNG/#5Chunk-layout
             if not self.atchunk:
                 self.atchunk = self.chunklentype()
-            length,type = self.atchunk
+            length, type = self.atchunk
             self.atchunk = None
             data = self.file.read(length)
             if len(data) != length:
@@ -1692,7 +1696,7 @@ class Reader:
         chunks that precede the ``IDAT`` chunk are read and either
         processed for metadata or discarded.
 
-        If the optional `lenient` argument evaluates to True, checksum
+        If the optional `lenient` argument evaluates to `True`, checksum
         failures will raise warnings rather than exceptions.
         """
 
@@ -1731,7 +1735,7 @@ class Reader:
         following chunk types, all others are ignored: ``IHDR``,
         ``PLTE``, ``bKGD``, ``tRNS``, ``gAMA``, ``sBIT``, ``pHYs``.
 
-        If the optional `lenient` argument evaluates to True,
+        If the optional `lenient` argument evaluates to `True`,
         checksum failures will raise warnings rather than exceptions.
         """
 
