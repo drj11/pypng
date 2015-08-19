@@ -217,7 +217,6 @@ class Test(unittest.TestCase):
             candi = candidate.replace('n', 'i')
             if candi not in pngsuite.png:
                 continue
-            print('adam7 read', candidate)
             straight = png.Reader(bytes=pngsuite.png[candidate])
             adam7 = png.Reader(bytes=pngsuite.png[candi])
             # Just compare the pixels.  Ignore x,y (because they're
