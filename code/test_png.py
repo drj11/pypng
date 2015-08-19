@@ -44,7 +44,8 @@ def topngbytes(name, rows, x, y, **k):
 
     import os
 
-    print(name)
+    if os.environ.get('PYPNG_TEST_FILENAME'):
+        print(name, file=sys.stderr)
     f = BytesIO()
     w = png.Writer(x, y, **k)
     w.write(f, rows)
