@@ -1,0 +1,3 @@
+#!/bin/sh
+
+docker run pypng-numpy-test python2 /png/code/test_png.py
