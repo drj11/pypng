@@ -2,6 +2,8 @@
 
 drj@pobox.com
 
+[![Build Status](https://travis-ci.org/drj11/pypng.svg?branch=master)](https://travis-ci.org/drj11/pypng)
+
 
 # INTRODUCTION
 
