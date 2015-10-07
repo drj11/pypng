@@ -9,9 +9,9 @@ drj@pobox.com
 
 PNG module for Python. PyPNG is written entirely in Python.
 
-- PyPNG home page: http://github.com/drj11/pypng/
-- PyPNG Documentation: http://packages.python.org/pypng/
-- PyPNG mailing list: http://groups.google.com/group/pypng-users
+- PyPNG home page: https://github.com/drj11/pypng/
+- PyPNG Documentation: https://pythonhosted.org/pypng/
+- PyPNG mailing list: https://groups.google.com/forum/#!forum/pypng-users
 
 
 ## QUICK START
