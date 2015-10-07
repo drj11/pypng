@@ -52,6 +52,13 @@ current directory:
 
 (For issues see https://github.com/drj11/pypng/issues?state=open )
 
+### Release (Not yet released)
+
+Support for earlier versions of Python is dropped in order to
+simplify the code. From the 2.x series only Python 2.7 is
+supported. From the Python 3.x series all versions from 3.2
+onward are supported.
+
 
 ### Release 0.0.18
 
