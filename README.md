@@ -28,8 +28,8 @@ no good then you could try the ReST sources in the `man/` directory.
 ## INSTALLATION
 
 PyPNG is pure Python and has no dependencies. It requires either
-Python 2.7 or Python 3.4 or any compatible higher version. The
-same code runs in both Python 2.7 and Python 3.4.
+Python 2.6 or Python 3.4 or any compatible higher version. The
+same code runs in both Python 2.6 and Python 3.4.
 
 PyPNG comes with a `setup.py` script to use with `distutils`.  After
 unpacking the distribution, cd into the directory and execute the
@@ -55,7 +55,7 @@ current directory:
 ### Release (Not yet released)
 
 Support for earlier versions of Python is dropped in order to
-simplify the code. From the 2.x series only Python 2.7 is
+simplify the code. From the 2.x series only Python 2.6 and 2.7 are
 supported. From the Python 3.x series all versions from 3.2
 onward are supported.
 

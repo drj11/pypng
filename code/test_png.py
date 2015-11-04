@@ -106,7 +106,7 @@ def seqtobytes(s):
     plastering over Python 2 / Python 3 cracks.
     """
 
-    fmt = "{}B".format(len(s))
+    fmt = "{0}B".format(len(s))
 
     return struct.pack(fmt, *s)
 
@@ -426,8 +426,8 @@ class Test(unittest.TestCase):
         try:
             r.asDirect()
         except Exception as e:
-            self.assertIsInstance(e, png.FormatError)
-            self.assertIn('chunk length', str(e))
+            self.assertTrue(isinstance(e, png.FormatError))
+            self.assertTrue('chunk length' in str(e))
     def testChunkShort(self):
         """
         Chunk that is too short.
@@ -436,8 +436,8 @@ class Test(unittest.TestCase):
         try:
             r.asDirect()
         except Exception as e:
-            self.assertIsInstance(e, png.ChunkError)
-            self.assertIn('too short', str(e))
+            self.assertTrue(isinstance(e, png.FormatError))
+            self.assertTrue('too short' in str(e))
     def testNoChecksum(self):
         """
         Chunk that's too small to contain a checksum.
@@ -446,8 +446,8 @@ class Test(unittest.TestCase):
         try:
             r.asDirect()
         except Exception as e:
-            self.assertIsInstance(e, png.ChunkError)
-            self.assertIn('checksum', str(e))
+            self.assertTrue(isinstance(e, png.FormatError))
+            self.assertTrue('checksum' in str(e))
 
     def testExtraPixels(self):
         """Test file that contains too many pixels."""
