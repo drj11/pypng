@@ -1244,8 +1244,9 @@ def from_array(a, mode=None, info={}):
                 bitdepth = 8 * dtype.itemsize
         info['bitdepth'] = bitdepth
 
-    for thing in 'width height bitdepth greyscale alpha'.split():
+    for thing in ["width", "height", "bitdepth", "greyscale", "alpha"]:
         assert thing in info
+
     return Image(a, info)
 
 # So that refugee's from PIL feel more at home.  Not documented.
