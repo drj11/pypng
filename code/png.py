@@ -1175,12 +1175,12 @@ def from_array(a, mode=None, info={}):
                       "info[%r] should match info['size'][%r]." %
                       (dimension, axis))
         info['width'],info['height'] = info['size']
+
     if 'height' not in info:
         try:
             info['height'] = len(a)
         except TypeError:
-            raise Error(
-              "len(a) does not work, supply info['height'] instead.")
+            raise Error("len(a) does not work, supply info['height'] instead.")
 
     planes = len(mode)
     if 'planes' in info:
