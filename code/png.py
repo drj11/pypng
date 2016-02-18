@@ -1138,10 +1138,22 @@ def from_array(a, mode=None, info={}):
     if match is not None:
         grps = match.groups()
         mode = grps[0]
-        mode += grps[1] if grps[1] is not None else ""
+        alpha = grps[1] is not None  # True if 'A' was found
+        mode += grps[1] if alpha else ""
         bitdepth = grps[2]
     else:
         raise Error()
+
+    # Colour format.
+    if 'greyscale' in info:
+        if bool(info['greyscale']) != ('L' == mode):
+            raise Error("info['greyscale'] should match mode.")
+    info['greyscale'] = 'L' == mode
+
+    if 'alpha' in info:
+        if bool(info['alpha']) != alpha:
+            raise Error("info['alpha'] should match mode.")
+    info['alpha'] = alpha
 
     # Get bitdepth from *mode* if possible.
     if bitdepth:
@@ -1169,16 +1181,6 @@ def from_array(a, mode=None, info={}):
         except TypeError:
             raise Error(
               "len(a) does not work, supply info['height'] instead.")
-
-    # Colour format.
-    if 'greyscale' in info:
-        if bool(info['greyscale']) != ('L' in mode):
-            raise Error("info['greyscale'] should match mode.")
-    info['greyscale'] = 'L' in mode
-    if 'alpha' in info:
-        if bool(info['alpha']) != ('A' in mode):
-            raise Error("info['alpha'] should match mode.")
-    info['alpha'] = 'A' in mode
 
     planes = len(mode)
     if 'planes' in info:
