@@ -1140,7 +1140,7 @@ def from_array(a, mode=None, info={}):
         mode = grps[0]
         alpha = grps[1] is not None  # True if 'A' was found
         mode += grps[1] if alpha else ""
-        bitdepth = grps[2]
+        bitdepth = int(grps[2]) if grps[2] != "" else None
     else:
         raise Error()
 
