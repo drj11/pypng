@@ -1163,11 +1163,11 @@ def from_array(a, mode=None, info={}):
         info['width'],info['height'] = info['size']
     if 'height' not in info:
         try:
-            l = len(a)
+            info['height'] = len(a)
         except TypeError:
             raise Error(
               "len(a) does not work, supply info['height'] instead.")
-        info['height'] = l
+
     # Colour format.
     if 'greyscale' in info:
         if bool(info['greyscale']) != ('L' in mode):
