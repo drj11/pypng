@@ -148,6 +148,7 @@ __version__ = "0.0.18"
 
 import itertools
 import math
+import re
 # http://www.python.org/doc/2.4.4/lib/module-operator.html
 import operator
 import struct
@@ -184,6 +185,9 @@ _adam7 = ((0, 0, 8, 8),
           (0, 2, 2, 4),
           (1, 0, 2, 2),
           (0, 1, 1, 2))
+
+# Regex for decoding mode string
+RegexModeDecode = re.compile("(L|RGB)(A)?;?([0-9]*)", flags=re.IGNORECASE)
 
 def group(s, n):
     # See http://www.python.org/doc/2.6/library/functions.html#zip
@@ -1130,34 +1134,14 @@ def from_array(a, mode=None, info={}):
     info = dict(info)
 
     # Syntax check mode string.
-    bitdepth = None
-    try:
-        # Assign the 'L' or 'RGBA' part to `gotmode`.
-        if mode.startswith('L'):
-            gotmode = 'L'
-            mode = mode[1:]
-        elif mode.startswith('RGB'):
-            gotmode = 'RGB'
-            mode = mode[3:]
-        else:
-            raise Error()
-        if mode.startswith('A'):
-            gotmode += 'A'
-            mode = mode[1:]
-
-        # Skip any optional ';'
-        while mode.startswith(';'):
-            mode = mode[1:]
-
-        # Parse optional bitdepth
-        if mode:
-            try:
-                bitdepth = int(mode)
-            except (TypeError, ValueError):
-                raise Error()
-    except Error:
-        raise Error("mode string should be 'RGB' or 'L;16' or similar.")
-    mode = gotmode
+    match = RegexModeDecode.match(mode)
+    if match is not None:
+        grps = match.groups()
+        mode = grps[0]
+        mode += grps[1] if grps[1] is not None else ""
+        bitdepth = grps[2]
+    else:
+        raise Error()
 
     # Get bitdepth from *mode* if possible.
     if bitdepth:
