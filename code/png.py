@@ -1153,6 +1153,8 @@ def from_array(a, mode=None, info={}):
     # Fill in and/or check entries in *info*.
     # Dimensions.
     if 'size' in info:
+        assert len(info["size"]) == 2
+
         # Check width, height, size all match where used.
         for dimension,axis in [('width', 0), ('height', 1)]:
             if dimension in info:
