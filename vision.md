@@ -42,7 +42,7 @@ practice will only support PNG and PNM.
 
 `as` methods generally do not change (perceptual) value. For
 example, a greyscale image can always be represented in an
-(equal bitdepth) RGB format by replicated the intensities.
+(equal bitdepth) RGB format by replicating the intensities.
 
 `as` methods will abort (raise Exception) if format cannot be
 changed without changing value.
