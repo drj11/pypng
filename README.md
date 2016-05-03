@@ -32,6 +32,7 @@ PyPNG is pure Python and has no dependencies.
 It requires either Python 2.6 or Python 3.4 or
 any compatible higher version.
 The same code runs in both Python 2.6 and Python 3.4.
+Tests only run in Python 3.x (and 2.7).
 
 PyPNG comes with a `setup.py` script to use with `distutils`.
 After unpacking the distribution,

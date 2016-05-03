@@ -534,50 +534,53 @@ class Test(unittest.TestCase):
     def testfromarrayShortMode(self):
         png.from_array([[0,1],[2,3]], 'L2').save(BytesIO())
 
-    # numpy dependent tests.  When numpy is not installed these
-    # tests are not defined and so fewer tests are run.
-    if numpy:
-        def testNumpyuint16(self):
-            """numpy uint16."""
+    # numpy dependent tests.
+    @unittest.skipUnless(numpy, "numpy is not available")
+    def testNumpyuint16(self):
+        """numpy uint16."""
 
-            rows = [map(numpy.uint16, range(0,0x10000,0x5555))]
-            b = topngbytes('numpyuint16.png', rows, 4, 1,
-                greyscale=True, alpha=False, bitdepth=16)
+        rows = [map(numpy.uint16, range(0,0x10000,0x5555))]
+        b = topngbytes('numpyuint16.png', rows, 4, 1,
+            greyscale=True, alpha=False, bitdepth=16)
 
-        def testNumpyuint8(self):
-            """numpy uint8."""
+    @unittest.skipUnless(numpy, "numpy is not available")
+    def testNumpyuint8(self):
+        """numpy uint8."""
 
-            rows = [map(numpy.uint8, range(0,0x100,0x55))]
-            b = topngbytes('numpyuint8.png', rows, 4, 1,
-                greyscale=True, alpha=False, bitdepth=8)
+        rows = [map(numpy.uint8, range(0,0x100,0x55))]
+        b = topngbytes('numpyuint8.png', rows, 4, 1,
+            greyscale=True, alpha=False, bitdepth=8)
 
-        def testNumpybool(self):
-            """numpy bool."""
+    @unittest.skipUnless(numpy, "numpy is not available")
+    def testNumpybool(self):
+        """numpy bool."""
 
-            rows = [map(numpy.bool, [0,1])]
-            b = topngbytes('numpybool.png', rows, 2, 1,
-                greyscale=True, alpha=False, bitdepth=1)
+        rows = [map(numpy.bool, [0,1])]
+        b = topngbytes('numpybool.png', rows, 2, 1,
+            greyscale=True, alpha=False, bitdepth=1)
 
-        def testNumpyarray(self):
-            """numpy array."""
+    @unittest.skipUnless(numpy, "numpy is not available")
+    def testNumpyarray(self):
+        """numpy array."""
 
-            pixels = numpy.array([[0,0x5555],[0x5555,0xaaaa]], numpy.uint16)
-            img = png.from_array(pixels, 'L')
-            img.save(BytesIO())
+        pixels = numpy.array([[0,0x5555],[0x5555,0xaaaa]], numpy.uint16)
+        img = png.from_array(pixels, 'L')
+        img.save(BytesIO())
 
-        def testNumpyPalette(self):
-            """numpy palette."""
+    @unittest.skipUnless(numpy, "numpy is not available")
+    def testNumpyPalette(self):
+        """numpy palette."""
 
-            s = ['110010010011',
-                 '101011010100',
-                 '110010110101',
-                 '100010010011']
+        s = ['110010010011',
+             '101011010100',
+             '110010110101',
+             '100010010011']
 
-            s = [[int(p) for p in row] for row in s]
+        s = [[int(p) for p in row] for row in s]
 
-            palette = [(0x55,0x55,0x55), (0xff,0x99,0x99)]
-            pnp = numpy.array(palette) # creates a 2x3 array
-            w = png.Writer(len(s[0]), len(s), palette=pnp, bitdepth=1)
+        palette = [(0x55,0x55,0x55), (0xff,0x99,0x99)]
+        pnp = numpy.array(palette) # creates a 2x3 array
+        w = png.Writer(len(s[0]), len(s), palette=pnp, bitdepth=1)
 
     def paeth(self, x, a, b, c):
         p = a + b - c
