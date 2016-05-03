@@ -20,30 +20,33 @@ PNG module for Python. PyPNG is written entirely in Python.
     png.from_array([[255, 0, 0, 255],
                     [0, 255, 255, 0]], 'L').save("small_smiley.png")
 
-After that, try `import png` then `help(png)`.  Also,
-lickable HTML documentation appears in the `html/` directory.  If HTML is
-no good then you could try the ReST sources in the `man/` directory.
+After that, try `import png` then `help(png)`.
+Also, lickable HTML documentation appears in the `html/` directory.
+If HTML is no good then you could try the ReST sources
+in the `man/` directory.
 
 
 ## INSTALLATION
 
-PyPNG is pure Python and has no dependencies. It requires either
-Python 2.6 or Python 3.4 or any compatible higher version. The
-same code runs in both Python 2.6 and Python 3.4.
+PyPNG is pure Python and has no dependencies.
+It requires either Python 2.6 or Python 3.4 or
+any compatible higher version.
+The same code runs in both Python 2.6 and Python 3.4.
 
-PyPNG comes with a `setup.py` script to use with `distutils`.  After
-unpacking the distribution, cd into the directory and execute the
-command:
+PyPNG comes with a `setup.py` script to use with `distutils`.
+After unpacking the distribution,
+`cd` into the directory and execute the command:
 
     python setup.py install
 
-The `png` module will be installed; `import png` will allow you to use it
-from your Python programs.
+The `png` module will be installed;
+`import png` will allow you to use it from your Python programs.
 
-Alternatively, you can copy `code/png.py` wherever you like.  It's intended
-that you can copy `png.py` into your application and distribute it.  The
-following `curl` command should copy the latest version into your
-current directory:
+Alternatively, you can copy `code/png.py` wherever you like.
+It's intended that you can copy `png.py` into
+your application and distribute it.
+The following `curl` command should copy the latest version into
+your current directory:
 
     curl -LO https://raw.github.com/drj11/pypng/master/code/png.py
 
@@ -55,15 +58,15 @@ current directory:
 ### Release (Not yet released)
 
 Support for earlier versions of Python is dropped in order to
-simplify the code. From the 2.x series only Python 2.6 and 2.7 are
-supported. From the Python 3.x series all versions from 3.2
-onward are supported.
+simplify the code.
+From the 2.x series only Python 2.6 and 2.7 are supported.
+From the Python 3.x series all versions from 3.2 onward are supported.
 
 
 ### Release 0.0.18
 
-Thanks to github.com/sean-duffy `.from_array()` can now take a 3D
-array.
+Thanks to `github.com/sean-duffy`,
+`.from_array()` can now take a 3D array.
 
 Converting to PNMs was broken in Python 3; this is now fixed.
 Github issue 26: https://github.com/drj11/pypng/issues/26
@@ -71,9 +74,10 @@ Github issue 26: https://github.com/drj11/pypng/issues/26
 
 ### Release 0.0.17
 
-Various fixes when running on Python 3 and Windows. Merging pull
-requests from github.com/ironfroggy and github.com/techtonik,
-and merging by hand a commit from github.com/Scondo.
+Various fixes when running on Python 3 and Windows.
+Merging pull requests from `github.com/ironfroggy` and
+`github.com/techtonik`,
+and merging by hand a commit from `github.com/Scondo`.
 
 
 ### Release 0.0.16
@@ -92,21 +96,21 @@ Fixed various URLs to point at github.com instead of googlecode.
 
 ### Release 0.0.14
 
-When using png.py as a command line tool, it can now produce
-non-square test images.
+When using `png.py` as a command line tool,
+it can now produce non-square test images.
 
 PyPNG now installs "out of the box" on Python 3 on a plain install
-(previously distribute or pip was required).
+(previously `distribute` or `pip` was required).
 
 PyPNG welcomes the following community contributions:
 
   Joaquín Cuenca Abela speeds up PNG reading when Cython is available.
 
-  Josh Bleecher Snyder adds a lenient mode which has relaxed checksum
-  checking.
+  Josh Bleecher Snyder adds a lenient mode
+  which has relaxed checksum checking.
 
-  nathan@dunfield.info fixed a problem writing files when using
-  the command line tool on Windows (Issue 62).
+  nathan@dunfield.info fixed a problem writing files
+  when using the command line tool on Windows (Issue 62).
 
 The following issues have been fixed:
 
@@ -118,15 +122,16 @@ The following issues have been fixed:
 
   Issue 62: Problem writing PNG files on Windows
 
-Development has moved from googlecode to github.  All issues below here,
-and the one immediately above, are from the googlecode issue tracker.
+Development has moved from googlecode to github.
+All issues below here, and the one immediately above,
+are from the googlecode issue tracker.
 All newer issue should be on github.
 
 
 ### Release 0.0.13
 
-PyPNG now installs "out of the box" on Python 3.  Thanks to
-simon.sapin@kozea.fr and nathan@dunfield.info for the patch.
+PyPNG now installs "out of the box" on Python 3.
+Thanks to simon.sapin@kozea.fr and nathan@dunfield.info for the patch.
 
 The following issues have been fixed:
 
@@ -136,8 +141,8 @@ The following issues have been fixed:
 
 ### Release 0.0.12
 
-PyPNG now works on Python 3 if you use the 2to3 tool.  Fix for
-converting grey images to RGBA.
+PyPNG now works on Python 3 if you use the `2to3` tool.
+Fix for converting grey images to RGBA.
 
 The following issues have been fixed:
 
@@ -147,9 +152,9 @@ The following issues have been fixed:
 
 ### Release 0.0.11
 
-Added the "How Fast is PyPNG" section to the documentation.  Changed it
-so that more PNG formats return their rows as Python array.array
-instances.
+Added the "How Fast is PyPNG" section to the documentation.
+Changed it so that more PNG formats return their rows as
+Python `array.array` instances.
 
 
 ### Release 0.0.10
@@ -166,8 +171,9 @@ The following issues have been fixed:
 Tentative fix for a deprecation warning on 64-bit Python 2.5 systems.
 Conversion tool for Plan 9 images.
 
-Issue 54 (below) is tentative.  The PyPNG developers have been unable to
-reproduce the error (as it seems to be on 64-bit Python 2.5 systems);
+Issue 54 (below) is tentative.
+The PyPNG developers have been unable to reproduce the error
+(as it seems to be on 64-bit Python 2.5 systems);
 any user reports would be most welcome.
 
 The following issues have been fixed:
@@ -178,9 +184,10 @@ The following issues have been fixed:
 
 ### Release 0.0.8
 
-Mostly more robust to dodgy input PNGs, as a result of testing with
-brokensuite.  One fixed bug was a critical: an infinite loop for a least
-one input (Issue 52 below).
+Mostly more robust to dodgy input PNGs,
+as a result of testing with `brokensuite`.
+One fixed bug was a critical:
+an infinite loop for a least one input (Issue 52 below).
 
 The following issues have been fixed:
 
@@ -209,8 +216,9 @@ The following issues have been fixed:
 
 ### Release 0.0.5
 
-sBIT chunks are now handled, meaning that PyPNG can handle any (single)
-bit depth from 1 to 16 from end to end.
+`sBIT` chunks are now handled,
+meaning that PyPNG can handle any (single) bit depth from 1 to 16
+from end to end.
 
 The following issues have been fixed:
 
@@ -219,8 +227,9 @@ The following issues have been fixed:
 
 ### Release 0.0.4
 
-PyPNG now works on Python 2.2 (significant for Symbian users as PyS60 is
-based on Python 2.2).  Not all features are supported on Python 2.2.
+PyPNG now works on Python 2.2
+(significant for Symbian users as PyS60 is based on Python 2.2).
+Not all features are supported on Python 2.2.
 
 The following issues have been fixed:
 
@@ -232,8 +241,8 @@ The following issues have been fixed:
 ### Release 0.0.3
 
 Handling PAM files allows end to end handling of alpha channels in
-workflows that involve both Netpbm formats and PNG.  PyPNG now works in
-Python 2.3.
+workflows that involve both Netpbm formats and PNG.
+PyPNG now works in Python 2.3.
 
 The following issues have been fixed:
 
