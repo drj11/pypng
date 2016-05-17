@@ -1958,7 +1958,7 @@ class Reader:
                 "Required PLTE chunk is missing in colour type 3 image.")
         plte = group(array('B', self.plte), 3)
         if self.trns or alpha == 'force':
-            trns = array('B', self.trns or '')
+            trns = array('B', self.trns or [])
             trns.extend([255]*(len(plte)-len(trns)))
             plte = list(map(operator.add, plte, group(trns, 1)))
         return plte

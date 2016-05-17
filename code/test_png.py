@@ -340,6 +340,13 @@ class Test(unittest.TestCase):
         again_pixels = [list(row) for row in again_pixels]
         self.assertEqual(again_pixels, pixels)
 
+    def testPaletteForcealpha(self):
+        """Test forcing alpha channel for palette"""
+        r = png.Reader(bytes=pngsuite.basn3p04)
+        r.preamble()
+        r.palette(alpha='force')
+
+
     def testPNMsbit(self):
         """Test that PNM files can generates sBIT chunk."""
         def do():
