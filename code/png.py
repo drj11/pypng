@@ -1135,18 +1135,18 @@ def from_array(a, mode=None, info={}):
 
     # Syntax check mode string.
     match = RegexModeDecode.match(mode)
-    if match is not None:
-        groups = match.groups()
-        mode = groups[0]
-        # alpha, indicated when 'A' is in mode.
-        alpha = groups[1] is not None
-        if alpha:
-            mode += groups[1]
-        bitdepth = groups[2]
-        if bitdepth:
-            bitdepth = int(bitdepth)
-    else:
+    if not match:
         raise Error("mode string should be 'RGB' or 'L;16' or similar.")
+
+    groups = match.groups()
+    mode = groups[0]
+    # alpha, indicated when 'A' is in mode.
+    alpha = groups[1] is not None
+    if alpha:
+        mode += groups[1]
+    bitdepth = groups[2]
+    if bitdepth:
+        bitdepth = int(bitdepth)
 
     # Colour format.
     if 'greyscale' in info:
