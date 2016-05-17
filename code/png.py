@@ -1138,13 +1138,10 @@ def from_array(a, mode=None, info={}):
     if not match:
         raise Error("mode string should be 'RGB' or 'L;16' or similar.")
 
-    groups = match.groups()
-    mode = groups[0]
-    # alpha, indicated when 'A' is in mode.
-    alpha = groups[1] is not None
+    mode, alpha, bitdepth = match.groups()
+    alpha = bool(alpha)
     if alpha:
-        mode += groups[1]
-    bitdepth = groups[2]
+        mode += 'A'
     if bitdepth:
         bitdepth = int(bitdepth)
 
