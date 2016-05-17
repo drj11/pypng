@@ -1150,9 +1150,9 @@ def from_array(a, mode=None, info={}):
 
     # Colour format.
     if 'greyscale' in info:
-        if bool(info['greyscale']) != ('L' == mode):
+        if bool(info['greyscale']) != ('L' in mode):
             raise Error("info['greyscale'] should match mode.")
-    info['greyscale'] = 'L' == mode
+    info['greyscale'] = 'L' in mode
 
     if 'alpha' in info:
         if bool(info['alpha']) != alpha:
