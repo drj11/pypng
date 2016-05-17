@@ -148,6 +148,7 @@ __version__ = "0.0.18"
 
 import itertools
 import math
+import re
 # http://www.python.org/doc/2.4.4/lib/module-operator.html
 import operator
 import struct
@@ -1048,6 +1049,9 @@ def filter_scanline(type, line, fo, prev=None):
     return out
 
 
+# Regex for decoding mode string
+RegexModeDecode = re.compile("(LA?|RGBA?);?([0-9]*)", flags=re.IGNORECASE)
+
 def from_array(a, mode=None, info={}):
     """Create a PNG :class:`Image` object from a 2- or 3-dimensional
     array.  One application of this function is easy PIL-style saving:
@@ -1130,45 +1134,38 @@ def from_array(a, mode=None, info={}):
     info = dict(info)
 
     # Syntax check mode string.
-    bitdepth = None
-    try:
-        # Assign the 'L' or 'RGBA' part to `gotmode`.
-        if mode.startswith('L'):
-            gotmode = 'L'
-            mode = mode[1:]
-        elif mode.startswith('RGB'):
-            gotmode = 'RGB'
-            mode = mode[3:]
-        else:
-            raise Error()
-        if mode.startswith('A'):
-            gotmode += 'A'
-            mode = mode[1:]
-
-        # Skip any optional ';'
-        while mode.startswith(';'):
-            mode = mode[1:]
-
-        # Parse optional bitdepth
-        if mode:
-            try:
-                bitdepth = int(mode)
-            except (TypeError, ValueError):
-                raise Error()
-    except Error:
+    match = RegexModeDecode.match(mode)
+    if not match:
         raise Error("mode string should be 'RGB' or 'L;16' or similar.")
-    mode = gotmode
+
+    mode, bitdepth = match.groups()
+    alpha = 'A' in mode
+    if bitdepth:
+        bitdepth = int(bitdepth)
+
+    # Colour format.
+    if 'greyscale' in info:
+        if bool(info['greyscale']) != ('L' in mode):
+            raise Error("info['greyscale'] should match mode.")
+    info['greyscale'] = 'L' in mode
+
+    if 'alpha' in info:
+        if bool(info['alpha']) != alpha:
+            raise Error("info['alpha'] should match mode.")
+    info['alpha'] = alpha
 
     # Get bitdepth from *mode* if possible.
     if bitdepth:
-        if info.get('bitdepth') and bitdepth != info['bitdepth']:
-            raise Error("mode bitdepth (%d) should match info bitdepth (%d)." %
+        if info.get("bitdepth") and bitdepth != info['bitdepth']:
+            raise Error("bitdepth (%d) should match bitdepth of info (%d)." %
               (bitdepth, info['bitdepth']))
         info['bitdepth'] = bitdepth
 
     # Fill in and/or check entries in *info*.
     # Dimensions.
     if 'size' in info:
+        assert len(info["size"]) == 2
+
         # Check width, height, size all match where used.
         for dimension,axis in [('width', 0), ('height', 1)]:
             if dimension in info:
@@ -1177,22 +1174,12 @@ def from_array(a, mode=None, info={}):
                       "info[%r] should match info['size'][%r]." %
                       (dimension, axis))
         info['width'],info['height'] = info['size']
+
     if 'height' not in info:
         try:
-            l = len(a)
+            info['height'] = len(a)
         except TypeError:
-            raise Error(
-              "len(a) does not work, supply info['height'] instead.")
-        info['height'] = l
-    # Colour format.
-    if 'greyscale' in info:
-        if bool(info['greyscale']) != ('L' in mode):
-            raise Error("info['greyscale'] should match mode.")
-    info['greyscale'] = 'L' in mode
-    if 'alpha' in info:
-        if bool(info['alpha']) != ('A' in mode):
-            raise Error("info['alpha'] should match mode.")
-    info['alpha'] = 'A' in mode
+            raise Error("len(a) does not work, supply info['height'] instead.")
 
     planes = len(mode)
     if 'planes' in info:
@@ -1244,8 +1231,9 @@ def from_array(a, mode=None, info={}):
                 bitdepth = 8 * dtype.itemsize
         info['bitdepth'] = bitdepth
 
-    for thing in 'width height bitdepth greyscale alpha'.split():
+    for thing in ["width", "height", "bitdepth", "greyscale", "alpha"]:
         assert thing in info
+
     return Image(a, info)
 
 # So that refugee's from PIL feel more at home.  Not documented.
