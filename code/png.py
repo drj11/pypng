@@ -186,9 +186,6 @@ _adam7 = ((0, 0, 8, 8),
           (1, 0, 2, 2),
           (0, 1, 1, 2))
 
-# Regex for decoding mode string
-RegexModeDecode = re.compile("(L|RGB)(A)?;?([0-9]*)", flags=re.IGNORECASE)
-
 def group(s, n):
     # See http://www.python.org/doc/2.6/library/functions.html#zip
     return list(zip(*[iter(s)]*n))
@@ -1052,6 +1049,9 @@ def filter_scanline(type, line, fo, prev=None):
     return out
 
 
+# Regex for decoding mode string
+RegexModeDecode = re.compile("(LA?|RGBA?);?([0-9]*)", flags=re.IGNORECASE)
+
 def from_array(a, mode=None, info={}):
     """Create a PNG :class:`Image` object from a 2- or 3-dimensional
     array.  One application of this function is easy PIL-style saving:
@@ -1138,10 +1138,8 @@ def from_array(a, mode=None, info={}):
     if not match:
         raise Error("mode string should be 'RGB' or 'L;16' or similar.")
 
-    mode, alpha, bitdepth = match.groups()
-    alpha = bool(alpha)
-    if alpha:
-        mode += 'A'
+    mode, bitdepth = match.groups()
+    alpha = 'A' in mode
     if bitdepth:
         bitdepth = int(bitdepth)
 
