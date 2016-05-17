@@ -533,6 +533,10 @@ class Test(unittest.TestCase):
         assert 0, "Expected from_array() to raise png.Error exception"
     def testfromarrayShortMode(self):
         png.from_array([[0,1],[2,3]], 'L2').save(BytesIO())
+    def testFromarrayLA(self):
+        png.from_array([[3,1],[0,3]], 'LA2',
+          info=dict(greyscale=True)).save(BytesIO())
+
 
     # numpy dependent tests.  When numpy is not installed these
     # tests are not defined and so fewer tests are run.
