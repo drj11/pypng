@@ -535,41 +535,46 @@ class Test(unittest.TestCase):
         png.from_array([[0,1],[2,3]], 'L2').save(BytesIO())
 
     # numpy dependent tests.
-    @unittest.skipUnless(numpy, "numpy is not available")
     def testNumpyuint16(self):
         """numpy uint16."""
+
+        numpy or self.skipTest("numpy is not available")
 
         rows = [map(numpy.uint16, range(0,0x10000,0x5555))]
         b = topngbytes('numpyuint16.png', rows, 4, 1,
             greyscale=True, alpha=False, bitdepth=16)
 
-    @unittest.skipUnless(numpy, "numpy is not available")
     def testNumpyuint8(self):
         """numpy uint8."""
+
+        numpy or self.skipTest("numpy is not available")
 
         rows = [map(numpy.uint8, range(0,0x100,0x55))]
         b = topngbytes('numpyuint8.png', rows, 4, 1,
             greyscale=True, alpha=False, bitdepth=8)
 
-    @unittest.skipUnless(numpy, "numpy is not available")
     def testNumpybool(self):
         """numpy bool."""
+
+        numpy or self.skipTest("numpy is not available")
 
         rows = [map(numpy.bool, [0,1])]
         b = topngbytes('numpybool.png', rows, 2, 1,
             greyscale=True, alpha=False, bitdepth=1)
 
-    @unittest.skipUnless(numpy, "numpy is not available")
     def testNumpyarray(self):
         """numpy array."""
+
+        numpy or self.skipTest("numpy is not available")
 
         pixels = numpy.array([[0,0x5555],[0x5555,0xaaaa]], numpy.uint16)
         img = png.from_array(pixels, 'L')
         img.save(BytesIO())
 
-    @unittest.skipUnless(numpy, "numpy is not available")
     def testNumpyPalette(self):
         """numpy palette."""
+
+        numpy or self.skipTest("numpy is not available")
 
         s = ['110010010011',
              '101011010100',
