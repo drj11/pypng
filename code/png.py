@@ -1142,7 +1142,7 @@ def from_array(a, mode=None, info={}):
         mode += grps[1] if alpha else ""
         bitdepth = int(grps[2]) if grps[2] != "" else None
     else:
-        raise Error()
+        raise Error("mode string should be 'RGB' or 'L;16' or similar.")
 
     # Colour format.
     if 'greyscale' in info:
