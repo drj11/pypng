@@ -3,5 +3,4 @@
 # http://www.python.org/doc/2.4.4/dist/sdist-cmd.html
 graft code
 graft man
-graft html
-global-exclude *.pyc *.DS_Store
+global-exclude *.pyc
