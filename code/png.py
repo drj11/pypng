@@ -1461,67 +1461,6 @@ class Reader:
         if not previous:
             previous = array('B', [0]*len(scanline))
 
-        def sub():
-            """Undo sub filter."""
-
-            ai = 0
-            # Loop starts at index fu.  Observe that the initial part
-            # of the result is already filled in correctly with
-            # scanline.
-            for i in range(fu, len(result)):
-                x = scanline[i]
-                a = result[ai]
-                result[i] = (x + a) & 0xff
-                ai += 1
-
-        def up():
-            """Undo up filter."""
-
-            for i in range(len(result)):
-                x = scanline[i]
-                b = previous[i]
-                result[i] = (x + b) & 0xff
-
-        def average():
-            """Undo average filter."""
-
-            ai = -fu
-            for i in range(len(result)):
-                x = scanline[i]
-                if ai < 0:
-                    a = 0
-                else:
-                    a = result[ai]
-                b = previous[i]
-                result[i] = (x + ((a + b) >> 1)) & 0xff
-                ai += 1
-
-        def paeth():
-            """Undo Paeth filter."""
-
-            # Also used for ci.
-            ai = -fu
-            for i in range(len(result)):
-                x = scanline[i]
-                if ai < 0:
-                    a = c = 0
-                else:
-                    a = result[ai]
-                    c = previous[ai]
-                b = previous[i]
-                p = a + b - c
-                pa = abs(p - a)
-                pb = abs(p - b)
-                pc = abs(p - c)
-                if pa <= pb and pa <= pc:
-                    pr = a
-                elif pb <= pc:
-                    pr = b
-                else:
-                    pr = c
-                result[i] = (x + pr) & 0xff
-                ai += 1
-
         # Call appropriate filter algorithm.  Note that 0 has already
         # been dealt with.
         (None,
