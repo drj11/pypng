@@ -120,7 +120,10 @@ Ignored when reading.  Not generated.
 ``pHYs``
 ^^^^^^^^
 
-Ignored when reading.  Not generated.
+When a PNG image is read, a ``pHYs`` chunk will add the ``phys`` key to
+the ``info`` dictionary. When writing a PNG image, a ``pHYs`` chunk will
+be generated if ``x_pixels_per_unit`` and ``y_pixels_per_unit`` is not ``None``
+(default: ``None``).
 
 ``sPLT``
 ^^^^^^^^

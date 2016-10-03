@@ -1965,6 +1965,10 @@ class Reader:
             a = getattr(self, attr, None)
             if a is not None:
                 meta[attr] = a
+        if getattr(self, 'x_pixels_per_unit', None):
+            meta['physical'] = {'x': self.x_pixels_per_unit,
+                                'y': self.y_pixels_per_unit,
+                                'unit_is_meter': self.unit_is_meter}
         if self.plte:
             meta['palette'] = self.palette()
         return self.width, self.height, pixels, meta
