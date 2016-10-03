@@ -738,7 +738,7 @@ class Test(unittest.TestCase):
         height = width
         out = BytesIO()
         # = Check if pHYs chunk is omitted by default
-        writer = png.Writer(width=width, height=height)
+        writer = png.Writer(width=width, height=height, greyscale=True)
         writer.write(out, pixels)
         out.seek(0)
         self.assert_(b'pHYs' not in out.getvalue())
@@ -749,8 +749,8 @@ class Test(unittest.TestCase):
         self.assert_(not hasattr(reader, 'x_pixels_per_unit'))
         # = Check if pHYs chunk is generated
         out = BytesIO()
-        writer = png.Writer(width=width, height=height, x_pixels_per_unit=2,
-                            y_pixels_per_unit=1, unit_is_meter=True)
+        writer = png.Writer(width=width, height=height, greyscale=True,
+                            x_pixels_per_unit=2, y_pixels_per_unit=1, unit_is_meter=True)
         writer.write(out, pixels)
         out.seek(0)
         reader = png.Reader(file=out)
@@ -763,8 +763,8 @@ class Test(unittest.TestCase):
         self.assertEqual(expected_dict, meta['physical'])
         # = 2nd check
         out = BytesIO()
-        writer = png.Writer(width=width, height=height, x_pixels_per_unit=2,
-                            y_pixels_per_unit=1, unit_is_meter=False)
+        writer = png.Writer(width=width, height=height, greyscale=True,
+                            x_pixels_per_unit=2, y_pixels_per_unit=1, unit_is_meter=False)
         writer.write(out, pixels)
         out.seek(0)
         reader = png.Reader(file=out)
