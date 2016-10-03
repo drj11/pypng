@@ -675,6 +675,56 @@ class Test(unittest.TestCase):
         out = reader.undo_filter(4, scanline, scanprev)
         self.assertEqual(list(out), [8, 10, 9, 108, 111, 113])  # paeth
 
+    def test_phys(self):
+        """\
+        Check if pHYs chunk is written
+        """
+        pixels = [[0] * 3] * 3
+        width = len(pixels)
+        height = width
+        out = BytesIO()
+        # = Check if pHYs chunk is omitted by default
+        writer = png.Writer(width=width, height=height)
+        writer.write(out, pixels)
+        out.seek(0)
+        self.assert_(b'pHYs' not in out.getvalue())
+        out.seek(0)
+        reader = png.Reader(file=out)
+        w, h, _, meta = reader.read()
+        self.assert_('physical' not in meta)
+        self.assert_(not hasattr(reader, 'x_pixels_per_unit'))
+        # = Check if pHYs chunk is generated
+        out = BytesIO()
+        writer = png.Writer(width=width, height=height, x_pixels_per_unit=2,
+                            y_pixels_per_unit=1, unit_is_meter=True)
+        writer.write(out, pixels)
+        out.seek(0)
+        reader = png.Reader(file=out)
+        w, h, _, meta = reader.read()
+        self.assert_('physical' in meta)
+        self.assertEqual(2, reader.x_pixels_per_unit)
+        self.assertEqual(1, reader.y_pixels_per_unit)
+        self.assert_(reader.unit_is_meter)
+        expected_dict = {'x': 2, 'y': 1, 'unit_is_meter': True}
+        self.assertEqual(expected_dict, meta['physical'])
+        # = 2nd check
+        out = BytesIO()
+        writer = png.Writer(width=width, height=height, x_pixels_per_unit=2,
+                            y_pixels_per_unit=1, unit_is_meter=False)
+        writer.write(out, pixels)
+        out.seek(0)
+        reader = png.Reader(file=out)
+        w, h, _, meta = reader.read()
+        self.assert_('physical' in meta)
+        self.assertEqual(2, reader.x_pixels_per_unit)
+        self.assertEqual(1, reader.y_pixels_per_unit)
+        self.assert_(not reader.unit_is_meter)
+        expected_dict = {'x': 2, 'y': 1, 'unit_is_meter': False}
+        self.assertEqual(expected_dict, meta['physical'])
+
+
+
+
     def testModifyRows(self):
         # Tests that the rows yielded by the pixels generator
         # can be safely modified.
