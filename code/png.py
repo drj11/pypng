@@ -156,7 +156,7 @@ import sys
 # http://www.python.org/doc/2.4.4/lib/module-warnings.html
 import warnings
 import zlib
-
+import collections
 from array import array
 from functools import reduce
 
@@ -185,6 +185,10 @@ _adam7 = ((0, 0, 8, 8),
           (0, 2, 2, 4),
           (1, 0, 2, 2),
           (0, 1, 1, 2))
+
+# Holds information about the 'pHYs' chunk (used by the Reader, only)
+_Resolution = collections.namedtuple('_Resolution', 'x y unit_is_meter')
+
 
 def group(s, n):
     # See http://www.python.org/doc/2.6/library/functions.html#zip
@@ -1918,9 +1922,9 @@ class Reader:
             if a is not None:
                 meta[attr] = a
         if getattr(self, 'x_pixels_per_unit', None):
-            meta['physical'] = {'x': self.x_pixels_per_unit,
-                                'y': self.y_pixels_per_unit,
-                                'unit_is_meter': self.unit_is_meter}
+            meta['physical'] = _Resolution(self.x_pixels_per_unit,
+                                           self.y_pixels_per_unit,
+                                           self.unit_is_meter)
         if self.plte:
             meta['palette'] = self.palette()
         return self.width, self.height, pixels, meta
