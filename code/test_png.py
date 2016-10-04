@@ -759,8 +759,12 @@ class Test(unittest.TestCase):
         self.assertEqual(2, reader.x_pixels_per_unit)
         self.assertEqual(1, reader.y_pixels_per_unit)
         self.assert_(reader.unit_is_meter)
-        expected_dict = {'x': 2, 'y': 1, 'unit_is_meter': True}
-        self.assertEqual(expected_dict, meta['physical'])
+        expected = (2, 1, True)
+        self.assertEqual(expected, meta['physical'])
+        res = meta['physical']
+        self.assertEqual(2, res.x)
+        self.assertEqual(1, res.y)
+        self.assert_(res.unit_is_meter)
         # = 2nd check
         out = BytesIO()
         writer = png.Writer(width=width, height=height, greyscale=True,
@@ -773,8 +777,12 @@ class Test(unittest.TestCase):
         self.assertEqual(2, reader.x_pixels_per_unit)
         self.assertEqual(1, reader.y_pixels_per_unit)
         self.assert_(not reader.unit_is_meter)
-        expected_dict = {'x': 2, 'y': 1, 'unit_is_meter': False}
-        self.assertEqual(expected_dict, meta['physical'])
+        expected = (2, 1, False)
+        self.assertEqual(expected, meta['physical'])
+        res = meta['physical']
+        self.assertEqual(2, res.x)
+        self.assertEqual(1, res.y)
+        self.assertFalse(res.unit_is_meter)
 
     def testModifyRows(self):
         # Tests that the rows yielded by the pixels generator
