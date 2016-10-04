@@ -776,9 +776,6 @@ class Test(unittest.TestCase):
         expected_dict = {'x': 2, 'y': 1, 'unit_is_meter': False}
         self.assertEqual(expected_dict, meta['physical'])
 
-
-
-
     def testModifyRows(self):
         # Tests that the rows yielded by the pixels generator
         # can be safely modified.
