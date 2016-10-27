@@ -545,6 +545,8 @@ class Writer:
         if bitdepth > 8 and palette:
             raise ValueError(
                 "bit depth must be 8 or less for images with palette")
+        if bitdepth == 1:
+            greyscale = Tru
 
         transparent = check_color(transparent, greyscale, 'transparent')
         background = check_color(background, greyscale, 'background')
