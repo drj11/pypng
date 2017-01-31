@@ -5,3 +5,4 @@ graft code
 graft man
 graft html
 global-exclude *.pyc *.DS_Store
+include LICENCE
