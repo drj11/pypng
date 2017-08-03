@@ -33,6 +33,10 @@ It requires either Python 2.6 or Python 3.4 or
 any compatible higher version.
 The same code runs in both Python 2.x and Python 3.x.
 
+To install PyPNG package via pip use:
+
+    pip install pypng
+
 PyPNG comes with a `setup.py` script to use with `distutils`.
 After unpacking the distribution,
 `cd` into the directory and execute the command:
