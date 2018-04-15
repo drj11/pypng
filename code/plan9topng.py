@@ -116,7 +116,7 @@ def png(out, metadata, f):
 def spam():
   """Not really spam, but old PAM code, which is in limbo."""
 
-  if nchans == 3 or nchans == 1 :
+  if nchans in (3, 1):
     # PGM (P5) or PPM (P6) format.
     output.write('P%d\n%d %d %d\n' % (5+(nchans==3), width, rows, maxval))
   else :
