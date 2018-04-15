@@ -28,6 +28,7 @@
 # [ICC 2004] ICC Specification ICC.1:2004-10 (Profile version 4.2.0.0)
 
 import struct
+import warnings
 
 import png
 
