@@ -243,16 +243,18 @@ def check_palette(palette):
     for i,t in enumerate(p):
         if len(t) not in (3,4):
             raise ValueError(
-              "palette entry %d: entries must be 3- or 4-tuples." % i)
+                "palette entry %d: entries must be 3- or 4-tuples." % i)
         if len(t) == 3:
             seen_triple = True
         if seen_triple and len(t) == 4:
             raise ValueError(
-              "palette entry %d: all 4-tuples must precede all 3-tuples" % i)
+                "palette entry %d: "
+                "all 4-tuples must precede all 3-tuples" % i)
         for x in t:
             if int(x) != x or not(0 <= x <= 255):
                 raise ValueError(
-                  "palette entry %d: values must be integer: 0 <= x <= 255" % i)
+                    "palette entry %d: "
+                    "values must be integer: 0 <= x <= 255" % i)
     return p
 
 def check_sizes(size, width, height):
@@ -265,15 +267,15 @@ def check_sizes(size, width, height):
 
     if len(size) != 2:
         raise ValueError(
-          "size argument should be a pair (width, height)")
+            "size argument should be a pair (width, height)")
     if width is not None and width != size[0]:
         raise ValueError(
-          "size[0] (%r) and width (%r) should match when both are used."
-            % (size[0], width))
+            "size[0] (%r) and width (%r) should match when both are used."
+              % (size[0], width))
     if height is not None and height != size[1]:
         raise ValueError(
-          "size[1] (%r) and height (%r) should match when both are used."
-            % (size[1], height))
+            "size[1] (%r) and height (%r) should match when both are used."
+              % (size[1], height))
     return size
 
 def check_color(c, greyscale, which):
@@ -541,7 +543,7 @@ class Writer:
 
         if bitdepth < 8 and (alpha or not greyscale and not palette):
             raise ValueError(
-              "bitdepth < 8 only permitted with greyscale or palette")
+                "bitdepth < 8 only permitted with greyscale or palette")
         if bitdepth > 8 and palette:
             raise ValueError(
                 "bit depth must be 8 or less for images with palette")
@@ -620,8 +622,8 @@ class Writer:
         nrows = self.write_passes(outfile, rows)
         if nrows != self.height:
             raise ValueError(
-              "rows supplied (%d) does not match height (%d)" %
-              (nrows, self.height))
+                "rows supplied (%d) does not match height (%d)" %
+                (nrows, self.height))
 
     def write_passes(self, outfile, rows, packed=False):
         """
@@ -1171,8 +1173,8 @@ def from_array(a, mode=None, info={}):
             if dimension in info:
                 if info[dimension] != info['size'][axis]:
                     raise Error(
-                      "info[%r] should match info['size'][%r]." %
-                      (dimension, axis))
+                        "info[%r] should match info['size'][%r]." %
+                        (dimension, axis))
         info['width'],info['height'] = info['size']
 
     if 'height' not in info:
@@ -1662,8 +1664,7 @@ class Reader:
             # :file:format We get here with a file format error:
             # when the available bytes (after decompressing) do not
             # pack into exact rows.
-            raise FormatError(
-              'Wrong size for decompressed IDAT chunk.')
+            raise FormatError('Wrong size for decompressed IDAT chunk.')
         assert len(a) == 0
 
     def validate_signature(self):
@@ -1694,8 +1695,7 @@ class Reader:
             if not self.atchunk:
                 self.atchunk = self.chunklentype()
                 if self.atchunk is None:
-                    raise FormatError(
-                      'This PNG file has no IDAT chunks.')
+                    raise FormatError('This PNG file has no IDAT chunks.')
             if self.atchunk[1] == b'IDAT':
                 return
             self.process_chunk(lenient=lenient)
@@ -1712,7 +1712,7 @@ class Reader:
             return None
         if len(x) != 8:
             raise FormatError(
-              'End of file whilst reading chunk length and type.')
+                'End of file whilst reading chunk length and type.')
         length,type = struct.unpack('!I4s', x)
         if length > 2**31-1:
             raise FormatError('Chunk %s is too large: %d.' % (type,length))
@@ -1787,7 +1787,7 @@ class Reader:
         self.plte = data
         if len(data) % 3 != 0:
             raise FormatError(
-              "PLTE chunk's length should be a multiple of 3.")
+                "PLTE chunk's length should be a multiple of 3.")
         if len(data) > (2**self.bitdepth)*3:
             raise FormatError("PLTE chunk is too long.")
         if len(data) == 0:
@@ -1798,7 +1798,7 @@ class Reader:
             if self.colormap:
                 if not self.plte:
                     warnings.warn(
-                      "PLTE chunk is required before bKGD chunk.")
+                        "PLTE chunk is required before bKGD chunk.")
                 self.background = struct.unpack('B', data)
             else:
                 self.background = struct.unpack("!%dH" % self.color_planes,
@@ -1820,8 +1820,8 @@ class Reader:
         else:
             if self.alpha:
                 raise FormatError(
-                  "tRNS chunk is not valid with colour type %d." %
-                  self.color_type)
+                    "tRNS chunk is not valid with colour type %d." %
+                    self.color_type)
             try:
                 self.transparent = \
                     struct.unpack("!%dH" % self.color_planes, data)
@@ -2223,10 +2223,10 @@ def check_bitdepth_colortype(bitdepth, colortype):
     # fewer than 8 bits per pixel.
     if colortype & 1 and bitdepth > 8:
         raise FormatError(
-          "Indexed images (colour type %d) cannot"
-          " have bitdepth > 8 (bit depth %d)."
-          " See http://www.w3.org/TR/2003/REC-PNG-20031110/#table111 ."
-          % (bitdepth, colortype))
+            "Indexed images (colour type %d) cannot"
+            " have bitdepth > 8 (bit depth %d)."
+            " See http://www.w3.org/TR/2003/REC-PNG-20031110/#table111 ."
+            % (bitdepth, colortype))
     if bitdepth < 8 and colortype not in (0,3):
         raise FormatError("Illegal combination of bit depth (%d)"
           " and colour type (%d)."
@@ -2374,7 +2374,7 @@ def read_pam_header(infile):
         depth <= 0 or
         maxval <= 0):
         raise Error(
-          'WIDTH, HEIGHT, DEPTH, MAXVAL must all be positive integers')
+            'WIDTH, HEIGHT, DEPTH, MAXVAL must all be positive integers')
     return 'P7', width, height, depth, maxval
 
 def read_pnm_header(infile, supported=(b'P5', b'P6')):
@@ -2588,7 +2588,7 @@ def _main(argv):
     else:
         # Encode PNM to PNG
         format, width, height, depth, maxval = \
-          read_pnm_header(infile, (b'P5',b'P6',b'P7'))
+            read_pnm_header(infile, (b'P5',b'P6',b'P7'))
         # When it comes to the variety of input formats, we do something
         # rather rude.  Observe that L, LA, RGB, RGBA are the 4 colour
         # types supported by PNG and that they correspond to 1, 2, 3, 4
@@ -2602,8 +2602,8 @@ def _main(argv):
             mi = supported.index(maxval)
         except ValueError:
             raise NotImplementedError(
-              'your maxval (%s) not in supported list %s' %
-              (maxval, str(supported)))
+                'your maxval (%s) not in supported list %s' %
+                (maxval, str(supported)))
         bitdepth = mi+1
         writer = Writer(width, height,
                         greyscale=greyscale,
@@ -2620,7 +2620,7 @@ def _main(argv):
               read_pnm_header(pgmfile, 'P5')
             if amaxval != '255':
                 raise NotImplementedError(
-                  'maxval %s not supported for alpha channel' % amaxval)
+                    'maxval %s not supported for alpha channel' % amaxval)
             if (awidth, aheight) != (width, height):
                 raise ValueError("alpha channel image size mismatch"
                                  " (%s has %sx%s but %s has %sx%s)"
