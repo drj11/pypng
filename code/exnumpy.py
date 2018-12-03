@@ -65,7 +65,7 @@ image_2d = numpy.vstack(itertools.imap(numpy.uint16, pngdata))
 # An alternative to the above is to create the target array of the right
 # shape, then populate it row by row:
 if 0:
-    image_2d = numpy.zeros((row_count,plane_count*column_count),
+    image_2d = numpy.zeros((row_count, plane_count * column_count),
                            dtype=numpy.uint16)
     for row_index, one_boxed_row_flat_pixels in enumerate(pngdata):
         image_2d[row_index,:]=one_boxed_row_flat_pixels
@@ -121,7 +121,8 @@ try:
     # See http://code.google.com/p/pypng/issues/detail?id=44
 # --- extract 003 start
     pngWriter.write(pngfile,
-                    numpy.reshape(image_3d, (-1, column_count*plane_count)))
+                    numpy.reshape(image_3d,
+                                  (-1, column_count * plane_count)))
 # --- extract 003 end
 finally:
     pngfile.close()
