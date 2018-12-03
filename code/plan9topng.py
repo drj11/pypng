@@ -113,21 +113,6 @@ def png(out, metadata, f):
     p = png.Writer(**meta)
     p.write(out, pixels)
 
-def spam():
-  """Not really spam, but old PAM code, which is in limbo."""
-
-  if nchans == 3 or nchans == 1 :
-    # PGM (P5) or PPM (P6) format.
-    output.write('P%d\n%d %d %d\n' % (5+(nchans==3), width, rows, maxval))
-  else :
-    # PAM format.
-    output.write("""P7
-WIDTH %d
-HEIGHT %d
-DEPTH %d
-MAXVAL %d
-""" % (width, rows, nchans, maxval))
-
 def unpack(f, rows, width, pixel, maxval) :
   """Unpack `f` into pixels.  Assumes the pixel format is such that the depth
   is either a multiple or a divisor of 8.
