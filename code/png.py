@@ -1272,10 +1272,12 @@ class Image:
 
         try:
             file.write
-            def close(): pass
+            def close():
+                pass
         except AttributeError:
             file = open(file, 'wb')
-            def close(): file.close()
+            def close():
+                file.close()
 
         try:
             w.write(file, self.rows)
