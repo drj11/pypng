@@ -82,7 +82,7 @@ class Profile:
         d['ntags'] = ntags
         fmt = '4s2L' * ntags
         # tag table
-        tt = struct.unpack('>' + fmt, profile[132:132+12*ntags])
+        tt = struct.unpack('>' + fmt, profile[132: 132 + 12 * ntags])
         tt = group(tt, 3)
 
         # Could (should) detect 2 or more tags having the same sig.  But
@@ -90,7 +90,7 @@ class Profile:
         # the ICC spec.
         
         # Convert (sig,offset,size) triples into (sig,value) pairs.
-        rawtag = map(lambda x: (x[0], profile[x[1]:x[1]+x[2]]), tt)
+        rawtag = map(lambda x: (x[0], profile[x[1]: x[1] + x[2]]), tt)
         self.rawtagtable = rawtag
         self.rawtagdict = dict(rawtag)
         tag = dict()
@@ -234,14 +234,14 @@ def encodefuns():
             return struct.pack('>L', 0)
         try:
             if float(f) == f:
-                return struct.pack('>LH', 1, int(round(f*2**8)))
+                return struct.pack('>LH', 1, int(round(f * 2 ** 8)))
         except (TypeError, ValueError):
             pass
         assert n >= 2
         table = []
-        M = float(n-1)
+        M = float(n - 1)
         for i in range(n):
-            x = i/M
+            x = i / M
             table.append(int(round(f(x) * 65535)))
         return struct.pack('>L%dH' % n, n, *table)
 
@@ -315,8 +315,8 @@ def encode(tsig, *l):
         raise "No encoder for type %r." % tsig
     v = fun[tsig](*l)
     # Padd tsig out with spaces.
-    tsig = (tsig + '   ')[:4]
-    return tsig + '\x00'*4 + v
+    tsig = (tsig + '   ')[: 4]
+    return tsig + ('\x00' * 4) + v
 
 def tagblock(tag):
     """`tag` should be a list of (*signature*, *element*) pairs, where
@@ -328,7 +328,7 @@ def tagblock(tag):
     """
 
     n = len(tag)
-    tablelen = 12*n
+    tablelen = 12 * n
 
     # Build the tag table in two parts.  A list of 12-byte tags, and a
     # string of element data.  Offset is the offset from the start of
@@ -352,15 +352,17 @@ def iccp(out, inp):
     print >>out, profile.tag
 
 def profileFromPNG(inp):
-    """Extract profile from PNG file.  Return (*profile*, *name*)
-    pair."""
+    """
+    Extract profile from PNG file.  Return (*profile*, *name*)
+    pair.
+    """
     r = png.Reader(file=inp)
     _,chunk = r.chunk('iCCP')
     i = chunk.index('\x00')
-    name = chunk[:i]
-    compression = chunk[i+1]
+    name = chunk[: i]
+    compression = chunk[i + 1]
     assert compression == chr(0)
-    profile = chunk[i+2:].decode('zlib')
+    profile = chunk[i + 2:].decode('zlib')
     return profile, name
 
 def iccpout(out, inp):
@@ -408,7 +410,7 @@ def s15f16l(s):
     """Convert sequence of ICC s15Fixed16 to list of float."""
     # Note: As long as float has at least 32 bits of mantissa, all
     # values are preserved.
-    n = len(s)//4
+    n = len(s) // 4
     t = struct.unpack('>%dl' % n, s)
     return map((2**-16).__mul__, t)
 
@@ -462,8 +464,8 @@ def RDmluc(s):
     assert sz == 12
     record = []
     for i in range(n):
-        lc,l,o = struct.unpack('4s2L', s[16+12*n:28+12*n])
-        record.append(lc, s[o:o+l])
+        lc,l,o = struct.unpack('4s2L', s[16 + 12 * n: 28 + 12 * n])
+        record.append(lc, s[o: o + l])
     # How are strings encoded?
     return record
 
@@ -484,7 +486,7 @@ def RDcurv(s):
         return dict(gamma=1)
     table = struct.unpack('>%dH' % count, s[12:])
     if count == 1:
-        return dict(gamma=table[0]*2**-8)
+        return dict(gamma=table[0] * 2 ** -8)
     return table
 
 def RDvcgt(s):
@@ -504,7 +506,7 @@ def RDvcgt(s):
             fmt = 'H'
         else:
             return s[8:]
-        l = len(s[18:])//size
+        l = len(s[18:]) // size
         t = struct.unpack('>%d%s' % (l, fmt), s[18:])
         t = group(t, count)
         return size, t
@@ -512,9 +514,8 @@ def RDvcgt(s):
 
 
 def group(s, n):
-    # See
-    # http://www.python.org/doc/2.6/library/functions.html#zip
-    return zip(*[iter(s)]*n)
+    # See http://www.python.org/doc/2.6/library/functions.html#zip
+    return zip(* [iter(s)] * n)
 
 
 def main(argv=None):
