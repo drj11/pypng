@@ -112,7 +112,7 @@ class Profile:
         """
 
         self.d.update(dict(profileclass='scnr',
-          colourspace='GRAY', pcs='XYZ '))
+                           colourspace='GRAY', pcs='XYZ '))
         return self
 
     def maybeAddDefaults(self):
