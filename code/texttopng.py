@@ -120,7 +120,7 @@ def char(i):
 
     i = ord(i)
     if i not in font:
-        return [(0,)]*8
+        return [(0,)] * 8
     return [(ord(row),) for row in font[i].decode('hex')]
 
 def texttoraster(m):
@@ -149,7 +149,7 @@ def linetoraster(m):
     """
 
     # Assumes monospaced font.
-    x = 8*len(m)
+    x = 8 * len(m)
     y = 8
     return x,y,[itertools.chain(*row) for row in
                               zip(*map(char, m))]
