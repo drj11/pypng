@@ -2,6 +2,8 @@
 
 # PngSuite Test PNGs.
 
+import sys
+
 """After you import this module with "import pngsuite" use
 ``pngsuite.bai0g01`` to get the bytes for a particular PNG image, or
 use ``pngsuite.png`` to get a dict() of them all.
@@ -546,5 +548,4 @@ acf0c6211c036f14a239703741740adc7da227edd7e56b833d0ae92549b4d357
 """),
 }
 
-import sys
 sys.modules[__name__].__dict__.update(png)
