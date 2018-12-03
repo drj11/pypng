@@ -732,8 +732,8 @@ class Writer:
                 a.extend([0] * int(extra))
                 # Pack into bytes
                 l = group(a, spb)
-                l = [reduce(lambda x,y:
-                                           (x << self.bitdepth) + y, e) for e in l]
+                l = [reduce(lambda x,y: (x << self.bitdepth) + y, e)
+                     for e in l]
                 data.extend(l)
         if self.rescale:
             oldextend = extend
@@ -2621,7 +2621,7 @@ def _main(argv):
         if options.alpha:
             pgmfile = open(options.alpha, 'rb')
             format, awidth, aheight, adepth, amaxval = \
-              read_pnm_header(pgmfile, 'P5')
+                read_pnm_header(pgmfile, 'P5')
             if amaxval != '255':
                 raise NotImplementedError(
                     'maxval %s not supported for alpha channel' % amaxval)
