@@ -23,7 +23,7 @@ class Error(Exception):
 
 def block(s, n):
     # See http://www.python.org/doc/2.6.2/library/functions.html#zip
-    return zip(*[iter(s)]*n)
+    return zip(* [iter(s)] * n)
 
 def convert(f, output=sys.stdout):
     """Convert Plan 9 file to PNG format.  Works with either uncompressed
@@ -42,7 +42,7 @@ def glue(f, r):
     the metadata that has already been read from the stream `f`.
     """
 
-    r = r + f.read(60-len(r))
+    r = r + f.read(60 - len(r))
     return (r, f)
 
 def meta(r):
@@ -74,7 +74,7 @@ def maxvalof(pixel):
     """Return the netpbm MAXVAL for a Plan9 pixel format string."""
 
     bitdepth = bitdepthof(pixel)
-    return (2**bitdepth)-1
+    return (2 ** bitdepth) - 1
 
 def pixmeta(metadata, f):
     """Convert (uncompressed) Plan 9 image file to pair of (*metadata*,
@@ -125,7 +125,7 @@ def unpack(f, rows, width, pixel, maxval):
     def mask(w):
         """An integer, to be used as a mask, with bottom `w` bits set to 1."""
 
-        return (1 << w)-1
+        return (1 << w) - 1
 
     def deblock(f, depth, width):
         """A "packer" used to convert multiple bytes into single pixels.
@@ -136,8 +136,8 @@ def unpack(f, rows, width, pixel, maxval):
         w = depth // 8
         i = 0
         for block in f:
-            for i in range(len(block)//w):
-                p = block[w*i:w*(i+1)]
+            for i in range(len(block) // w):
+                p = block[w * i: w * (i + 1)]
                 i += w
                 # Convert p to little-endian integer, x
                 x = 0
@@ -156,13 +156,14 @@ def unpack(f, rows, width, pixel, maxval):
             col = 0
             for i in block:
                 x = ord(i)
-                for j in range(8/depth):
+                for j in range(8 / depth):
                     yield x >> (8 - depth)
                     col += 1
                     if col == width:
-                        # A row-end forces a new byte even if we haven't consumed
-                        # all of the current byte.  Effectively rows are bit-padded
-                        # to make a whole number of bytes.
+                        # A row-end forces a new byte even if
+                        # we haven't consumed all of the current byte.
+                        # Effectively rows are bit-padded to make
+                        # a whole number of bytes.
                         col = 0
                         break
                     x <<= depth
@@ -196,7 +197,7 @@ def unpack(f, rows, width, pixel, maxval):
             if type[j] != 'x':
                 # scale to maxval
                 v = v * float(maxval) / mask(chan[j])
-                v = int(v+0.5)
+                v = int(v + 0.5)
                 o.append(v)
         yield o
 
@@ -243,7 +244,7 @@ def deblock(f):
         i += 1
         if x & 0x80:
             x = (x & 0x7f) + 1
-            lit = d[i:i+x]
+            lit = d[i: i + x]
             i += x
             o.extend(lit)
             continue
@@ -266,7 +267,7 @@ def deblock(f):
         if offset < 0:
             raise Error('byte offset indexes off the begininning of the output buffer; not a Plan 9 image file?')
         for j in range(l):
-            o.append(o[offset+j])
+            o.append(o[offset + j])
     return row,''.join(o)
 
 def main(argv=None):
