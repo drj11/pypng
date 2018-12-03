@@ -98,7 +98,7 @@ def mycallersname():
     if not frame:
         return None
     frame_,filename_,lineno_,funname,linelist_,listi_ = (
-      inspect.getouterframes(frame)[2])
+        inspect.getouterframes(frame)[2])
     return funname
 
 def seqtobytes(s):
