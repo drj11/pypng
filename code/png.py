@@ -292,8 +292,7 @@ def check_color(c, greyscale, which):
         except TypeError:
             c = (c,)
         if len(c) != 1:
-            raise ValueError("%s for greyscale must be 1-tuple" %
-                which)
+            raise ValueError("%s for greyscale must be 1-tuple" % which)
         if not isinteger(c[0]):
             raise ValueError(
                 "%s colour for greyscale must be integer" % which)
@@ -504,8 +503,9 @@ class Writer:
             bitdepth = int(8 * bytes_per_sample)
         del bytes_per_sample
         if not isinteger(bitdepth) or bitdepth < 1 or 16 < bitdepth:
-            raise ValueError("bitdepth (%r) must be a positive integer <= 16" %
-              bitdepth)
+            raise ValueError(
+                "bitdepth (%r) must be a positive integer <= 16" %
+                bitdepth)
 
         self.rescale = None
         palette = check_palette(palette)
@@ -662,7 +662,8 @@ class Writer:
         # See :chunk:order
         # http://www.w3.org/TR/PNG/#11sBIT
         if self.rescale:
-            write_chunk(outfile, b'sBIT',
+            write_chunk(
+                outfile, b'sBIT',
                 struct.pack('%dB' % self.planes,
                             * [self.rescale[0]] * self.planes))
         
@@ -738,7 +739,7 @@ class Writer:
         if self.rescale:
             oldextend = extend
             factor = (float(2 ** self.rescale[1] - 1) /
-                float(2 ** self.rescale[0] - 1))
+                      float(2 ** self.rescale[0] - 1))
             def extend(sl):
                 oldextend([int(round(factor * x)) for x in sl])
 
@@ -825,8 +826,9 @@ class Writer:
         """
 
         if self.rescale:
-            raise Error("write_packed method not suitable for bit depth %d" %
-              self.rescale[0])
+            raise Error(
+                "write_packed method not suitable for bit depth %d" %
+                self.rescale[0])
         return self.write_passes(outfile, rows, packed=True)
 
     def convert_pnm(self, infile, outfile):
@@ -1159,8 +1161,9 @@ def from_array(a, mode=None, info={}):
     # Get bitdepth from *mode* if possible.
     if bitdepth:
         if info.get("bitdepth") and bitdepth != info['bitdepth']:
-            raise Error("bitdepth (%d) should match bitdepth of info (%d)." %
-              (bitdepth, info['bitdepth']))
+            raise Error(
+                "bitdepth (%d) should match bitdepth of info (%d)." %
+                (bitdepth, info['bitdepth']))
         info['bitdepth'] = bitdepth
 
     # Fill in and/or check entries in *info*.
@@ -1387,8 +1390,9 @@ class Reader:
             self.atchunk = None
             data = self.file.read(length)
             if len(data) != length:
-                raise ChunkError('Chunk %s too short for required %i octets.'
-                  % (type, length))
+                raise ChunkError(
+                    'Chunk %s too short for required %i octets.'
+                    % (type, length))
             checksum = self.file.read(4)
             if len(checksum) != 4:
                 raise ChunkError('Chunk %s too short for checksum.' % type)
@@ -1449,8 +1453,9 @@ class Reader:
             return result
 
         if filter_type not in (1,2,3,4):
-            raise FormatError('Invalid PNG Filter Type.'
-              '  See http://www.w3.org/TR/2003/REC-PNG-20031110/#9Filters .')
+            raise FormatError(
+                'Invalid PNG Filter Type.  '
+                'See http://www.w3.org/TR/2003/REC-PNG-20031110/#9Filters .')
 
         # Filter unit.  The stride from one pixel to the corresponding
         # byte from the previous pixel.  Normally this is the pixel
@@ -1600,7 +1605,7 @@ class Reader:
             if self.bitdepth == 16:
                 raw = tostring(raw)
                 return array('H',
-                    struct.unpack('!%dH' % (len(raw) // 2), raw))
+                             struct.unpack('!%dH' % (len(raw) // 2), raw))
             assert self.bitdepth < 8
             width = self.width
             # Samples per byte
@@ -1608,7 +1613,7 @@ class Reader:
             out = array('B')
             mask = 2**self.bitdepth - 1
             shifts = [self.bitdepth * i
-                for i in reversed(list(range(spb)))]
+                      for i in reversed(list(range(spb)))]
             for o in raw:
                 out.extend([mask&(o>>i) for i in shifts])
             return out[:width]
@@ -1625,7 +1630,7 @@ class Reader:
         if self.bitdepth == 16:
             bytes = tostring(bytes)
             return array('H',
-              struct.unpack('!%dH' % (len(bytes) // 2), bytes))
+                         struct.unpack('!%dH' % (len(bytes) // 2), bytes))
         assert self.bitdepth < 8
         if width is None:
             width = self.width
@@ -1749,13 +1754,15 @@ class Reader:
         if self.compression != 0:
             raise Error("unknown compression method %d" % self.compression)
         if self.filter != 0:
-            raise FormatError("Unknown filter method %d,"
-              " see http://www.w3.org/TR/2003/REC-PNG-20031110/#9Filters ."
-              % self.filter)
+            raise FormatError(
+                "Unknown filter method %d,"
+                " see http://www.w3.org/TR/2003/REC-PNG-20031110/#9Filters ."
+                % self.filter)
         if self.interlace not in (0,1):
-            raise FormatError("Unknown interlace method %d,"
-              " see http://www.w3.org/TR/2003/REC-PNG-20031110/#8InterlaceMethods ."
-              % self.interlace)
+            raise FormatError(
+                "Unknown interlace method %d,"
+                " see http://www.w3.org/TR/2003/REC-PNG-20031110/#8InterlaceMethods ."
+                % self.interlace)
 
         # Derived values
         # http://www.w3.org/TR/PNG/#6Colour-values
@@ -1805,7 +1812,7 @@ class Reader:
                 self.background = struct.unpack('B', data)
             else:
                 self.background = struct.unpack("!%dH" % self.color_planes,
-                  data)
+                                                data)
         except struct.error:
             raise FormatError("bKGD chunk has incorrect length.")
 
@@ -1909,7 +1916,7 @@ class Reader:
             # Like :meth:`group` but producing an array.array object for
             # each row.
             pixels = map(lambda *row: array(arraycode, row),
-                       * [iter(self.deinterlace(raw))] *
+                         * [iter(self.deinterlace(raw))] *
                          (self.width * self.planes))
         else:
             pixels = self.iterboxed(self.iterstraight(raw))
@@ -2049,8 +2056,9 @@ class Reader:
                     opa = map(it.__ne__, row)
                     opa = map(maxval.__mul__, opa)
                     opa = list(zip(opa)) # convert to 1-tuples
-                    yield array(typecode,
-                      itertools.chain(*map(operator.add, row, opa)))
+                    yield array(
+                        typecode,
+                        itertools.chain(*map(operator.add, row, opa)))
             pixels = itertrns(pixels)
         targetbitdepth = None
         if self.sbit:
@@ -2058,7 +2066,7 @@ class Reader:
             targetbitdepth = max(sbit)
             if targetbitdepth > meta['bitdepth']:
                 raise Error('sBIT chunk %r exceeds bitdepth %d' %
-                    (sbit,self.bitdepth))
+                            (sbit,self.bitdepth))
             if min(sbit) <= 0:
                 raise Error('sBIT chunk %r has a 0-entry' % sbit)
             if targetbitdepth == meta['bitdepth']:
@@ -2232,10 +2240,11 @@ def check_bitdepth_colortype(bitdepth, colortype):
             " See http://www.w3.org/TR/2003/REC-PNG-20031110/#table111 ."
             % (bitdepth, colortype))
     if bitdepth < 8 and colortype not in (0,3):
-        raise FormatError("Illegal combination of bit depth (%d)"
-          " and colour type (%d)."
-          " See http://www.w3.org/TR/2003/REC-PNG-20031110/#table111 ."
-          % (bitdepth, colortype))
+        raise FormatError(
+            "Illegal combination of bit depth (%d)"
+            " and colour type (%d)."
+            " See http://www.w3.org/TR/2003/REC-PNG-20031110/#table111 ."
+            % (bitdepth, colortype))
 
 def isinteger(x):
     try:
