@@ -59,18 +59,18 @@ class Profile:
         if len(profile) < 128:
             raise FormatError("ICC Profile is too short.")
         d.update(
-          zip(['size', 'preferredCMM', 'version',
-               'profileclass', 'colourspace', 'pcs'],
-              struct.unpack('>L4sL4s4s4s', profile[:24])))
+            zip(['size', 'preferredCMM', 'version',
+                 'profileclass', 'colourspace', 'pcs'],
+                struct.unpack('>L4sL4s4s4s', profile[:24])))
         if len(profile) < d['size']:
             warnings.warn(
-              'Profile size declared to be %d, but only got %d bytes' %
-                (d['size'], len(profile)))
+                'Profile size declared to be %d, but only got %d bytes' %
+                  (d['size'], len(profile)))
         d['version'] = '%08x' % d['version']
         d['created'] = readICCdatetime(profile[24:36])
         d.update(
-          zip(['acsp', 'platform', 'flag', 'manufacturer', 'model'],
-              struct.unpack('>4s4s3L', profile[36:56])))
+            zip(['acsp', 'platform', 'flag', 'manufacturer', 'model'],
+                struct.unpack('>4s4s3L', profile[36:56])))
         if d['acsp'] != 'acsp':
             warnings.warn('acsp field not present (not an ICC Profile?).')
         d['deviceattributes'] = profile[56:64]
@@ -254,54 +254,54 @@ def encodefuns():
 # Most tags can only have one or a few tag types.
 # When encoding, we associate a default tag type with each tag so that
 # the encoding is implicit.
-defaulttagtype=dict(
-  A2B0='mft1',
-  A2B1='mft1',
-  A2B2='mft1',
-  bXYZ='XYZ',
-  bTRC='curv',
-  B2A0='mft1',
-  B2A1='mft1',
-  B2A2='mft1',
-  calt='dtim',
-  targ='text',
-  chad='sf32',
-  chrm='chrm',
-  cprt='desc',
-  crdi='crdi',
-  dmnd='desc',
-  dmdd='desc',
-  devs='',
-  gamt='mft1',
-  kTRC='curv',
-  gXYZ='XYZ',
-  gTRC='curv',
-  lumi='XYZ',
-  meas='',
-  bkpt='XYZ',
-  wtpt='XYZ',
-  ncol='',
-  ncl2='',
-  resp='',
-  pre0='mft1',
-  pre1='mft1',
-  pre2='mft1',
-  desc='desc',
-  pseq='',
-  psd0='data',
-  psd1='data',
-  psd2='data',
-  psd3='data',
-  ps2s='data',
-  ps2i='data',
-  rXYZ='XYZ',
-  rTRC='curv',
-  scrd='desc',
-  scrn='',
-  tech='sig',
-  bfd='',
-  vued='desc',
-  view='view',
+defaulttagtype = dict(
+    A2B0='mft1',
+    A2B1='mft1',
+    A2B2='mft1',
+    bXYZ='XYZ',
+    bTRC='curv',
+    B2A0='mft1',
+    B2A1='mft1',
+    B2A2='mft1',
+    calt='dtim',
+    targ='text',
+    chad='sf32',
+    chrm='chrm',
+    cprt='desc',
+    crdi='crdi',
+    dmnd='desc',
+    dmdd='desc',
+    devs='',
+    gamt='mft1',
+    kTRC='curv',
+    gXYZ='XYZ',
+    gTRC='curv',
+    lumi='XYZ',
+    meas='',
+    bkpt='XYZ',
+    wtpt='XYZ',
+    ncol='',
+    ncl2='',
+    resp='',
+    pre0='mft1',
+    pre1='mft1',
+    pre2='mft1',
+    desc='desc',
+    pseq='',
+    psd0='data',
+    psd1='data',
+    psd2='data',
+    psd3='data',
+    ps2s='data',
+    ps2i='data',
+    rXYZ='XYZ',
+    rTRC='curv',
+    scrd='desc',
+    scrn='',
+    tech='sig',
+    bfd='',
+    vued='desc',
+    view='view',
 )
 
 def encode(tsig, *l):
