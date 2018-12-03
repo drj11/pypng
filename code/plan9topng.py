@@ -97,10 +97,11 @@ def pixmeta(metadata, f):
     maxval = 2**bitdepth - 1
     # PNG style metadata
     meta=dict(size=(width,rows), bitdepth=bitdepthof(chan),
-      greyscale=greyscale, alpha=alpha, planes=nchans)
+              greyscale=greyscale, alpha=alpha, planes=nchans)
 
-    return itertools.imap(lambda x: itertools.chain(*x),
-      block(unpack(f, rows, width, chan, maxval), width)), meta
+    return itertools.imap(
+        lambda x: itertools.chain(*x),
+        block(unpack(f, rows, width, chan, maxval), width)), meta
 
 def png(out, metadata, f):
     """Convert to PNG format.  `metadata` should be a Plan9 5-tuple; `f`
