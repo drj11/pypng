@@ -8,8 +8,6 @@
 # [ICC 2001] ICC Specification ICC.1:2001-04 (Profile version 2.4.0)
 # [ICC 2004] ICC Specification ICC.1:2004-10 (Profile version 4.2.0.0)
 
-import struct
-
 # Local module.
 import iccp
 
