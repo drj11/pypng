@@ -62,7 +62,6 @@ if __name__ == '__main__':
     try:
         # http://peak.telecommunity.com/DevCenter/setuptools#basic-use
         from setuptools import setup
-        # distribute is probably installed, so use_2to3 should work
         conf['test_suite'] = "test_png"
     except ImportError:
         # http://docs.python.org/release/2.4.4/dist/setup-script.html
