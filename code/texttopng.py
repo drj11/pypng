@@ -151,8 +151,7 @@ def linetoraster(m):
     # Assumes monospaced font.
     x = 8 * len(m)
     y = 8
-    return x,y,[itertools.chain(*row) for row in
-                              zip(*map(char, m))]
+    return x,y,[itertools.chain(*row) for row in zip(*map(char, m))]
 
 def render(message, out):
     import png
