@@ -21,7 +21,7 @@ def black(m):
     def f(x):
         if x <= m:
             return 0.0
-        return (x-m)/(1.0-m)
+        return (x - m) / (1.0 - m)
     return f
 
 # For monochrome input the required tags are (See [ICC 2001] 6.3.1.1):
