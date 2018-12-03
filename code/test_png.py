@@ -166,7 +166,7 @@ class Test(unittest.TestCase):
         self.assertEqual(x, 1)
         self.assertEqual(y, 4)
         self.assertEqual([list(row) for row in pixels],
-          [list(row) for row in [a, b, b, c]])
+                         [list(row) for row in [a, b, b, c]])
 
     def testPtrns(self):
         "Test colour type 3 and tRNS chunk (and 4-bit palette)."
@@ -188,7 +188,7 @@ class Test(unittest.TestCase):
         boxed = [(e,d,c),(d,c,a),(c,a,b)]
         flat = map(lambda row: itertools.chain(*row), boxed)
         self.assertEqual([list(row) for row in pixels],
-          [list(row) for row in flat])
+                         [list(row) for row in flat])
 
     def testRGBtoRGBA(self):
         """asRGBA8() on colour type 2 source."""
@@ -208,7 +208,7 @@ class Test(unittest.TestCase):
         x,y,pixels,meta = r.asRGBA()
         row9 = list(list(pixels)[9])
         self.assertEqual(row9[0:8],
-          [222, 222, 222, 255, 221, 221, 221, 255])
+                         [222, 222, 222, 255, 221, 221, 221, 255])
 
     def testCtrns(self):
         "Test colour type 2 and tRNS chunk."
@@ -239,7 +239,7 @@ class Test(unittest.TestCase):
             straight = straight.read()[2]
             adam7 = adam7.read()[2]
             self.assertEqual([list(row) for row in straight],
-              [list(row) for row in adam7])
+                             [list(row) for row in adam7])
 
     def testAdam7write(self):
         """Adam7 interlace writing.
@@ -255,22 +255,24 @@ class Test(unittest.TestCase):
                 continue
             it = png.Reader(bytes=bytes)
             x,y,pixels,meta = it.read()
-            pngi = topngbytes('adam7wn{}.png'.format(name), pixels,
-              x=x, y=y, bitdepth=it.bitdepth,
-              greyscale=it.greyscale, alpha=it.alpha,
-              transparent=it.transparent,
-              interlace=False)
+            pngi = topngbytes(
+                'adam7wn{}.png'.format(name), pixels,
+                x=x, y=y, bitdepth=it.bitdepth,
+                greyscale=it.greyscale, alpha=it.alpha,
+                transparent=it.transparent,
+                interlace=False)
             x,y,ps,meta = png.Reader(bytes=pngi).read()
             it = png.Reader(bytes=bytes)
             x,y,pixels,meta = it.read()
-            pngs = topngbytes('adam7wi{}.png'.format(name), pixels,
-              x=x, y=y, bitdepth=it.bitdepth,
-              greyscale=it.greyscale, alpha=it.alpha,
-              transparent=it.transparent,
-              interlace=True)
+            pngs = topngbytes(
+                'adam7wi{}.png'.format(name), pixels,
+                x=x, y=y, bitdepth=it.bitdepth,
+                greyscale=it.greyscale, alpha=it.alpha,
+                transparent=it.transparent,
+                interlace=True)
             x,y,pi,meta = png.Reader(bytes=pngs).read()
             self.assertEqual([list(row) for row in ps],
-              [list(row) for row in pi])
+                             [list(row) for row in pi])
 
     def testPGMin(self):
         """Test that the command line tool can read PGM files."""
@@ -312,7 +314,7 @@ class Test(unittest.TestCase):
     def testLA4(self):
         """Create an LA image with bitdepth 4."""
         bytes = topngbytes('la4.png', [[5, 12]], 1, 1,
-          greyscale=True, alpha=True, bitdepth=4)
+                           greyscale=True, alpha=True, bitdepth=4)
         sbit = png.Reader(bytes=bytes).chunk(b'sBIT')[1]
         self.assertEqual(sbit, b'\x04\x04')
 
@@ -554,7 +556,7 @@ class Test(unittest.TestCase):
 
     def testfromarrayRGB(self):
         img = png.from_array([[0,0,0, 0,0,1, 0,1,0, 0,1,1],
-                          [1,0,0, 1,0,1, 1,1,0, 1,1,1]], 'RGB;1')
+                             [1,0,0, 1,0,1, 1,1,0, 1,1,1]], 'RGB;1')
         o = BytesIO()
         img.save(o)
 
@@ -577,7 +579,7 @@ class Test(unittest.TestCase):
 
     def testFromarrayLA(self):
         png.from_array([[3,1],[0,3]], 'LA2',
-          info=dict(greyscale=True)).save(BytesIO())
+                       info=dict(greyscale=True)).save(BytesIO())
 
 
 # numpy dependent tests.
@@ -590,7 +592,7 @@ class Test(unittest.TestCase):
 
         rows = [map(numpy.uint16, range(0,0x10000,0x5555))]
         topngbytes('numpyuint16.png', rows, 4, 1,
-            greyscale=True, alpha=False, bitdepth=16)
+                   greyscale=True, alpha=False, bitdepth=16)
 
     def testNumpyuint8(self):
         """numpy uint8."""
@@ -599,7 +601,7 @@ class Test(unittest.TestCase):
 
         rows = [map(numpy.uint8, range(0,0x100,0x55))]
         topngbytes('numpyuint8.png', rows, 4, 1,
-            greyscale=True, alpha=False, bitdepth=8)
+                   greyscale=True, alpha=False, bitdepth=8)
 
     def testNumpybool(self):
         """numpy bool."""
@@ -608,7 +610,7 @@ class Test(unittest.TestCase):
 
         rows = [map(numpy.bool, [0,1])]
         topngbytes('numpybool.png', rows, 2, 1,
-            greyscale=True, alpha=False, bitdepth=1)
+                   greyscale=True, alpha=False, bitdepth=1)
 
     def testNumpyarray(self):
         """numpy array."""
