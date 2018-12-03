@@ -125,4 +125,3 @@ try:
 # --- extract 003 end
 finally:
     pngfile.close()
-
