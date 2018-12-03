@@ -1,16 +1,14 @@
 #!/usr/bin/env python
 # Script to render text as a PNG image.
 
-"""texttopng"""
+# texttopng
 
 # Example (all ASCII glyphs):
-"""
-printf $(printf '\\%s' $(seq 40 176 | grep -v '[89]')) |
-  fold -w 32 |
-  ./texttopng > ascii.png
-"""
+#
+# printf $(printf '\\%s' $(seq 40 176 | grep -v '[89]')) |
+#   fold -w 32 |
+#   ./texttopng > ascii.png
 
-from array import array
 import itertools
 
 def usage(fil):
