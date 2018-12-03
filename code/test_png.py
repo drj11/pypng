@@ -79,7 +79,7 @@ def _redirect_io(inp, out, f):
     if os.environ.get('PYPNG_TEST_TMP') and hasattr(out,'getvalue'):
         name = mycallersname()
         if name:
-            w = open(name+'.png', 'wb')
+            w = open('{}.png'.format(name), 'wb')
             w.write(out.getvalue())
             w.close()
     return x
@@ -151,7 +151,7 @@ class Test(unittest.TestCase):
         self.assertEqual(y, 4)
         for i,row in enumerate(pixels):
             self.assertEqual(len(row), 3)
-            self.assertEqual(list(row), [0x55*i]*3)
+            self.assertEqual(list(row), [0x55 * i] * 3)
 
     def testP2(self):
         "2-bit palette."
@@ -182,9 +182,9 @@ class Test(unittest.TestCase):
         x,y,pixels,meta = r.asRGBA8()
         self.assertEqual(x, 3)
         self.assertEqual(y, 3)
-        c = c+(255,)
-        d = d+(255,)
-        e = e+(255,)
+        c = c + (255,)
+        d = d + (255,)
+        e = e + (255,)
         boxed = [(e,d,c),(d,c,a),(c,a,b)]
         flat = map(lambda row: itertools.chain(*row), boxed)
         self.assertEqual([list(row) for row in pixels],
@@ -255,7 +255,7 @@ class Test(unittest.TestCase):
                 continue
             it = png.Reader(bytes=bytes)
             x,y,pixels,meta = it.read()
-            pngi = topngbytes('adam7wn'+name+'.png', pixels,
+            pngi = topngbytes('adam7wn{}.png'.format(name), pixels,
               x=x, y=y, bitdepth=it.bitdepth,
               greyscale=it.greyscale, alpha=it.alpha,
               transparent=it.transparent,
@@ -263,7 +263,7 @@ class Test(unittest.TestCase):
             x,y,ps,meta = png.Reader(bytes=pngi).read()
             it = png.Reader(bytes=bytes)
             x,y,pixels,meta = it.read()
-            pngs = topngbytes('adam7wi'+name+'.png', pixels,
+            pngs = topngbytes('adam7wi{}.png'.format(name), pixels,
               x=x, y=y, bitdepth=it.bitdepth,
               greyscale=it.greyscale, alpha=it.alpha,
               transparent=it.transparent,
@@ -370,7 +370,7 @@ class Test(unittest.TestCase):
         s = BytesIO()
         s.write(b'P6 8 1 1\n')
         for pixel in range(8):
-            s.write(struct.pack('<I', (0x4081*pixel)&0x10101)[:3])
+            s.write(struct.pack('<I', (0x4081 * pixel) & 0x10101)[:3])
         s.flush()
         s.seek(0)
         o = BytesIO()
@@ -740,7 +740,7 @@ class Test(unittest.TestCase):
 
 def group(s, n):
     # See http://www.python.org/doc/2.6/library/functions.html#zip
-    return list(zip(*[iter(s)]*n))
+    return list(zip(* [iter(s)] * n))
 
 if __name__ == '__main__':
     unittest.main(__name__)
