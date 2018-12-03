@@ -50,7 +50,7 @@ class Profile:
         if len(profile) < 128:
             raise FormatError("ICC Profile is too short.")
         size, = struct.unpack('>L', profile[:4])
-        profile += inp.read(d['size'] - len(profile))
+        profile += inp.read(self.d['size'] - len(profile))
         return self.fromString(profile, name)
 
     def fromString(self, profile, name='<unknown>'):
@@ -119,10 +119,10 @@ class Profile:
         if self.rawtagdict:
             return
         self._addTags(
-          cprt='Copyright unknown.',
-          desc='created by $URL$ $Rev$',
-          wtpt=D50(),
-          )
+            cprt='Copyright unknown.',
+            desc='created by $URL$ $Rev$',
+            wtpt=D50(),
+        )
 
     def addTags(self, **k):
         self.maybeAddDefaults()
@@ -231,7 +231,7 @@ def encodefuns():
         """
 
         if f is None:
-            return struct.pack('>L',  0)
+            return struct.pack('>L', 0)
         try:
             if float(f) == f:
                 return struct.pack('>LH', 1, int(round(f*2**8)))
