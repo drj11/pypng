@@ -188,7 +188,7 @@ _adam7 = ((0, 0, 8, 8),
 
 def group(s, n):
     # See http://www.python.org/doc/2.6/library/functions.html#zip
-    return list(zip(*[iter(s)]*n))
+    return list(zip(* [iter(s)] * n))
 
 def isarray(x):
     return isinstance(x, array)
@@ -221,9 +221,9 @@ def interleave_planes(ipixels, apixels, ipsize, apsize):
     out.extend(apixels)
     # Interleave in the pixel data
     for i in range(ipsize):
-        out[i:newtotal:newpsize] = ipixels[i:itotal:ipsize]
+        out[i: newtotal: newpsize] = ipixels[i: itotal: ipsize]
     for i in range(apsize):
-        out[i+ipsize:newtotal:newpsize] = apixels[i:atotal:apsize]
+        out[i + ipsize: newtotal: newpsize] = apixels[i: atotal: apsize]
     return out
 
 def check_palette(palette):
@@ -488,7 +488,7 @@ class Writer:
         if not isinteger(width) or not isinteger(height):
             raise ValueError("width and height must be integers")
         # http://www.w3.org/TR/PNG/#7Integers-and-byte-order
-        if width > 2**32-1 or height > 2**32-1:
+        if width > 2 ** 32 - 1 or height > 2 ** 32 - 1:
             raise ValueError("width and height cannot exceed 2**32-1")
 
         if alpha and transparent is not None:
@@ -501,7 +501,7 @@ class Writer:
             if bytes_per_sample not in (0.125, 0.25, 0.5, 1, 2):
                 raise ValueError(
                     "bytes per sample must be .125, .25, .5, 1, or 2")
-            bitdepth = int(8*bytes_per_sample)
+            bitdepth = int(8 * bytes_per_sample)
         del bytes_per_sample
         if not isinteger(bitdepth) or bitdepth < 1 or 16 < bitdepth:
             raise ValueError("bitdepth (%r) must be a positive integer <= 16" %
@@ -571,13 +571,13 @@ class Writer:
         self.y_pixels_per_unit = y_pixels_per_unit
         self.unit_is_meter = bool(unit_is_meter)
 
-        self.color_type = 4*self.alpha + 2*(not greyscale) + 1*self.colormap
+        self.color_type = 4 * self.alpha + 2 * (not greyscale) + 1 * self.colormap
         assert self.color_type in (0,2,3,4,6)
 
         self.color_planes = (3,1)[self.greyscale or self.colormap]
         self.planes = self.color_planes + self.alpha
         # :todo: fix for bitdepth < 8
-        self.psize = (self.bitdepth/8) * self.planes
+        self.psize = (self.bitdepth / 8) * self.planes
 
     def make_palette(self):
         """Create the byte sequences for a ``PLTE`` and if necessary a
@@ -657,14 +657,14 @@ class Writer:
         # http://www.w3.org/TR/PNG/#11gAMA
         if self.gamma is not None:
             write_chunk(outfile, b'gAMA',
-                        struct.pack("!L", int(round(self.gamma*1e5))))
+                        struct.pack("!L", int(round(self.gamma * 1e5))))
 
         # See :chunk:order
         # http://www.w3.org/TR/PNG/#11sBIT
         if self.rescale:
             write_chunk(outfile, b'sBIT',
                 struct.pack('%dB' % self.planes,
-                            *[self.rescale[0]]*self.planes))
+                            * [self.rescale[0]] * self.planes))
         
         # :chunk:order: Without a palette (PLTE chunk), ordering is
         # relatively relaxed.  With one, gAMA chunk must precede PLTE
@@ -722,14 +722,14 @@ class Writer:
             # Pack into bytes
             assert self.bitdepth < 8
             # samples per byte
-            spb = int(8/self.bitdepth)
+            spb = int(8 / self.bitdepth)
             def extend(sl):
                 a = array('B', sl)
                 # Adding padding bytes so we can group into a whole
                 # number of spb-tuples.
                 l = float(len(a))
-                extra = math.ceil(l / float(spb))*spb - l
-                a.extend([0]*int(extra))
+                extra = math.ceil(l / float(spb)) * spb - l
+                a.extend([0] * int(extra))
                 # Pack into bytes
                 l = group(a, spb)
                 l = [reduce(lambda x,y:
@@ -737,10 +737,10 @@ class Writer:
                 data.extend(l)
         if self.rescale:
             oldextend = extend
-            factor = \
-              float(2**self.rescale[1]-1) / float(2**self.rescale[0]-1)
+            factor = (float(2 ** self.rescale[1] - 1) /
+                float(2 ** self.rescale[0] - 1))
             def extend(sl):
-                oldextend([int(round(factor*x)) for x in sl])
+                oldextend([int(round(factor * x)) for x in sl])
 
         # Build the first row, testing mostly to see if we need to
         # changed the extend function to cope with NumPy integer types
@@ -796,7 +796,7 @@ class Writer:
             write_chunk(outfile, b'IDAT', compressed + flushed)
         # http://www.w3.org/TR/PNG/#11IEND
         write_chunk(outfile, b'IEND')
-        return i+1
+        return i + 1
 
     def write_array(self, outfile, pixels):
         """
@@ -839,7 +839,7 @@ class Writer:
         if self.interlace:
             pixels = array('B')
             pixels.fromfile(infile,
-                            (self.bitdepth/8) * self.color_planes *
+                            (self.bitdepth / 8) * self.color_planes *
                             self.width * self.height)
             self.write_passes(outfile, self.array_scanlines_interlace(pixels))
         else:
@@ -852,15 +852,15 @@ class Writer:
         """
         pixels = array('B')
         pixels.fromfile(ppmfile,
-                        (self.bitdepth/8) * self.color_planes *
+                        (self.bitdepth / 8) * self.color_planes *
                         self.width * self.height)
         apixels = array('B')
         apixels.fromfile(pgmfile,
-                         (self.bitdepth/8) *
+                         (self.bitdepth / 8) *
                          self.width * self.height)
         pixels = interleave_planes(pixels, apixels,
-                                   (self.bitdepth/8) * self.color_planes,
-                                   (self.bitdepth/8))
+                                   (self.bitdepth / 8) * self.color_planes,
+                                   (self.bitdepth / 8))
         if self.interlace:
             self.write_passes(outfile, self.array_scanlines_interlace(pixels))
         else:
@@ -923,23 +923,23 @@ class Writer:
             if xstart >= self.width:
                 continue
             # Pixels per row (of reduced image)
-            ppr = int(math.ceil((self.width-xstart)/float(xstep)))
+            ppr = int(math.ceil((self.width - xstart) / float(xstep)))
             # number of values in reduced image row.
-            row_len = ppr*self.planes
+            row_len = ppr * self.planes
             for y in range(ystart, self.height, ystep):
                 if xstep == 1:
                     offset = y * vpr
-                    yield pixels[offset:offset+vpr]
+                    yield pixels[offset: offset + vpr]
                 else:
                     row = array(fmt)
                     # There's no easier way to set the length of an array
                     row.extend(pixels[0:row_len])
                     offset = y * vpr + xstart * self.planes
-                    end_offset = (y+1) * vpr
+                    end_offset = (y + 1) * vpr
                     skip = self.planes * xstep
                     for i in range(self.planes):
                         row[i::self.planes] = \
-                            pixels[offset+i:end_offset:skip]
+                            pixels[offset + i: end_offset: skip]
                     yield row
 
 def write_chunk(outfile, tag, data=b''):
@@ -954,7 +954,7 @@ def write_chunk(outfile, tag, data=b''):
     outfile.write(data)
     checksum = zlib.crc32(tag)
     checksum = zlib.crc32(data, checksum)
-    checksum &= 2**32-1
+    checksum &= 2 ** 32 - 1
     outfile.write(struct.pack("!I", checksum))
 
 def write_chunks(out, chunks):
@@ -1035,7 +1035,7 @@ def filter_scanline(type, line, fo, prev=None):
         if type == 2: # "up"
             type = 0
         elif type == 3:
-            prev = [0]*len(line)
+            prev = [0] * len(line)
         elif type == 4: # "paeth"
             type = 1
     if type == 0:
@@ -1292,7 +1292,7 @@ class _readable:
         self.offset = 0
 
     def read(self, n):
-        r = self.buf[self.offset:self.offset+n]
+        r = self.buf[self.offset: self.offset + n]
         if isarray(r):
             r = r.tostring()
         self.offset += n
@@ -1461,7 +1461,7 @@ class Reader:
         # first line 'up' is the same as 'null', 'paeth' is the same
         # as 'sub', with only 'average' requiring any special case.
         if not previous:
-            previous = array('B', [0]*len(scanline))
+            previous = array('B', [0] * len(scanline))
 
         def sub():
             """Undo sub filter."""
@@ -1546,24 +1546,24 @@ class Reader:
         # writes to the output array randomly (well, not quite), so the
         # entire output array must be in memory.
         fmt = 'BH'[self.bitdepth > 8]
-        a = array(fmt, [0]*vpr*self.height)
+        a = array(fmt, [0] * (vpr * self.height))
         source_offset = 0
 
         for xstart, ystart, xstep, ystep in _adam7:
             if xstart >= self.width:
                 continue
-            # The previous (reconstructed) scanline.  None at the
-            # beginning of a pass to indicate that there is no previous
-            # line.
+            # The previous (reconstructed) scanline.
+            # `None` at the beginning of a pass
+            # to indicate that there is no previous line.
             recon = None
             # Pixels per row (reduced pass image)
-            ppr = int(math.ceil((self.width-xstart)/float(xstep)))
+            ppr = int(math.ceil((self.width - xstart) / float(xstep)))
             # Row size in bytes for this pass.
             row_size = int(math.ceil(self.psize * ppr))
             for y in range(ystart, self.height, ystep):
                 filter_type = raw[source_offset]
                 source_offset += 1
-                scanline = raw[source_offset:source_offset+row_size]
+                scanline = raw[source_offset: source_offset + row_size]
                 source_offset += row_size
                 recon = self.undo_filter(filter_type, scanline, recon)
                 # Convert so that there is one element per pixel value
@@ -1571,14 +1571,14 @@ class Reader:
                 if xstep == 1:
                     assert xstart == 0
                     offset = y * vpr
-                    a[offset:offset+vpr] = flat
+                    a[offset: offset + vpr] = flat
                 else:
                     offset = y * vpr + xstart * self.planes
-                    end_offset = (y+1) * vpr
+                    end_offset = (y + 1) * vpr
                     skip = self.planes * xstep
                     for i in range(self.planes):
-                        a[offset+i:end_offset:skip] = \
-                            flat[i::self.planes]
+                        a[offset + i: end_offset: skip] = \
+                            flat[i:: self.planes]
         return a
 
     def iterboxed(self, rows):
@@ -1597,11 +1597,12 @@ class Reader:
                 return array('B', raw)
             if self.bitdepth == 16:
                 raw = tostring(raw)
-                return array('H', struct.unpack('!%dH' % (len(raw)//2), raw))
+                return array('H',
+                    struct.unpack('!%dH' % (len(raw) // 2), raw))
             assert self.bitdepth < 8
             width = self.width
             # Samples per byte
-            spb = 8//self.bitdepth
+            spb = 8 // self.bitdepth
             out = array('B')
             mask = 2**self.bitdepth - 1
             shifts = [self.bitdepth * i
@@ -1622,12 +1623,12 @@ class Reader:
         if self.bitdepth == 16:
             bytes = tostring(bytes)
             return array('H',
-              struct.unpack('!%dH' % (len(bytes)//2), bytes))
+              struct.unpack('!%dH' % (len(bytes) // 2), bytes))
         assert self.bitdepth < 8
         if width is None:
             width = self.width
         # Samples per byte
-        spb = 8//self.bitdepth
+        spb = 8 // self.bitdepth
         out = array('B')
         mask = 2**self.bitdepth - 1
         shifts = list(map(self.bitdepth.__mul__, reversed(list(range(spb)))))
@@ -1656,8 +1657,8 @@ class Reader:
             a.extend(some)
             while len(a) >= rb + 1:
                 filter_type = a[0]
-                scanline = a[1:rb+1]
-                del a[:rb+1]
+                scanline = a[1: rb + 1]
+                del a[: rb + 1]
                 recon = self.undo_filter(filter_type, scanline, recon)
                 yield recon
         if len(a) != 0:
@@ -1714,7 +1715,7 @@ class Reader:
             raise FormatError(
                 'End of file whilst reading chunk length and type.')
         length,type = struct.unpack('!I4s', x)
-        if length > 2**31-1:
+        if length > 2 ** 31 - 1:
             raise FormatError('Chunk %s is too large: %d.' % (type,length))
         return length,type
 
@@ -1767,7 +1768,7 @@ class Reader:
         self.alpha = alpha
         self.color_planes = color_planes
         self.planes = planes
-        self.psize = float(self.bitdepth)/float(8) * planes
+        self.psize = float(self.bitdepth) / float(8) * planes
         if int(self.psize) == self.psize:
             self.psize = int(self.psize)
         self.row_bytes = int(math.ceil(self.width * self.psize))
@@ -1788,7 +1789,7 @@ class Reader:
         if len(data) % 3 != 0:
             raise FormatError(
                 "PLTE chunk's length should be a multiple of 3.")
-        if len(data) > (2**self.bitdepth)*3:
+        if len(data) > (2 ** self.bitdepth) * 3:
             raise FormatError("PLTE chunk is too long.")
         if len(data) == 0:
             raise FormatError("Empty PLTE is not allowed.")
@@ -1813,7 +1814,7 @@ class Reader:
             if not self.plte:
                 warnings.warn("PLTE chunk is required before tRNS chunk.")
             else:
-                if len(data) > len(self.plte)/3:
+                if len(data) > len(self.plte) / 3:
                     # Was warning, but promoted to Error as it
                     # would otherwise cause pain later on.
                     raise FormatError("tRNS chunk is too long.")
@@ -1906,7 +1907,8 @@ class Reader:
             # Like :meth:`group` but producing an array.array object for
             # each row.
             pixels = map(lambda *row: array(arraycode, row),
-                       *[iter(self.deinterlace(raw))]*self.width*self.planes)
+                       * [iter(self.deinterlace(raw))] *
+                         (self.width * self.planes))
         else:
             pixels = self.iterboxed(self.iterstraight(raw))
         meta = dict()
@@ -1959,7 +1961,7 @@ class Reader:
         plte = group(array('B', self.plte), 3)
         if self.trns or alpha == 'force':
             trns = array('B', self.trns or [])
-            trns.extend([255]*(len(plte)-len(trns)))
+            trns.extend([255] * (len(plte) - len(trns)))
             plte = list(map(operator.add, plte, group(trns, 1)))
         return plte
 
@@ -2029,7 +2031,7 @@ class Reader:
             # perhaps go faster (all those 1-tuples!), but I still
             # wonder whether the code proliferation is worth it)
             it = self.transparent
-            maxval = 2**meta['bitdepth']-1
+            maxval = 2 ** meta['bitdepth'] - 1
             planes = meta['planes']
             meta['alpha'] = True
             meta['planes'] += 1
@@ -2075,10 +2077,10 @@ class Reader:
         """
 
         x,y,pixels,info = self.asDirect()
-        sourcemaxval = 2**info['bitdepth']-1
+        sourcemaxval = 2 ** info['bitdepth'] - 1
         del info['bitdepth']
         info['maxval'] = float(maxval)
-        factor = float(maxval)/float(sourcemaxval)
+        factor = float(maxval) / float(sourcemaxval)
         def iterfloat():
             for row in pixels:
                 yield [factor * p for p in row]
@@ -2094,7 +2096,7 @@ class Reader:
         meta['bitdepth'] = targetbitdepth
         def iterscale():
             for row in pixels:
-                yield [int(round(x*factor)) for x in row]
+                yield [int(round(x * factor)) for x in row]
         if maxval == targetmaxval:
             return width, height, pixels, meta
         else:
@@ -2597,14 +2599,14 @@ def _main(argv):
         # care about TUPLTYPE.
         greyscale = depth <= 2
         pamalpha = depth in (2,4)
-        supported = [2**x-1 for x in range(1,17)]
+        supported = [2 ** x - 1 for x in range(1, 17)]
         try:
             mi = supported.index(maxval)
         except ValueError:
             raise NotImplementedError(
                 'your maxval (%s) not in supported list %s' %
                 (maxval, str(supported)))
-        bitdepth = mi+1
+        bitdepth = mi + 1
         writer = Writer(width, height,
                         greyscale=greyscale,
                         bitdepth=bitdepth,
