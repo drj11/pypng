@@ -96,8 +96,8 @@ def pixmeta(metadata, f):
     bitdepth = bitdepthof(chan)
     maxval = 2**bitdepth - 1
     # PNG style metadata
-    meta=dict(size=(width,rows), bitdepth=bitdepthof(chan),
-              greyscale=greyscale, alpha=alpha, planes=nchans)
+    meta = dict(size=(width,rows), bitdepth=bitdepthof(chan),
+                greyscale=greyscale, alpha=alpha, planes=nchans)
 
     return itertools.imap(
         lambda x: itertools.chain(*x),
