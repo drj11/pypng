@@ -76,7 +76,7 @@ def _redirect_io(inp, out, f):
     finally:
         sys.stdin = oldin
         sys.stdout = oldout
-    if os.environ.get('PYPNG_TEST_TMP') and hasattr(out,'getvalue'):
+    if os.environ.get('PYPNG_TEST_TMP') and hasattr(out, 'getvalue'):
         name = mycallersname()
         if name:
             w = open('{}.png'.format(name), 'wb')
@@ -97,7 +97,7 @@ def mycallersname():
     frame = inspect.currentframe()
     if not frame:
         return None
-    frame_,filename_,lineno_,funname,linelist_,listi_ = (
+    frame_, filename_, lineno_, funname, linelist_, listi_ = (
         inspect.getouterframes(frame)[2])
     return funname
 
@@ -128,11 +128,11 @@ class Test(unittest.TestCase):
         f = BytesIO()
         w.write_array(f, array('B', map(mask.__and__, range(1, 256))))
         r = png.Reader(bytes=f.getvalue())
-        x,y,pixels,meta = r.read()
+        x, y, pixels, meta = r.read()
         self.assertEqual(x, 15)
         self.assertEqual(y, 17)
         self.assertEqual(list(itertools.chain(*pixels)),
-                         [mask & x for x in range(1,256)])
+                         [mask & x for x in range(1, 256)])
 
     def testL8(self):
         return self.helperLN(8)
@@ -146,23 +146,23 @@ class Test(unittest.TestCase):
         f = BytesIO()
         w.write_array(f, array('B', range(4)))
         r = png.Reader(bytes=f.getvalue())
-        x,y,pixels,meta = r.asRGB8()
+        x, y, pixels, meta = r.asRGB8()
         self.assertEqual(x, 1)
         self.assertEqual(y, 4)
-        for i,row in enumerate(pixels):
+        for i, row in enumerate(pixels):
             self.assertEqual(len(row), 3)
             self.assertEqual(list(row), [0x55 * i] * 3)
 
     def testP2(self):
         "2-bit palette."
-        a = (255,255,255)
-        b = (200,120,120)
-        c = (50,99,50)
-        w = png.Writer(1, 4, bitdepth=2, palette=[a,b,c])
+        a = (255, 255, 255)
+        b = (200, 120, 120)
+        c = (50, 99, 50)
+        w = png.Writer(1, 4, bitdepth=2, palette=[a, b, c])
         f = BytesIO()
-        w.write_array(f, array('B', (0,1,1,2)))
+        w.write_array(f, array('B', (0, 1, 1, 2)))
         r = png.Reader(bytes=f.getvalue())
-        x,y,pixels,meta = r.asRGB8()
+        x, y, pixels, meta = r.asRGB8()
         self.assertEqual(x, 1)
         self.assertEqual(y, 4)
         self.assertEqual([list(row) for row in pixels],
@@ -170,22 +170,22 @@ class Test(unittest.TestCase):
 
     def testPtrns(self):
         "Test colour type 3 and tRNS chunk (and 4-bit palette)."
-        a = (50,99,50,50)
-        b = (200,120,120,80)
-        c = (255,255,255)
-        d = (200,120,120)
-        e = (50,99,50)
-        w = png.Writer(3, 3, bitdepth=4, palette=[a,b,c,d,e])
+        a = (50, 99, 50, 50)
+        b = (200, 120, 120, 80)
+        c = (255, 255, 255)
+        d = (200, 120, 120)
+        e = (50, 99, 50)
+        w = png.Writer(3, 3, bitdepth=4, palette=[a, b, c, d, e])
         f = BytesIO()
         w.write_array(f, array('B', (4, 3, 2, 3, 2, 0, 2, 0, 1)))
         r = png.Reader(bytes=f.getvalue())
-        x,y,pixels,meta = r.asRGBA8()
+        x, y, pixels, meta = r.asRGBA8()
         self.assertEqual(x, 3)
         self.assertEqual(y, 3)
         c = c + (255,)
         d = d + (255,)
         e = e + (255,)
-        boxed = [(e,d,c),(d,c,a),(c,a,b)]
+        boxed = [(e, d, c), (d, c, a), (c, a, b)]
         flat = map(lambda row: itertools.chain(*row), boxed)
         self.assertEqual([list(row) for row in pixels],
                          [list(row) for row in flat])
@@ -195,7 +195,7 @@ class Test(unittest.TestCase):
         # Test for Issue 26 (googlecode)
         # Also test that png.Reader can take a "file-like" object.
         r = png.Reader(BytesIO(pngsuite.basn2c08))
-        x,y,pixels,meta = r.asRGBA8()
+        x, y, pixels, meta = r.asRGBA8()
         # Test the pixels at row 9 columns 0 and 1.
         row9 = list(pixels)[9]
         self.assertEqual(list(row9[0:8]),
@@ -205,7 +205,7 @@ class Test(unittest.TestCase):
         """asRGBA() on grey source."""
         # Test for Issue 60 (googlecode)
         r = png.Reader(bytes=pngsuite.basi0g08)
-        x,y,pixels,meta = r.asRGBA()
+        x, y, pixels, meta = r.asRGBA()
         row9 = list(list(pixels)[9])
         self.assertEqual(row9[0:8],
                          [222, 222, 222, 255, 221, 221, 221, 255])
@@ -214,7 +214,7 @@ class Test(unittest.TestCase):
         "Test colour type 2 and tRNS chunk."
         # Test for Issue 25 (googlecode)
         r = png.Reader(bytes=pngsuite.tbrn2c08)
-        x,y,pixels,meta = r.asRGBA8()
+        x, y, pixels, meta = r.asRGBA8()
         # I just happen to know that the first pixel is transparent.
         # In particular it should be #7f7f7f00
         row0 = list(pixels)[0]
@@ -249,28 +249,28 @@ class Test(unittest.TestCase):
         # Not such a great test, because the only way we can check what
         # we have written is to read it back again.
 
-        for name,bytes in pngsuite.png.items():
+        for name, bytes in pngsuite.png.items():
             # Only certain colour types supported for this test.
             if name[3:5] not in ['n0', 'n2', 'n4', 'n6']:
                 continue
             it = png.Reader(bytes=bytes)
-            x,y,pixels,meta = it.read()
+            x, y, pixels, meta = it.read()
             pngi = topngbytes(
                 'adam7wn{}.png'.format(name), pixels,
                 x=x, y=y, bitdepth=it.bitdepth,
                 greyscale=it.greyscale, alpha=it.alpha,
                 transparent=it.transparent,
                 interlace=False)
-            x,y,ps,meta = png.Reader(bytes=pngi).read()
+            x, y, ps, meta = png.Reader(bytes=pngi).read()
             it = png.Reader(bytes=bytes)
-            x,y,pixels,meta = it.read()
+            x, y, pixels, meta = it.read()
             pngs = topngbytes(
                 'adam7wi{}.png'.format(name), pixels,
                 x=x, y=y, bitdepth=it.bitdepth,
                 greyscale=it.greyscale, alpha=it.alpha,
                 transparent=it.transparent,
                 interlace=True)
-            x,y,pi,meta = png.Reader(bytes=pngs).read()
+            x, y, pi, meta = png.Reader(bytes=pngs).read()
             self.assertEqual([list(row) for row in ps],
                              [list(row) for row in pi])
 
@@ -286,7 +286,7 @@ class Test(unittest.TestCase):
         o = BytesIO()
         _redirect_io(s, o, do)
         r = png.Reader(bytes=o.getvalue())
-        x,y,pixels,meta = r.read()
+        x, y, pixels, meta = r.read()
         self.assertTrue(r.greyscale)
         self.assertEqual(r.bitdepth, 2)
 
@@ -298,7 +298,7 @@ class Test(unittest.TestCase):
         s.write(b'P7\nWIDTH 3\nHEIGHT 1\nDEPTH 4\nMAXVAL 255\n'
                 b'TUPLTYPE RGB_ALPHA\nENDHDR\n')
         # The pixels in flat row flat pixel format
-        flat = [255,0,0,255, 0,255,0,120, 0,0,255,30]
+        flat = [255, 0, 0, 255, 0, 255, 0, 120, 0, 0, 255, 30]
         asbytes = seqtobytes(flat)
         s.write(asbytes)
         s.flush()
@@ -306,7 +306,7 @@ class Test(unittest.TestCase):
         o = BytesIO()
         _redirect_io(s, o, do)
         r = png.Reader(bytes=o.getvalue())
-        x,y,pixels,meta = r.read()
+        x, y, pixels, meta = r.read()
         self.assertTrue(r.alpha)
         self.assertTrue(not r.greyscale)
         self.assertEqual(list(itertools.chain(*pixels)), flat)
@@ -321,7 +321,7 @@ class Test(unittest.TestCase):
     def testPal(self):
         """Test that a palette PNG returns the palette in info."""
         r = png.Reader(bytes=pngsuite.basn3p04)
-        x,y,pixels,info = r.read()
+        x, y, pixels, info = r.read()
         self.assertEqual(x, 32)
         self.assertEqual(y, 32)
         self.assertTrue('palette' in info)
@@ -330,21 +330,21 @@ class Test(unittest.TestCase):
         """Test metadata for paletted PNG can be passed from one PNG
         to another."""
         r = png.Reader(bytes=pngsuite.basn3p04)
-        x,y,pixels,info = r.read()
+        x, y, pixels, info = r.read()
         w = png.Writer(**info)
         o = BytesIO()
         w.write(o, pixels)
         o.flush()
         o.seek(0)
         r = png.Reader(file=o)
-        _,_,_,again_info = r.read()
+        _, _, _, again_info = r.read()
         # Same palette
         self.assertEqual(again_info['palette'], info['palette'])
 
     def testPalExpand(self):
         """Test that bitdepth can be used to fiddle with pallete image."""
         r = png.Reader(bytes=pngsuite.basn3p04)
-        x,y,pixels,info = r.read()
+        x, y, pixels, info = r.read()
         pixels = [list(row) for row in pixels]
         info['bitdepth'] = 8
         w = png.Writer(**info)
@@ -353,7 +353,7 @@ class Test(unittest.TestCase):
         o.flush()
         o.seek(0)
         r = png.Reader(file=o)
-        _,_,again_pixels,again_info = r.read()
+        _, _, again_pixels, again_info = r.read()
         # Same pixels
         again_pixels = [list(row) for row in again_pixels]
         self.assertEqual(again_pixels, pixels)
@@ -396,7 +396,7 @@ class Test(unittest.TestCase):
         w = png.Writer(8, 8, greyscale=True, bitdepth=1, transparent=transparent)
         w.write_packed(o, pixels)
         r = png.Reader(bytes=o.getvalue())
-        x,y,pixels,meta = r.asDirect()
+        x, y, pixels, meta = r.asDirect()
         self.assertTrue(meta['alpha'])
         self.assertTrue(meta['greyscale'])
         self.assertEqual(meta['bitdepth'], 1)
@@ -419,7 +419,7 @@ class Test(unittest.TestCase):
         w.write_packed(o, [itertools.chain([0x0a], [0xaa]),
                            itertools.chain([0x0f], [0xff])])
         r = png.Reader(bytes=o.getvalue())
-        x,y,pixels,info = r.asDirect()
+        x, y, pixels, info = r.asDirect()
         pixels = list(pixels)
         self.assertEqual(len(pixels), 2)
         self.assertEqual(len(pixels[0]), 16)
@@ -536,7 +536,7 @@ class Test(unittest.TestCase):
         import hashlib
 
         r = png.Reader(bytes=pngsuite.basn0g02)
-        x,y,pixel,meta = r.read_flat()
+        x, y, pixel, meta = r.read_flat()
         d = hashlib.md5(seqtobytes(pixel)).hexdigest()
         self.assertEqual(d, '255cd971ab8cd9e7275ff906e5041aa0')
 
@@ -555,8 +555,14 @@ class Test(unittest.TestCase):
         img.save(BytesIO())
 
     def testfromarrayRGB(self):
-        img = png.from_array([[0,0,0, 0,0,1, 0,1,0, 0,1,1],
-                             [1,0,0, 1,0,1, 1,1,0, 1,1,1]], 'RGB;1')
+        img = png.from_array([[0, 0, 0,
+                               0, 0, 1,
+                               0, 1, 0,
+                               0, 1, 1],
+                             [1, 0, 0,
+                              1, 0, 1,
+                              1, 1, 0,
+                              1, 1, 1]], 'RGB;1')
         o = BytesIO()
         img.save(o)
 
@@ -575,10 +581,10 @@ class Test(unittest.TestCase):
         assert 0, "Expected from_array() to raise png.Error exception"
 
     def testfromarrayShortMode(self):
-        png.from_array([[0,1],[2,3]], 'L2').save(BytesIO())
+        png.from_array([[0, 1], [2, 3]], 'L2').save(BytesIO())
 
     def testFromarrayLA(self):
-        png.from_array([[3,1],[0,3]], 'LA2',
+        png.from_array([[3, 1], [0, 3]], 'LA2',
                        info=dict(greyscale=True)).save(BytesIO())
 
 
@@ -590,7 +596,7 @@ class Test(unittest.TestCase):
 
         numpy or self.skipTest("numpy is not available")
 
-        rows = [map(numpy.uint16, range(0,0x10000,0x5555))]
+        rows = [map(numpy.uint16, range(0, 0x10000, 0x5555))]
         topngbytes('numpyuint16.png', rows, 4, 1,
                    greyscale=True, alpha=False, bitdepth=16)
 
@@ -599,7 +605,7 @@ class Test(unittest.TestCase):
 
         numpy or self.skipTest("numpy is not available")
 
-        rows = [map(numpy.uint8, range(0,0x100,0x55))]
+        rows = [map(numpy.uint8, range(0, 0x100, 0x55))]
         topngbytes('numpyuint8.png', rows, 4, 1,
                    greyscale=True, alpha=False, bitdepth=8)
 
@@ -608,7 +614,7 @@ class Test(unittest.TestCase):
 
         numpy or self.skipTest("numpy is not available")
 
-        rows = [map(numpy.bool, [0,1])]
+        rows = [map(numpy.bool, [0, 1])]
         topngbytes('numpybool.png', rows, 2, 1,
                    greyscale=True, alpha=False, bitdepth=1)
 
@@ -617,7 +623,7 @@ class Test(unittest.TestCase):
 
         numpy or self.skipTest("numpy is not available")
 
-        pixels = numpy.array([[0,0x5555],[0x5555,0xaaaa]], numpy.uint16)
+        pixels = numpy.array([[0, 0x5555], [0x5555, 0xaaaa]], numpy.uint16)
         img = png.from_array(pixels, 'L')
         img.save(BytesIO())
 
@@ -633,7 +639,7 @@ class Test(unittest.TestCase):
 
         s = [[int(p) for p in row] for row in s]
 
-        palette = [(0x55,0x55,0x55), (0xff,0x99,0x99)]
+        palette = [(0x55, 0x55, 0x55), (0xff, 0x99, 0x99)]
         pnp = numpy.array(palette) # creates a 2x3 array
         png.Writer(len(s[0]), len(s), palette=pnp, bitdepth=1)
 
@@ -723,8 +729,8 @@ class Test(unittest.TestCase):
         k = 'f02n0g08'
         r1 = png.Reader(bytes=pngsuite.png[k])
         r2 = png.Reader(bytes=pngsuite.png[k])
-        _,_,pixels1,info1 = r1.asDirect()
-        _,_,pixels2,info2 = r2.asDirect()
+        _, _, pixels1, info1 = r1.asDirect()
+        _, _, pixels2, info2 = r2.asDirect()
         izip = getattr(itertools, 'izip', zip)
         for row1, row2 in izip(pixels1, pixels2):
             self.assertEqual(row1, row2)
@@ -733,7 +739,7 @@ class Test(unittest.TestCase):
 
     def testPNMWrite(self):
         o = BytesIO()
-        w,h = 3,3
+        w, h = 3, 3
         pixels = [[0, 1, 2],
                   [3, 0, 1],
                   [2, 3, 0]]
