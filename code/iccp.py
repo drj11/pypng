@@ -427,12 +427,12 @@ def ICCdecode(s):
     """
 
     sig = s[0:4].strip()
-    f=dict(text=RDtext,
-           XYZ=RDXYZ,
-           curv=RDcurv,
-           vcgt=RDvcgt,
-           sf32=RDsf32,
-           )
+    f = dict(text=RDtext,
+             XYZ=RDXYZ,
+             curv=RDcurv,
+             vcgt=RDvcgt,
+             sf32=RDsf32,
+             )
     if sig not in f:
         return None
     return (sig, f[sig](s))
