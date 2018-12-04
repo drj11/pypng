@@ -1333,7 +1333,7 @@ class Reader:
 
         """
         if ((_guess is not None and len(kw) != 0) or
-            (_guess is None and len(kw) != 1)):
+                (_guess is None and len(kw) != 1)):
             raise TypeError("Reader() takes exactly 1 argument")
 
         # Will be the first 8 bytes, later on.  See validate_signature.
@@ -1847,7 +1847,7 @@ class Reader:
     def _process_sBIT(self, data):
         self.sbit = data
         if (self.colormap and len(data) != 3 or
-            not self.colormap and len(data) != self.planes):
+                not self.colormap and len(data) != self.planes):
             raise FormatError("sBIT chunk has incorrect length.")
 
     def _process_pHYs(self, data):
@@ -2383,9 +2383,9 @@ def read_pam_header(infile):
     depth = int(header[DEPTH])
     maxval = int(header[MAXVAL])
     if (width <= 0 or
-        height <= 0 or
-        depth <= 0 or
-        maxval <= 0):
+            height <= 0 or
+            depth <= 0 or
+            maxval <= 0):
         raise Error(
             'WIDTH, HEIGHT, DEPTH, MAXVAL must all be positive integers')
     return 'P7', width, height, depth, maxval
