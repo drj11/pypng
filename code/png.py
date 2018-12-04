@@ -1766,8 +1766,8 @@ class Reader:
 
         # Derived values
         # http://www.w3.org/TR/PNG/#6Colour-values
-        colormap =  bool(self.color_type & 1)
-        greyscale = not (self.color_type & 2)
+        colormap = bool(self.color_type & 1)
+        greyscale = not(self.color_type & 2)
         alpha = bool(self.color_type & 4)
         color_planes = (3,1)[greyscale or colormap]
         planes = color_planes + alpha
