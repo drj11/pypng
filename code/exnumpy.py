@@ -68,7 +68,7 @@ if 0:
     image_2d = numpy.zeros((row_count, plane_count * column_count),
                            dtype=numpy.uint16)
     for row_index, one_boxed_row_flat_pixels in enumerate(pngdata):
-        image_2d[row_index,:] = one_boxed_row_flat_pixels
+        image_2d[row_index, :] = one_boxed_row_flat_pixels
 
 del pngReader
 del pngdata
@@ -85,7 +85,7 @@ del pngdata
 '''
 # --- extract 002 start
 image_3d = numpy.reshape(image_2d,
-                         (row_count,column_count,plane_count))
+                         (row_count, column_count, plane_count))
 # --- extract 002 end
 
 
