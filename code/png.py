@@ -1615,7 +1615,7 @@ class Reader:
             shifts = [self.bitdepth * i
                       for i in reversed(list(range(spb)))]
             for o in raw:
-                out.extend([mask&(o>>i) for i in shifts])
+                out.extend([mask & (o >> i) for i in shifts])
             return out[:width]
 
         return map(asvalues, rows)
@@ -1641,7 +1641,7 @@ class Reader:
         shifts = list(map(self.bitdepth.__mul__, reversed(list(range(spb)))))
         l = width
         for o in bytes:
-            out.extend([(mask&(o>>s)) for s in shifts][:l])
+            out.extend([(mask & (o >> s)) for s in shifts][:l])
             l -= spb
             if l <= 0:
                 l = width
