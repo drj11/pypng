@@ -25,14 +25,14 @@ import png
 # directly; this suggests alternatives such as using urllib to read
 # an image from the internet:
 # png.Reader(file=urllib.urlopen('http://www.libpng.org/pub/png/PngSuite/basn2c16.png'))
-pngReader=png.Reader(filename='picture.png')
+pngReader = png.Reader(filename='picture.png')
 # Tuple unpacking, using multiple assignment, is very useful for the
 # result of asDirect (and other methods).
 # See
 # http://docs.python.org/tutorial/introduction.html#first-steps-towards-programming
 row_count, column_count, pngdata, meta = pngReader.asDirect()
-bitdepth=meta['bitdepth']
-plane_count=meta['planes']
+bitdepth = meta['bitdepth']
+plane_count = meta['planes']
 
 # Make sure we're dealing with RGB files
 assert plane_count == 3
@@ -68,7 +68,7 @@ if 0:
     image_2d = numpy.zeros((row_count, plane_count * column_count),
                            dtype=numpy.uint16)
     for row_index, one_boxed_row_flat_pixels in enumerate(pngdata):
-        image_2d[row_index,:]=one_boxed_row_flat_pixels
+        image_2d[row_index,:] = one_boxed_row_flat_pixels
 
 del pngReader
 del pngdata
@@ -101,7 +101,7 @@ image_3d = numpy.reshape(image_2d,
 '''
 
 row_count, column_count, plane_count = image_3d.shape
-assert plane_count==3
+assert plane_count == 3
 
 pngfile = open('picture_out.png', 'wb')
 try:
