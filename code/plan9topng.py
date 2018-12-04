@@ -85,7 +85,7 @@ def pixmeta(metadata, f):
     `f`, the input file, should be cued up to the start of the image data.
     """
 
-    chan,minx,miny,limx,limy = metadata
+    chan, minx, miny, limx, limy = metadata
     rows = limy - miny
     width = limx - minx
     nchans = len(re.findall('[a-wyz]', chan))
@@ -96,7 +96,7 @@ def pixmeta(metadata, f):
     bitdepth = bitdepthof(chan)
     maxval = 2**bitdepth - 1
     # PNG style metadata
-    meta = dict(size=(width,rows), bitdepth=bitdepthof(chan),
+    meta = dict(size=(width, rows), bitdepth=bitdepthof(chan),
                 greyscale=greyscale, alpha=alpha, planes=nchans)
 
     return itertools.imap(
@@ -110,7 +110,7 @@ def png(out, metadata, f):
 
     import png
 
-    pixels,meta = pixmeta(metadata, f)
+    pixels, meta = pixmeta(metadata, f)
     p = png.Writer(**meta)
     p.write(out, pixels)
 
@@ -218,7 +218,7 @@ def decomprest(f, rows):
 
     row = 0
     while row < rows:
-        row,o = deblock(f)
+        row, o = deblock(f)
         yield o
 
 
@@ -269,7 +269,7 @@ def deblock(f):
             raise Error('byte offset indexes off the begininning of the output buffer; not a Plan 9 image file?')
         for j in range(l):
             o.append(o[offset + j])
-    return row,''.join(o)
+    return row, ''.join(o)
 
 def main(argv=None):
     if argv is None:
