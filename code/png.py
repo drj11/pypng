@@ -271,11 +271,11 @@ def check_sizes(size, width, height):
     if width is not None and width != size[0]:
         raise ValueError(
             "size[0] (%r) and width (%r) should match when both are used."
-              % (size[0], width))
+            % (size[0], width))
     if height is not None and height != size[1]:
         raise ValueError(
             "size[1] (%r) and height (%r) should match when both are used."
-              % (size[1], height))
+            % (size[1], height))
     return size
 
 def check_color(c, greyscale, which):
