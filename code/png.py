@@ -1912,7 +1912,7 @@ class Reader:
 
         if self.interlace:
             raw = array('B', itertools.chain(*raw))
-            arraycode = 'BH'[self.bitdepth>8]
+            arraycode = 'BH'[self.bitdepth > 8]
             # Like :meth:`group` but producing an array.array object for
             # each row.
             pixels = map(lambda *row: array(arraycode, row),
@@ -1947,7 +1947,7 @@ class Reader:
         """
 
         x, y, pixel, meta = self.read()
-        arraycode = 'BH'[meta['bitdepth']>8]
+        arraycode = 'BH'[meta['bitdepth'] > 8]
         pixel = array(arraycode, itertools.chain(*pixel))
         return x, y, pixel, meta
 
@@ -2044,7 +2044,7 @@ class Reader:
             planes = meta['planes']
             meta['alpha'] = True
             meta['planes'] += 1
-            typecode = 'BH'[meta['bitdepth']>8]
+            typecode = 'BH'[meta['bitdepth'] > 8]
             def itertrns(pixels):
                 for row in pixels:
                     # For each row we group it into pixels, then form a
