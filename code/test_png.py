@@ -298,7 +298,7 @@ class Test(unittest.TestCase):
         s.write(b'P7\nWIDTH 3\nHEIGHT 1\nDEPTH 4\nMAXVAL 255\n'
                 b'TUPLTYPE RGB_ALPHA\nENDHDR\n')
         # The pixels in flat row flat pixel format
-        flat =  [255,0,0,255, 0,255,0,120, 0,0,255,30]
+        flat = [255,0,0,255, 0,255,0,120, 0,0,255,30]
         asbytes = seqtobytes(flat)
         s.write(asbytes)
         s.flush()
