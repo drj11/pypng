@@ -64,8 +64,8 @@ class Profile:
                 struct.unpack('>L4sL4s4s4s', profile[:24])))
         if len(profile) < d['size']:
             warnings.warn(
-                'Profile size declared to be %d, but only got %d bytes' %
-                  (d['size'], len(profile)))
+                "Profile size declared to be %d, but only got %d bytes" %
+                (d['size'], len(profile)))
         d['version'] = '%08x' % d['version']
         d['created'] = readICCdatetime(profile[24:36])
         d.update(
