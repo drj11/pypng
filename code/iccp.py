@@ -182,7 +182,7 @@ class Profile:
                         pcsilluminant=encodefuns()['XYZ'](*D50()),
                         creator=z,
                         )
-        for k,v in defaults.items():
+        for k, v in defaults.items():
             defaultkey(self.d, k, v)
 
         hl = map(self.d.__getitem__,
@@ -340,7 +340,7 @@ def tagblock(tag):
     table = ''
     # The element data
     element = ''
-    for k,v in tag:
+    for k, v in tag:
         table += struct.pack('>4s2L', k, offset + len(element), len(v))
         element += v
     return struct.pack('>L', n) + table + element
@@ -357,7 +357,7 @@ def profileFromPNG(inp):
     pair.
     """
     r = png.Reader(file=inp)
-    _,chunk = r.chunk('iCCP')
+    _, chunk = r.chunk('iCCP')
     i = chunk.index('\x00')
     name = chunk[: i]
     compression = chunk[i + 1]
@@ -460,11 +460,11 @@ def RDmluc(s):
     strings, but the ICC standard does not prohibit it."""
     # See [ICC 2004] 10.13
     assert s[0:4] == 'mluc'
-    n,sz = struct.unpack('>2L', s[8:16])
+    n, sz = struct.unpack('>2L', s[8:16])
     assert sz == 12
     record = []
     for i in range(n):
-        lc,l,o = struct.unpack('4s2L', s[16 + 12 * n: 28 + 12 * n])
+        lc, l, o = struct.unpack('4s2L', s[16 + 12 * n: 28 + 12 * n])
         record.append(lc, s[o: o + l])
     # How are strings encoded?
     return record
@@ -499,7 +499,7 @@ def RDvcgt(s):
         return s[8:]
     if tagtype == 0:
         # Table.
-        channels,count,size = struct.unpack('>3H', s[12:18])
+        channels, count, size = struct.unpack('>3H', s[12:18])
         if size == 1:
             fmt = 'B'
         elif size == 2:
@@ -524,12 +524,12 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv
     argv = argv[1:]
-    opt,arg = getopt(argv, 'o:')
+    opt, arg = getopt(argv, 'o:')
     if len(arg) > 0:
         inp = open(arg[0], 'rb')
     else:
         inp = sys.stdin
-    for o,v in opt:
+    for o, v in opt:
         if o == '-o':
             f = open(v, 'wb')
             return iccpout(f, inp)
