@@ -18,12 +18,15 @@ import re
 # http://www.python.org/doc/2.3.5/lib/module-sys.html
 import sys
 
+
 class Error(Exception):
     """Some sort of Plan 9 image error."""
+
 
 def block(s, n):
     # See http://www.python.org/doc/2.6.2/library/functions.html#zip
     return zip(* [iter(s)] * n)
+
 
 def convert(f, output=sys.stdout):
     """Convert Plan 9 file to PNG format.  Works with either uncompressed
@@ -45,6 +48,7 @@ def glue(f, r):
     r = r + f.read(60 - len(r))
     return (r, f)
 
+
 def meta(r):
     """Convert 60 character string `r`, the metadata from an image file.
     Returns a 5-tuple (*chan*,*minx*,*miny*,*limx*,*limy*).  5-tuples may
@@ -61,6 +65,7 @@ def meta(r):
     r = [r[0]] + map(int, r[1:])
     return r
 
+
 def bitdepthof(pixel):
     """Return the bitdepth for a Plan9 pixel format string."""
 
@@ -70,11 +75,13 @@ def bitdepthof(pixel):
             maxd = max(maxd, int(c[1:]))
     return maxd
 
+
 def maxvalof(pixel):
     """Return the netpbm MAXVAL for a Plan9 pixel format string."""
 
     bitdepth = bitdepthof(pixel)
     return (2 ** bitdepth) - 1
+
 
 def pixmeta(metadata, f):
     """Convert (uncompressed) Plan 9 image file to pair of (*metadata*,
@@ -103,9 +110,11 @@ def pixmeta(metadata, f):
         lambda x: itertools.chain(*x),
         block(unpack(f, rows, width, chan, maxval), width)), meta
 
+
 def png(out, metadata, f):
-    """Convert to PNG format.  `metadata` should be a Plan9 5-tuple; `f`
-    the input file (see :meth:`pixmeta`).
+    """Convert to PNG format.
+    `metadata` should be a Plan9 5-tuple;
+    `f` the input file (see :meth:`pixmeta`).
     """
 
     import png
@@ -114,9 +123,11 @@ def png(out, metadata, f):
     p = png.Writer(**meta)
     p.write(out, pixels)
 
+
 def unpack(f, rows, width, pixel, maxval):
-    """Unpack `f` into pixels.  Assumes the pixel format is such that the depth
-    is either a multiple or a divisor of 8.
+    """Unpack `f` into pixels.
+    Assumes the pixel format is such that
+    the depth is either a multiple or a divisor of 8.
     `f` is assumed to be an iterator that returns blocks of input such
     that each block contains a whole number of pixels.  An iterator is
     returned that yields each pixel as an n-tuple.  `pixel` describes the
@@ -270,6 +281,7 @@ def deblock(f):
         for j in range(l):
             o.append(o[offset + j])
     return row, ''.join(o)
+
 
 def main(argv=None):
     if argv is None:
