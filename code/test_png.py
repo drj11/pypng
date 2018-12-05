@@ -368,7 +368,6 @@ class Test(unittest.TestCase):
         r.preamble()
         r.palette(alpha='force')
 
-
     def testPNMsbit(self):
         """Test that PNM files can generates sBIT chunk."""
         def do():
@@ -591,9 +590,7 @@ class Test(unittest.TestCase):
         png.from_array([[3, 1], [0, 3]], 'LA2',
                        info=dict(greyscale=True)).save(BytesIO())
 
-
 # numpy dependent tests.
-
 
     def testNumpyuint16(self):
         """numpy uint16."""
