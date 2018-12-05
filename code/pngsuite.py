@@ -9,6 +9,7 @@ import sys
 use ``pngsuite.png`` to get a dict() of them all.
 """
 
+
 def _dehex(s):
     """Liberally convert from hex string to binary string."""
     import re
