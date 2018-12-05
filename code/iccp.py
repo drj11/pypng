@@ -556,5 +556,6 @@ def main(argv=None):
             return iccpout(f, inp)
     return iccp(sys.stdout, inp)
 
+
 if __name__ == '__main__':
     main()
