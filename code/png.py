@@ -186,15 +186,19 @@ _adam7 = ((0, 0, 8, 8),
           (1, 0, 2, 2),
           (0, 1, 1, 2))
 
+
 def group(s, n):
     # See http://www.python.org/doc/2.6/library/functions.html#zip
     return list(zip(* [iter(s)] * n))
 
+
 def isarray(x):
     return isinstance(x, array)
 
+
 def tostring(row):
     return row.tostring()
+
 
 def interleave_planes(ipixels, apixels, ipsize, apsize):
     """
@@ -225,6 +229,7 @@ def interleave_planes(ipixels, apixels, ipsize, apsize):
     for i in range(apsize):
         out[i + ipsize: newtotal: newpsize] = apixels[i: atotal: apsize]
     return out
+
 
 def check_palette(palette):
     """Check a palette argument (to the :class:`Writer` class)
@@ -257,8 +262,9 @@ def check_palette(palette):
                     "values must be integer: 0 <= x <= 255" % i)
     return p
 
+
 def check_sizes(size, width, height):
-    """Check that these arguments, in supplied, are consistent.
+    """Check that these arguments, if supplied, are consistent.
     Return a (width, height) pair.
     """
 
@@ -277,6 +283,7 @@ def check_sizes(size, width, height):
             "size[1] (%r) and height (%r) should match when both are used."
             % (size[1], height))
     return size
+
 
 def check_color(c, greyscale, which):
     """Checks that a colour argument for transparent or
@@ -305,14 +312,17 @@ def check_color(c, greyscale, which):
                 "%s colour must be a triple of integers" % which)
     return c
 
+
 class Error(Exception):
     def __str__(self):
         return self.__class__.__name__ + ': ' + ' '.join(self.args)
+
 
 class FormatError(Error):
     """Problem with input file format.  In other words, PNG file does
     not conform to the specification in some way and is invalid.
     """
+
 
 class ChunkError(FormatError):
     pass
@@ -944,6 +954,7 @@ class Writer:
                             pixels[offset + i: end_offset: skip]
                     yield row
 
+
 def write_chunk(outfile, tag, data=b''):
     """
     Write a PNG chunk to the output file, including length and
@@ -959,12 +970,14 @@ def write_chunk(outfile, tag, data=b''):
     checksum &= 2 ** 32 - 1
     outfile.write(struct.pack("!I", checksum))
 
+
 def write_chunks(out, chunks):
     """Create a PNG file by writing out the chunks."""
 
     out.write(_signature)
     for chunk in chunks:
         write_chunk(out, *chunk)
+
 
 def filter_scanline(type, line, fo, prev=None):
     """Apply a scanline filter to a scanline.  `type` specifies the
@@ -1055,6 +1068,7 @@ def filter_scanline(type, line, fo, prev=None):
 
 # Regex for decoding mode string
 RegexModeDecode = re.compile("(LA?|RGBA?);?([0-9]*)", flags=re.IGNORECASE)
+
 
 def from_array(a, mode=None, info={}):
     """Create a PNG :class:`Image` object from a 2- or 3-dimensional
@@ -1244,6 +1258,7 @@ def from_array(a, mode=None, info={}):
 # So that refugee's from PIL feel more at home.  Not documented.
 fromarray = from_array
 
+
 class Image:
     """A PNG image.  You can create an :class:`Image` object from
     an array of pixels by calling :meth:`png.from_array`.  It can be
@@ -1287,6 +1302,7 @@ class Image:
         finally:
             close()
 
+
 class _readable:
     """
     A simple file-like interface for strings and arrays.
@@ -1310,6 +1326,7 @@ except TypeError:
 else:
     def as_str(x):
         return str(x, 'ascii')
+
 
 class Reader:
     """
@@ -2220,6 +2237,7 @@ class Reader:
         meta['greyscale'] = False
         return width, height, convert(), meta
 
+
 def check_bitdepth_colortype(bitdepth, colortype):
     """Check that `bitdepth` and `colortype` are both valid,
     and specified in a valid combination. Returns if valid,
@@ -2245,6 +2263,7 @@ def check_bitdepth_colortype(bitdepth, colortype):
             " and colour type (%d)."
             " See http://www.w3.org/TR/2003/REC-PNG-20031110/#table111 ."
             % (bitdepth, colortype))
+
 
 def isinteger(x):
     try:
@@ -2390,6 +2409,7 @@ def read_pam_header(infile):
             'WIDTH, HEIGHT, DEPTH, MAXVAL must all be positive integers')
     return 'P7', width, height, depth, maxval
 
+
 def read_pnm_header(infile, supported=(b'P5', b'P6')):
     """
     Read a PNM header, returning (format,width,height,depth,maxval).
@@ -2467,6 +2487,7 @@ def read_pnm_header(infile, supported=(b'P5', b'P6')):
     depth = (1, 3)[type == b'P6']
     return header[0], header[1], header[2], depth, header[3]
 
+
 def write_pnm(file, width, height, pixels, meta):
     """Write a Netpbm PNM/PAM file.
     """
@@ -2513,6 +2534,7 @@ def write_pnm(file, width, height, pixels, meta):
         file.write(struct.pack(fmt, *row))
     file.flush()
 
+
 def color_triple(color):
     """
     Convert a command line colour value to a RGB triple of integers.
@@ -2530,6 +2552,7 @@ def color_triple(color):
         return (int(color[1:5], 16),
                 int(color[5:9], 16),
                 int(color[9:13], 16))
+
 
 def _add_common_options(parser):
     """Call *parser.add_option* for each of the options that are
@@ -2552,6 +2575,7 @@ def _add_common_options(parser):
                       action="store", type="int", metavar="level",
                       help="zlib compression level (0-9)")
     return parser
+
 
 def _main(argv):
     """
