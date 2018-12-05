@@ -640,7 +640,8 @@ class Test(unittest.TestCase):
         s = [[int(p) for p in row] for row in s]
 
         palette = [(0x55, 0x55, 0x55), (0xff, 0x99, 0x99)]
-        pnp = numpy.array(palette) # creates a 2x3 array
+        # Creates a 2x3 array
+        pnp = numpy.array(palette)
         png.Writer(len(s[0]), len(s), palette=pnp, bitdepth=1)
 
     def paeth(self, x, a, b, c):
