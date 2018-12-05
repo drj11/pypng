@@ -15,6 +15,7 @@ import itertools
 def usage(fil):
     fil.write("texttopng [-h|--help] text\n")
 
+
 font = {
     32: '0000000000000000',
     33: '0010101010001000',
@@ -196,6 +197,7 @@ def main(argv=None):
             msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
 
     render(message, out)
+
 
 if __name__ == '__main__':
     main()
