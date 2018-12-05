@@ -38,6 +38,7 @@ import pngsuite
 def runTest():
     unittest.main(__name__)
 
+
 def topngbytes(name, rows, x, y, **k):
     """
     Convenience function for creating a PNG file "in memory" as
@@ -59,6 +60,7 @@ def topngbytes(name, rows, x, y, **k):
         w.write(f.getvalue())
         w.close()
     return f.getvalue()
+
 
 def _redirect_io(inp, out, f):
     """Calls the function `f` with ``sys.stdin`` changed to `inp`
@@ -84,6 +86,7 @@ def _redirect_io(inp, out, f):
             w.close()
     return x
 
+
 def mycallersname():
     """Returns the name of the caller of the caller of this function
     (hence the name of the caller of the function in which
@@ -100,6 +103,7 @@ def mycallersname():
     frame_, filename_, lineno_, funname, linelist_, listi_ = (
         inspect.getouterframes(frame)[2])
     return funname
+
 
 def seqtobytes(s):
     """Convert a sequence of integers to a *bytes* instance.  Good for
@@ -746,6 +750,7 @@ class Test(unittest.TestCase):
                   [2, 3, 0]]
         meta = dict(alpha=False, greyscale=True, bitdepth=2, planes=1)
         png.write_pnm(o, w, h, pixels, meta)
+
 
 def group(s, n):
     # See http://www.python.org/doc/2.6/library/functions.html#zip
