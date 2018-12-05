@@ -334,7 +334,7 @@ class Writer:
                  gamma=None,
                  compression=None,
                  interlace=False,
-                 bytes_per_sample=None, # deprecated
+                 bytes_per_sample=None,     # deprecated
                  planes=None,
                  colormap=None,
                  maxval=None,
@@ -1004,7 +1004,7 @@ def filter_scanline(type, line, fo, prev=None):
             ai += 1
     def paeth():
         # http://www.w3.org/TR/PNG/#9Filter-type-4-Paeth
-        ai = -fo # also used for ci
+        ai = -fo    # also used for ci
         for i, x in enumerate(line):
             a = 0
             b = prev[i]
@@ -1034,11 +1034,11 @@ def filter_scanline(type, line, fo, prev=None):
         # of the image simpler.  "up" becomes "none"; "paeth" becomes
         # "left" (non-trivial, but true). "average" needs to be handled
         # specially.
-        if type == 2: # "up"
+        if type == 2:       # "up"
             type = 0
         elif type == 3:
             prev = [0] * len(line)
-        elif type == 4: # "paeth"
+        elif type == 4:     # "paeth"
             type = 1
     if type == 0:
         out.extend(line)
@@ -1048,7 +1048,7 @@ def filter_scanline(type, line, fo, prev=None):
         up()
     elif type == 3:
         average()
-    else: # type == 4
+    else:   # type == 4
         paeth()
     return out
 
@@ -2055,7 +2055,7 @@ class Reader:
                     row = group(row, planes)
                     opa = map(it.__ne__, row)
                     opa = map(maxval.__mul__, opa)
-                    opa = list(zip(opa)) # convert to 1-tuples
+                    opa = list(zip(opa))    # convert to 1-tuples
                     yield array(
                         typecode,
                         itertools.chain(*map(operator.add, row, opa)))
