@@ -1379,7 +1379,6 @@ class Reader:
         else:
             raise TypeError("expecting filename, file or bytes array")
 
-
     def chunk(self, seek=None, lenient=False):
         """
         Read the next PNG chunk from the input file; returns a
@@ -1948,7 +1947,6 @@ class Reader:
         if self.plte:
             meta['palette'] = self.palette()
         return self.width, self.height, pixels, meta
-
 
     def read_flat(self):
         """
