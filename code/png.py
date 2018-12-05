@@ -339,9 +339,9 @@ class Writer:
                  colormap=None,
                  maxval=None,
                  chunk_limit=2**20,
-                 x_pixels_per_unit = None,
-                 y_pixels_per_unit = None,
-                 unit_is_meter = False):
+                 x_pixels_per_unit=None,
+                 y_pixels_per_unit=None,
+                 unit_is_meter=False):
         """
         Create a PNG encoder object.
 
