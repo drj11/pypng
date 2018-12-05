@@ -1255,6 +1255,7 @@ def from_array(a, mode=None, info={}):
 
     return Image(a, info)
 
+
 # So that refugee's from PIL feel more at home.  Not documented.
 fromarray = from_array
 
@@ -1318,6 +1319,7 @@ class _readable:
             r = r.tostring()
         self.offset += n
         return r
+
 
 try:
     str(b'dummy', 'ascii')
