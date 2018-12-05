@@ -291,5 +291,6 @@ def main(argv=None):
     else:
         return convert(open(argv[1], 'rb'))
 
+
 if __name__ == '__main__':
     sys.exit(main())
