@@ -142,7 +142,7 @@ def unpack(f, rows, width, pixel, maxval):
                 i += w
                 # Convert p to little-endian integer, x
                 x = 0
-                s = 1 # scale
+                s = 1   # scale
                 for j in p:
                     x += s * ord(j)
                     s <<= 8
