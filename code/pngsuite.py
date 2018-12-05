@@ -21,6 +21,7 @@ def _dehex(s):
     # thing.decode('hex')).
     return binascii.unhexlify(s)
 
+
 # Copies of PngSuite test files taken
 # from http://www.schaik.com/pngsuite/pngsuite_bas_png.html
 # on 2009-02-19 by drj and converted to hex.
