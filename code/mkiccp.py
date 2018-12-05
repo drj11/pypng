@@ -11,6 +11,7 @@
 # Local module.
 import iccp
 
+
 def black(m):
     """Return a function that maps all values from [0.0,m] to 0, and maps
     the range [m,1.0] into [0.0, 1.0] linearly.
@@ -24,16 +25,17 @@ def black(m):
         return (x - m) / (1.0 - m)
     return f
 
+
 # For monochrome input the required tags are (See [ICC 2001] 6.3.1.1):
 # profileDescription [ICC 2001] 6.4.32
 # grayTRC [ICC 2001] 6.4.19
 # mediaWhitePoint [ICC 2001] 6.4.25
 # copyright [ICC 2001] 6.4.13
-
 def agreyprofile(out):
     it = iccp.Profile().greyInput()
     it.addTags(kTRC=black(0.07))
     it.write(out)
+
 
 def main():
     import sys
