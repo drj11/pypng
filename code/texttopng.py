@@ -11,6 +11,7 @@
 
 import itertools
 
+
 def usage(fil):
     fil.write("texttopng [-h|--help] text\n")
 
@@ -112,6 +113,7 @@ font = {
     126: '0020540800000000',
 }
 
+
 def char(i):
     """Get image data for the character `i` (a one character string).
     Returned as a list of rows.  Each row is a tuple containing the
@@ -122,6 +124,7 @@ def char(i):
     if i not in font:
         return [(0,)] * 8
     return [(ord(row),) for row in font[i].decode('hex')]
+
 
 def texttoraster(m):
     """Convert the string *m* to a raster image. Any newlines
@@ -140,6 +143,7 @@ def texttoraster(m):
     raster = itertools.chain(*(r[2] for r in rasters))
     return x, y, raster
 
+
 def linetoraster(m):
     """Convert a single line of text *m* to a raster image (by 
     rendering it using the font in *font*).
@@ -153,6 +157,7 @@ def linetoraster(m):
     y = 8
     return x, y, [itertools.chain(*row) for row in zip(*map(char, m))]
 
+
 def render(message, out):
     import png
 
@@ -160,6 +165,7 @@ def render(message, out):
     w = png.Writer(x, y, greyscale=True, bitdepth=1)
     w.write_packed(out, pixels)
     out.flush()
+
 
 def main(argv=None):
     import sys
