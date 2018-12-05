@@ -32,8 +32,10 @@ import warnings
 
 import png
 
+
 class FormatError(Exception):
     pass
+
 
 class Profile:
     """An International Color Consortium Profile (ICC Profile)."""
@@ -197,6 +199,7 @@ class Profile:
         out.write('\x00' * 44)
         return self
 
+
 def encodefuns():
     """Returns a dictionary mapping ICC type signature sig to encoding
     function.  Each function returns a string comprising the content of
@@ -249,6 +252,7 @@ def encodefuns():
         return struct.pack('>3l', *map(fs15f16, l))
 
     return locals()
+
 
 # Tag type defaults.
 # Most tags can only have one or a few tag types.
@@ -304,6 +308,7 @@ defaulttagtype = dict(
     view='view',
 )
 
+
 def encode(tsig, *l):
     """Encode a Python value as an ICC type.  `tsig` is the type
     signature to (the first 4 bytes of the encoded value, see [ICC 2004]
@@ -317,6 +322,7 @@ def encode(tsig, *l):
     # Padd tsig out with spaces.
     tsig = (tsig + '   ')[: 4]
     return tsig + ('\x00' * 4) + v
+
 
 def tagblock(tag):
     """`tag` should be a list of (*signature*, *element*) pairs, where
@@ -345,11 +351,13 @@ def tagblock(tag):
         element += v
     return struct.pack('>L', n) + table + element
 
+
 def iccp(out, inp):
     profile = Profile().fromString(*profileFromPNG(inp))
     print >>out, profile.d
     print >>out, map(lambda x: x[0], profile.rawtagtable)
     print >>out, profile.tag
+
 
 def profileFromPNG(inp):
     """
@@ -365,16 +373,19 @@ def profileFromPNG(inp):
     profile = chunk[i + 2:].decode('zlib')
     return profile, name
 
+
 def iccpout(out, inp):
     """Extract ICC Profile from PNG file `inp` and write it to
     the file `out`."""
 
     out.write(profileFromPNG(inp)[0])
 
+
 def fs15f16(x):
     """Convert float to ICC s15Fixed16Number (as a Python ``int``)."""
 
     return int(round(x * 2**16))
+
 
 def D50():
     """Return D50 illuminant as an (X,Y,Z) triple."""
@@ -394,17 +405,20 @@ def writeICCdatetime(t=None):
         t = time.gmtime()
     return struct.pack('>6H', *t[:6])
 
+
 def readICCdatetime(s):
     """Convert from 12 byte ICC representation of dateTimeNumber to
     ISO8601 string. See [ICC 2004] 5.1.1"""
 
     return '%04d-%02d-%02dT%02d:%02d:%02dZ' % struct.unpack('>6H', s)
 
+
 def readICCXYZNumber(s):
     """Convert from 12 byte ICC representation of XYZNumber to (x,y,z)
     triple of floats.  See [ICC 2004] 5.1.11"""
 
     return s15f16l(s)
+
 
 def s15f16l(s):
     """Convert sequence of ICC s15Fixed16 to list of float."""
@@ -418,6 +432,7 @@ def s15f16l(s):
 # section 10.  When encoded, a value begins with a 4 byte type
 # signature.  We use the same 4 byte type signature in the names of the
 # Python functions that decode the type into a Pythonic representation.
+
 
 def ICCdecode(s):
     """Take an ICC encoded tag, and dispatch on its type signature
@@ -437,6 +452,7 @@ def ICCdecode(s):
         return None
     return (sig, f[sig](s))
 
+
 def RDXYZ(s):
     """Convert ICC XYZType to rank 1 array of trimulus values."""
 
@@ -444,11 +460,13 @@ def RDXYZ(s):
     assert s[0:4] == 'XYZ '
     return readICCXYZNumber(s[8:])
 
+
 def RDsf32(s):
     """Convert ICC s15Fixed16ArrayType to list of float."""
     # See [ICC 2004] 10.18
     assert s[0:4] == 'sf32'
     return s15f16l(s[8:])
+
 
 def RDmluc(s):
     """Convert ICC multiLocalizedUnicodeType.  This types encodes
@@ -469,6 +487,7 @@ def RDmluc(s):
     # How are strings encoded?
     return record
 
+
 def RDtext(s):
     """Convert ICC textType to Python string."""
     # Note: type not specified or used in [ICC 2004], only in older
@@ -476,6 +495,7 @@ def RDtext(s):
     # See [ICC 2001] 6.5.18
     assert s[0:4] == 'text'
     return s[8:-1]
+
 
 def RDcurv(s):
     """Convert ICC curveType."""
@@ -488,6 +508,7 @@ def RDcurv(s):
     if count == 1:
         return dict(gamma=table[0] * 2 ** -8)
     return table
+
 
 def RDvcgt(s):
     """Convert Apple CMVideoCardGammaType."""
