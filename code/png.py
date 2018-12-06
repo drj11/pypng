@@ -778,7 +778,7 @@ class Writer:
         try:
             # If this fails...
             extend(row)
-        except:
+        except Exception:
             # ... try a version that converts the values to int first.
             # Not only does this work for the (slightly broken) NumPy
             # types, there are probably lots of other, unknown, "nearly"
