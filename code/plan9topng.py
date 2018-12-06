@@ -261,7 +261,7 @@ def deblock(f):
             o.extend(lit)
             continue
         # x's high-order bit is 0
-        l = (x >> 2) + 3
+        length = (x >> 2) + 3
         # Offset is made from bottom 2 bits of x and all 8 bits of next
         # byte.  http://plan9.bell-labs.com/magic/man2html/6/image doesn't
         # say whether x's 2 bits are most significant or least significant.
@@ -279,7 +279,7 @@ def deblock(f):
         if offset < 0:
             raise Error('byte offset indexes off the begininning of '
                         'the output buffer; not a Plan 9 image file?')
-        for j in range(l):
+        for j in range(length):
             o.append(o[offset + j])
     return row, ''.join(o)
 
