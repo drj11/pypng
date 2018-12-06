@@ -734,6 +734,7 @@ class Writer:
             assert self.bitdepth < 8
             # samples per byte
             spb = int(8 / self.bitdepth)
+
             def extend(sl):
                 a = array('B', sl)
                 # Adding padding bytes so we can group into a whole
@@ -750,6 +751,7 @@ class Writer:
             oldextend = extend
             factor = (float(2 ** self.rescale[1] - 1) /
                       float(2 ** self.rescale[0] - 1))
+
             def extend(sl):
                 oldextend([int(round(factor * x)) for x in sl])
 
@@ -895,6 +897,7 @@ class Writer:
             assert self.bitdepth == 16
             row_bytes *= 2
             fmt = '>%dH' % vpr
+
             def line():
                 return array('H', struct.unpack(fmt, infile.read(row_bytes)))
         else:
@@ -1002,10 +1005,12 @@ def filter_scanline(type, line, fo, prev=None):
                 x = (x - line[ai]) & 0xff
             out.append(x)
             ai += 1
+
     def up():
         for i, x in enumerate(line):
             x = (x - prev[i]) & 0xff
             out.append(x)
+
     def average():
         ai = -fo
         for i, x in enumerate(line):
@@ -1015,6 +1020,7 @@ def filter_scanline(type, line, fo, prev=None):
                 x = (x - (prev[i] >> 1)) & 0xff
             out.append(x)
             ai += 1
+
     def paeth():
         # http://www.w3.org/TR/PNG/#9Filter-type-4-Paeth
         ai = -fo    # also used for ci
@@ -1291,10 +1297,12 @@ class Image:
 
         try:
             file.write
+
             def close():
                 pass
         except AttributeError:
             file = open(file, 'wb')
+
             def close():
                 file.close()
 
@@ -2043,6 +2051,7 @@ class Reader:
             meta['bitdepth'] = 8
             meta['planes'] = 3 + bool(self.trns)
             plte = self.palette()
+
             def iterpal(pixels):
                 for row in pixels:
                     row = [plte[x] for x in row]
@@ -2062,6 +2071,7 @@ class Reader:
             meta['alpha'] = True
             meta['planes'] += 1
             typecode = 'BH'[meta['bitdepth'] > 8]
+
             def itertrns(pixels):
                 for row in pixels:
                     # For each row we group it into pixels, then form a
@@ -2091,6 +2101,7 @@ class Reader:
         if targetbitdepth:
             shift = meta['bitdepth'] - targetbitdepth
             meta['bitdepth'] = targetbitdepth
+
             def itershift(pixels):
                 for row in pixels:
                     yield [p >> shift for p in row]
@@ -2108,6 +2119,7 @@ class Reader:
         del info['bitdepth']
         info['maxval'] = float(maxval)
         factor = float(maxval) / float(sourcemaxval)
+
         def iterfloat():
             for row in pixels:
                 yield [factor * p for p in row]
@@ -2121,6 +2133,7 @@ class Reader:
         targetmaxval = 2**targetbitdepth - 1
         factor = float(targetmaxval) / float(maxval)
         meta['bitdepth'] = targetbitdepth
+
         def iterscale():
             for row in pixels:
                 yield [int(round(x * factor)) for x in row]
@@ -2181,6 +2194,7 @@ class Reader:
             return width, height, pixels, meta
         meta['greyscale'] = False
         typecode = 'BH'[meta['bitdepth'] > 8]
+
         def iterrgb():
             for row in pixels:
                 a = array(typecode, [0]) * 3 * width
@@ -2205,6 +2219,7 @@ class Reader:
         typecode = 'BH'[meta['bitdepth'] > 8]
         maxval = 2**meta['bitdepth'] - 1
         maxbuffer = struct.pack('=' + typecode, maxval) * 4 * width
+
         def newarray():
             return array(typecode, maxbuffer)
 
@@ -2228,6 +2243,7 @@ class Reader:
         else:
             assert not meta['alpha'] and not meta['greyscale']
             # RGB to RGBA
+
             def convert():
                 for row in pixels:
                     a = newarray()
