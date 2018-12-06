@@ -213,10 +213,10 @@ def encodefuns():
         are empty."""
 
         ascii += '\x00'
-        l = len(ascii)
+        n = len(ascii)
 
-        return struct.pack('>L%ds2LHB67s' % l,
-                           l, ascii, 0, 0, 0, 0, '')
+        return struct.pack('>L%ds2LHB67s' % n,
+                           n, ascii, 0, 0, 0, 0, '')
 
     def text(ascii):
         """Return textType [ICC 2001] 6.5.18."""
@@ -527,8 +527,8 @@ def RDvcgt(s):
             fmt = 'H'
         else:
             return s[8:]
-        l = len(s[18:]) // size
-        t = struct.unpack('>%d%s' % (l, fmt), s[18:])
+        n = len(s[18:]) // size
+        t = struct.unpack('>%d%s' % (n, fmt), s[18:])
         t = group(t, count)
         return size, t
     return s[8:]
