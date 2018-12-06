@@ -193,7 +193,8 @@ def main(argv=None):
         # to avoid \n translation
         # http://stackoverflow.com/questions/2374427/python-2-x-write-binary-output-to-stdout
         if sys.platform == "win32":
-            import os, msvcrt
+            import msvcrt
+            import os
             msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
 
     render(message, out)
