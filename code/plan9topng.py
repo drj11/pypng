@@ -277,7 +277,8 @@ def deblock(f):
         # which to start indexing.
         offset = ~offset + len(o)
         if offset < 0:
-            raise Error('byte offset indexes off the begininning of the output buffer; not a Plan 9 image file?')
+            raise Error('byte offset indexes off the begininning of '
+                        'the output buffer; not a Plan 9 image file?')
         for j in range(l):
             o.append(o[offset + j])
     return row, ''.join(o)
