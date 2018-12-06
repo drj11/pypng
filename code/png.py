@@ -745,14 +745,15 @@ class Writer:
                 a = array('B', sl)
                 # Adding padding bytes so we can group into a whole
                 # number of spb-tuples.
-                l = float(len(a))
-                extra = math.ceil(l / float(spb)) * spb - l
+                n = float(len(a))
+                extra = math.ceil(n / spb) * spb - n
                 a.extend([0] * int(extra))
                 # Pack into bytes
-                l = group(a, spb)
-                l = [reduce(lambda x, y: (x << self.bitdepth) + y, e)
-                     for e in l]
-                data.extend(l)
+                # Each block is the samples for one byte
+                blocks = group(a, spb)
+                bytes = [reduce(lambda x, y: (x << self.bitdepth) + y, e)
+                         for e in blocks]
+                data.extend(bytes)
         if self.rescale:
             oldextend = extend
             factor = (float(2 ** self.rescale[1] - 1) /
@@ -1673,12 +1674,12 @@ class Reader:
         out = array('B')
         mask = 2**self.bitdepth - 1
         shifts = list(map(self.bitdepth.__mul__, reversed(list(range(spb)))))
-        l = width
+        remaining = width
         for o in bytes:
-            out.extend([(mask & (o >> s)) for s in shifts][:l])
-            l -= spb
-            if l <= 0:
-                l = width
+            out.extend([(mask & (o >> s)) for s in shifts][:remaining])
+            remaining -= spb
+            if remaining <= 0:
+                remaining = width
         return out
 
     def iterstraight(self, raw):
@@ -2405,18 +2406,19 @@ def read_pam_header(infile):
     # Unlike PBM, PGM, and PPM, we can read the header a line at a time.
     header = dict()
     while True:
-        l = infile.readline().strip()
-        if l == b'ENDHDR':
+        line = infile.readline().strip()
+        if line == b'ENDHDR':
             break
-        if not l:
+        if not line:
             raise EOFError('PAM ended prematurely')
-        if l[0] == b'#':
+        if line[0] == b'#':
             continue
-        l = l.split(None, 1)
-        if l[0] not in header:
-            header[l[0]] = l[1]
+        line = line.split(None, 1)
+        key = line[0]
+        if key not in header:
+            header[key] = line[1]
         else:
-            header[l[0]] += b' ' + l[1]
+            header[key] += b' ' + line[1]
 
     required = [b'WIDTH', b'HEIGHT', b'DEPTH', b'MAXVAL']
     WIDTH, HEIGHT, DEPTH, MAXVAL = required
