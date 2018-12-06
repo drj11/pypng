@@ -396,7 +396,8 @@ class Test(unittest.TestCase):
         """Helper used by :meth:`testLtrns*`."""
         pixels = zip([0x00, 0x38, 0x4c, 0x54, 0x5c, 0x40, 0x38, 0x00])
         o = BytesIO()
-        w = png.Writer(8, 8, greyscale=True, bitdepth=1, transparent=transparent)
+        w = png.Writer(8, 8,
+                       greyscale=True, bitdepth=1, transparent=transparent)
         w.write_packed(o, pixels)
         r = png.Reader(bytes=o.getvalue())
         x, y, pixels, meta = r.asDirect()
