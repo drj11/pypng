@@ -521,7 +521,8 @@ class Writer:
         palette = check_palette(palette)
         if palette:
             if bitdepth not in (1, 2, 4, 8):
-                raise ValueError("with palette, bitdepth must be 1, 2, 4, or 8")
+                raise ValueError(
+                    "with palette, bitdepth must be 1, 2, 4, or 8")
             if transparent is not None:
                 raise ValueError("transparent and palette not compatible")
             if alpha:
@@ -581,7 +582,9 @@ class Writer:
         self.y_pixels_per_unit = y_pixels_per_unit
         self.unit_is_meter = bool(unit_is_meter)
 
-        self.color_type = 4 * self.alpha + 2 * (not greyscale) + 1 * self.colormap
+        self.color_type = (4 * self.alpha +
+                           2 * (not greyscale) +
+                           1 * self.colormap)
         assert self.color_type in (0, 2, 3, 4, 6)
 
         self.color_planes = (3, 1)[self.greyscale or self.colormap]
@@ -708,8 +711,11 @@ class Writer:
                             struct.pack("!3H", *self.background))
 
         # http://www.w3.org/TR/PNG/#11pHYs
-        if self.x_pixels_per_unit is not None and self.y_pixels_per_unit is not None:
-            tup = (self.x_pixels_per_unit, self.y_pixels_per_unit, int(self.unit_is_meter))
+        if (self.x_pixels_per_unit is not None and
+                self.y_pixels_per_unit is not None):
+            tup = (self.x_pixels_per_unit,
+                   self.y_pixels_per_unit,
+                   int(self.unit_is_meter))
             write_chunk(outfile, b'pHYs', struct.pack("!LLB", *tup))
 
         # http://www.w3.org/TR/PNG/#11IDAT
@@ -1436,7 +1442,8 @@ class Reader:
             if checksum != verify:
                 (a, ) = struct.unpack('!I', checksum)
                 (b, ) = struct.unpack('!I', verify)
-                message = "Checksum error in %s chunk: 0x%08X != 0x%08X." % (type, a, b)
+                message = ("Checksum error in %s chunk: 0x%08X != 0x%08X."
+                           % (type, a, b))
                 if lenient:
                     warnings.warn(message, RuntimeWarning)
                 else:
@@ -1559,11 +1566,12 @@ class Reader:
 
         # Call appropriate filter algorithm.  Note that 0 has already
         # been dealt with.
-        (None,
-         pngfilters.undo_filter_sub,
-         pngfilters.undo_filter_up,
-         pngfilters.undo_filter_average,
-         pngfilters.undo_filter_paeth)[filter_type](fu, scanline, previous, result)
+        fn = (None,
+              pngfilters.undo_filter_sub,
+              pngfilters.undo_filter_up,
+              pngfilters.undo_filter_average,
+              pngfilters.undo_filter_paeth)[filter_type]
+        fn(fu, scanline, previous, result)
         return result
 
     def deinterlace(self, raw):
@@ -1786,8 +1794,9 @@ class Reader:
                 % self.filter)
         if self.interlace not in (0, 1):
             raise FormatError(
-                "Unknown interlace method %d,"
-                " see http://www.w3.org/TR/2003/REC-PNG-20031110/#8InterlaceMethods ."
+                "Unknown interlace method %d, see "
+                "http://www.w3.org/TR/2003/REC-PNG-20031110/#8InterlaceMethods"
+                " ."
                 % self.interlace)
 
         # Derived values
@@ -1882,7 +1891,8 @@ class Reader:
         fmt = "!LLB"
         if len(data) != struct.calcsize(fmt):
             raise FormatError("pHYs chunk has incorrect length.")
-        self.x_pixels_per_unit, self.y_pixels_per_unit, unit = struct.unpack(fmt, data)
+        self.x_pixels_per_unit, self.y_pixels_per_unit, unit = \
+            struct.unpack(fmt, data)
         self.unit_is_meter = bool(unit)
 
     def read(self, lenient=False):
