@@ -516,9 +516,11 @@ class Test(unittest.TestCase):
     def helperFormat(self, f):
         r = png.Reader(bytes=pngsuite.basn0g01)
         o = BytesIO()
+
         def newchunks():
             for chunk in r.chunks():
                 yield f(chunk)
+
         png.write_chunks(o, newchunks())
         r = png.Reader(bytes=o.getvalue())
         return list(r.asDirect()[2])
@@ -701,6 +703,7 @@ class Test(unittest.TestCase):
         reader.psize = 3
         scanprev = array('B', [20, 21, 22, 210, 211, 212])
         scanline = array('B', [30, 32, 34, 230, 233, 236])
+
         def cp(a):
             return array('B', a)
 
