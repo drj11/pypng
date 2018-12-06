@@ -267,7 +267,7 @@ def deblock(f):
         # say whether x's 2 bits are most significant or least significant.
         # But it is clear from inspecting a random file,
         # http://plan9.bell-labs.com/sources/plan9/sys/games/lib/sokoban/images/cargo.bit
-        # that x's 2 bit are most significant.
+        # that x's 2 bits are most significant.
         # 
         offset = (x & 3) << 8
         offset |= ord(d[i])
