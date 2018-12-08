@@ -89,7 +89,7 @@ class Profile:
         # Could (should) detect 2 or more tags having the same sig.  But
         # we don't.  Two or more tags with the same sig is illegal per
         # the ICC spec.
-        
+
         # Convert (sig,offset,size) triples into (sig,value) pairs.
         rawtag = map(lambda x: (x[0], profile[x[1]: x[1] + x[2]]), tt)
         self.rawtagtable = rawtag
@@ -327,7 +327,7 @@ def tagblock(tag):
     """`tag` should be a list of (*signature*, *element*) pairs, where
     *signature* (the key) is a length 4 string, and *element* is the
     content of the tag element (another string).
-    
+
     The entire tag block (consisting of first a table and then the
     element data) is constructed and returned as a string.
     """
