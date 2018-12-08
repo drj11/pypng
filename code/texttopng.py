@@ -148,7 +148,7 @@ def texttoraster(m):
 def linetoraster(m):
     """Convert a single line of text *m* to a raster image,
     by rendering it using the font in *font*.
-    
+
     A triple of (*width*, *height*, *pixels*) is returned;
     *pixels* is in boxed row packed pixel format.
     """
