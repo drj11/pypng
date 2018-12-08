@@ -49,7 +49,7 @@ assert plane_count == 3
 '''
 # The use of ``numpy.uint16``, below, is to convert each row to a NumPy
 # array with data type ``numpy.uint16``.  This is a feature of NumPy,
-# discussed further in 
+# discussed further in
 # http://docs.scipy.org/doc/numpy/user/basics.types.html .
 # You can use avoid the explicit conversion with
 # ``numpy.vstack(pngdata)``, but then NumPy will pick the array's data
