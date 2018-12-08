@@ -191,7 +191,6 @@ def unpack(f, rows, width, pixel, maxval):
     # multiple bytes into a single pixel (for depth >= 8) or split bytes
     # into several pixels (for depth < 8)
     if depth >= 8:
-        # 
         assert depth % 8 == 0
         packer = deblock
     else:
@@ -268,7 +267,6 @@ def deblock(f):
         # But it is clear from inspecting a random file,
         # http://plan9.bell-labs.com/sources/plan9/sys/games/lib/sokoban/images/cargo.bit
         # that x's 2 bits are most significant.
-        # 
         offset = (x & 3) << 8
         offset |= ord(d[i])
         i += 1
