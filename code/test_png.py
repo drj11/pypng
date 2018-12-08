@@ -81,7 +81,7 @@ def _redirect_io(inp, out, f):
     if os.environ.get('PYPNG_TEST_TMP') and hasattr(out, 'getvalue'):
         name = mycallersname()
         if name:
-            w = open('{}.png'.format(name), 'wb')
+            w = open(name + '.png', 'wb')
             w.write(out.getvalue())
             w.close()
     return x
@@ -259,8 +259,7 @@ class Test(unittest.TestCase):
                 continue
             it = png.Reader(bytes=bytes)
             x, y, pixels, meta = it.read()
-            pngi = topngbytes(
-                'adam7wn{}.png'.format(name), pixels,
+            pngi = topngbytes('adam7wn' + name + '.png', pixels,
                 x=x, y=y, bitdepth=it.bitdepth,
                 greyscale=it.greyscale, alpha=it.alpha,
                 transparent=it.transparent,
@@ -268,8 +267,7 @@ class Test(unittest.TestCase):
             x, y, ps, meta = png.Reader(bytes=pngi).read()
             it = png.Reader(bytes=bytes)
             x, y, pixels, meta = it.read()
-            pngs = topngbytes(
-                'adam7wi{}.png'.format(name), pixels,
+            pngs = topngbytes('adam7wi' + name + '.png', pixels,
                 x=x, y=y, bitdepth=it.bitdepth,
                 greyscale=it.greyscale, alpha=it.alpha,
                 transparent=it.transparent,
