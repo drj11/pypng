@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-# $URL$
-# $Rev$
+
 
 # iccp
 #
@@ -20,7 +19,7 @@
 # - 'ndin' Apple display native information.
 # - 'dscm' Apple multi-localized description strings.
 # - 'mmod' Apple display make and model information.
-# 
+
 
 # References
 #
