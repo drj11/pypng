@@ -10,8 +10,6 @@
 # in the man directory, so that this file forms a single source for
 # metadata.
 
-# http://docs.python.org/release/2.4.4/lib/module-sys.html
-import sys
 
 def get_version():
     from os.path import dirname, join
@@ -20,6 +18,7 @@ def get_version():
             version = line.split('"')[1]
             break
     return version
+
 
 conf = dict(
     name='pypng',
@@ -38,7 +37,7 @@ http://pythonhosted.org/pypng/
     author='David Jones',
     author_email='drj@pobox.com',
     url='https://github.com/drj11/pypng',
-    package_dir={'':'code'},
+    package_dir={'': 'code'},
     py_modules=['png', 'test_png', 'pngsuite'],
     classifiers=[
       'Topic :: Multimedia :: Graphics',
