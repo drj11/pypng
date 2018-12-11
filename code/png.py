@@ -146,6 +146,7 @@ And now, my famous members
 
 __version__ = "0.0.18"
 
+import collections
 import itertools
 import math
 import re
@@ -185,6 +186,10 @@ _adam7 = ((0, 0, 8, 8),
           (0, 2, 2, 4),
           (1, 0, 2, 2),
           (0, 1, 1, 2))
+
+
+# Holds information about the 'pHYs' chunk (used by the Reader, only)
+_Resolution = collections.namedtuple('_Resolution', 'x y unit_is_meter')
 
 
 def group(s, n):
@@ -1965,6 +1970,10 @@ class Reader:
             a = getattr(self, attr, None)
             if a is not None:
                 meta[attr] = a
+        if getattr(self, 'x_pixels_per_unit', None):
+            meta['physical'] = _Resolution(self.x_pixels_per_unit,
+                                           self.y_pixels_per_unit,
+                                           self.unit_is_meter)
         if self.plte:
             meta['palette'] = self.palette()
         return self.width, self.height, pixels, meta
