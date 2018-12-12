@@ -451,6 +451,15 @@ class Test(unittest.TestCase):
         r = png.Reader(bytes=pngsuite.tbrn2c08)
         list(r.asDirect()[2])[0].tostring
 
+    def testRowLengthError(self):
+        # See https://github.com/drj11/pypng/issues/28
+        writer = png.Writer(width=4, height=1, greyscale=True)
+        o = BytesIO()
+
+        self.assertRaises(png.Error,
+          writer.write,
+          o, [[1, 111, 222]])
+
     # Invalid file format tests.  These construct various badly
     # formatted PNG files, then feed them into a Reader.  When
     # everything is working properly, we should get FormatError
