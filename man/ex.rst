@@ -156,8 +156,8 @@ The basic strategy is to create a :class:`~png.Reader` object (a
 to extract the size, and pixel data.
 
 
-PngSuite
-^^^^^^^^
+Reader
+^^^^^^
 
 The :meth:`~png.Reader` constructor can take either a filename, a file-like
 object, or a sequence of bytes directly.  Here we use ``urllib`` to download
