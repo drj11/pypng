@@ -278,6 +278,17 @@ class Test(unittest.TestCase):
             self.assertEqual([list(row) for row in ps],
                              [list(row) for row in pi])
 
+    def testInterlaceWriteArrayBytes(self):
+        """
+        Test that when using `write_array` a bytes instance
+        can be used.
+        As per https://github.com/drj11/pypng/issues/65
+        """
+
+        f = BytesIO()
+        w = png.Writer(3, 2, interlace=True, greyscale=True)
+        w.write_array(f, bytes([0x55, 0xaa, 0xff, 0xaa, 0x55, 0x00]))
+
     def testPGMin(self):
         """Test that the command line tool can read PGM files."""
         def do():

@@ -830,6 +830,10 @@ class Writer:
         """
 
         if self.interlace:
+            if type(pixels) != array:
+                # Coerce to array type
+                fmt = 'BH'[self.bitdepth > 8]
+                pixels = array(fmt, pixels)
             self.write_passes(outfile, self.array_scanlines_interlace(pixels))
         else:
             self.write_passes(outfile, self.array_scanlines(pixels))
