@@ -168,9 +168,18 @@ a PNG file from the internet.
 (32, 32, <itertools.imap object at 0x10b7eb0>, {'greyscale': True,
 'alpha': False, 'interlace': 0, 'bitdepth': 2, 'gamma': 1.0})
 
-The :meth:`png.read` method returns a 4-tuple.  Note that the pixels are
-returned as an iterator (not always, and the interface doesn't guarantee it;
-the returned value might be an iterator or a sequence).
+The :meth:`png.read` method returns a 4-tuple consisting of:
+
+* `width`: Width of PNG image in pixels;
+* `height`: Height of PNG image in pixes;
+* `rows`: A sequence or iterator for the row data;
+* `info`: An info dictionary containing much of the image
+  metadata.
+
+Note that the pixels are returned as an iterator or a sequence.
+Generally if PyPNG can manage to efficiently return a row
+iterator then it will, but at other times it will return a
+sequence.
 
 >>> l=list(_[2]) 
 >>> l[0]
