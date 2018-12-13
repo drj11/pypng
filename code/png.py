@@ -195,7 +195,8 @@ def adam7generate(width, height):
     of an Adam7 interlaced image
     of size `width` by `height` pixels.
 
-    Yields a series of (x, y, xstep) triples,
+    Yields a generator for each pass,
+    and each pass generator yields a series of (x, y, xstep) triples,
     each one identifying a reduced scanline consisting of
     pixels starting at (x, y) and taking every xstep pixel to the right.
     """
@@ -203,8 +204,7 @@ def adam7generate(width, height):
     for xstart, ystart, xstep, ystep in _adam7:
         if xstart >= width:
             continue
-        for y in range(ystart, height, ystep):
-            yield xstart, y, xstep
+        yield ((xstart, y, xstep) for y in range(ystart, height, ystep))
 
 
 # Holds information about the 'pHYs' chunk (used by the Reader, only)
@@ -972,29 +972,30 @@ class Writer:
 
         # Each iteration generates a scanline starting at (x, y)
         # and consisting of every xstep pixels.
-        for x, y, xstep in adam7generate(self.width, self.height):
-            # Pixels per row (of reduced image)
-            ppr = int(math.ceil((self.width - x) / float(xstep)))
-            # Values per row (of reduced image)
-            reduced_row_len = ppr * self.planes
-            if xstep == 1:
-                # Easy case: line is a simple slice.
-                offset = y * vpr
-                yield pixels[offset: offset + vpr]
-                continue
-            # We have to step by xstep,
-            # which we can do one plane at a time
-            # using the step in Python slices.
-            row = array(fmt)
-            # There's no easier way to set the length of an array
-            row.extend(pixels[0:reduced_row_len])
-            offset = y * vpr + x * self.planes
-            end_offset = (y + 1) * vpr
-            skip = self.planes * xstep
-            for i in range(self.planes):
-                row[i::self.planes] = \
-                    pixels[offset + i: end_offset: skip]
-            yield row
+        for lines in adam7generate(self.width, self.height):
+            for x, y, xstep in lines:
+                # Pixels per row (of reduced image)
+                ppr = int(math.ceil((self.width - x) / float(xstep)))
+                # Values per row (of reduced image)
+                reduced_row_len = ppr * self.planes
+                if xstep == 1:
+                    # Easy case: line is a simple slice.
+                    offset = y * vpr
+                    yield pixels[offset: offset + vpr]
+                    continue
+                # We have to step by xstep,
+                # which we can do one plane at a time
+                # using the step in Python slices.
+                row = array(fmt)
+                # There's no easier way to set the length of an array
+                row.extend(pixels[0:reduced_row_len])
+                offset = y * vpr + x * self.planes
+                end_offset = (y + 1) * vpr
+                skip = self.planes * xstep
+                for i in range(self.planes):
+                    row[i::self.planes] = \
+                        pixels[offset + i: end_offset: skip]
+                yield row
 
 
 def write_chunk(outfile, tag, data=b''):
@@ -1562,18 +1563,17 @@ class Reader:
         a = array(fmt, [0] * (vpr * self.height))
         source_offset = 0
 
-        for xstart, ystart, xstep, ystep in _adam7:
-            if xstart >= self.width:
-                continue
+        for lines in adam7generate(self.width, self.height):
             # The previous (reconstructed) scanline.
             # `None` at the beginning of a pass
             # to indicate that there is no previous line.
             recon = None
-            # Pixels per row (reduced pass image)
-            ppr = int(math.ceil((self.width - xstart) / float(xstep)))
-            # Row size in bytes for this pass.
-            row_size = int(math.ceil(self.psize * ppr))
-            for y in range(ystart, self.height, ystep):
+            for x, y, xstep in lines:
+                # Pixels per row (reduced pass image)
+                ppr = int(math.ceil((self.width - x) / float(xstep)))
+                # Row size in bytes for this pass.
+                row_size = int(math.ceil(self.psize * ppr))
+
                 filter_type = raw[source_offset]
                 source_offset += 1
                 scanline = raw[source_offset: source_offset + row_size]
@@ -1582,16 +1582,17 @@ class Reader:
                 # Convert so that there is one element per pixel value
                 flat = self.serialtoflat(recon, ppr)
                 if xstep == 1:
-                    assert xstart == 0
+                    assert x == 0
                     offset = y * vpr
                     a[offset: offset + vpr] = flat
                 else:
-                    offset = y * vpr + xstart * self.planes
+                    offset = y * vpr + x * self.planes
                     end_offset = (y + 1) * vpr
                     skip = self.planes * xstep
                     for i in range(self.planes):
                         a[offset + i: end_offset: skip] = \
                             flat[i:: self.planes]
+
         return a
 
     def iterboxed(self, rows):
