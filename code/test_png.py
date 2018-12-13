@@ -457,8 +457,8 @@ class Test(unittest.TestCase):
         o = BytesIO()
 
         self.assertRaises(png.Error,
-          writer.write,
-          o, [[1, 111, 222]])
+                          writer.write,
+                          o, [[1, 111, 222]])
 
     # Invalid file format tests.  These construct various badly
     # formatted PNG files, then feed them into a Reader.  When
