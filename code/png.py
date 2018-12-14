@@ -281,7 +281,7 @@ def check_palette(palette):
     seen_triple = False
     for i, t in enumerate(p):
         if len(t) not in (3, 4):
-            raise ValueError(
+            raise ProtocolError(
                 "palette entry %d: entries must be 3- or 4-tuples." % i)
         if len(t) == 3:
             seen_triple = True
