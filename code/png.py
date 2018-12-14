@@ -290,7 +290,7 @@ def check_palette(palette):
                 "palette entry %d: all 4-tuples must precede all 3-tuples" % i)
         for x in t:
             if int(x) != x or not(0 <= x <= 255):
-                raise ValueError(
+                raise ProtocolError(
                     "palette entry %d: "
                     "values must be integer: 0 <= x <= 255" % i)
     return p
