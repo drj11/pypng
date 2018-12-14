@@ -531,10 +531,10 @@ class Writer:
         width, height = check_sizes(size, width, height)
         del size
 
+        if not isinteger(width) or not isinteger(height):
+            raise ProtocolError("width and height must be integers")
         if width <= 0 or height <= 0:
             raise ValueError("width and height must be greater than zero")
-        if not isinteger(width) or not isinteger(height):
-            raise ValueError("width and height must be integers")
         # http://www.w3.org/TR/PNG/#7Integers-and-byte-order
         if width > 2 ** 32 - 1 or height > 2 ** 32 - 1:
             raise ValueError("width and height cannot exceed 2**32-1")
