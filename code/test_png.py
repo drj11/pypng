@@ -827,7 +827,7 @@ class Test(unittest.TestCase):
             png.Writer,
             1, 4, bitdepth=2, palette=[a, b, c])
 
-    def test_write_palette_bad_transparency(self):
+    def test_write_palette_bad_fraction(self):
         """Palette with fractions should raise error."""
         a = (255, 255, 255, 0.9)
         b = (200, 120, 120)
