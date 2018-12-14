@@ -753,7 +753,7 @@ class Test(unittest.TestCase):
         self.assertEqual(list(out), [8, 10, 9, 108, 111, 113])  # paeth
 
     def test_phys(self):
-        """\
+        """
         Check if pHYs chunk is written
         """
         pixels = [[0] * 3] * 3
