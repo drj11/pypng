@@ -177,19 +177,19 @@ __all__ = ['Image', 'Reader', 'Writer', 'write_chunks', 'from_array']
 
 # The PNG signature.
 # http://www.w3.org/TR/PNG/#5PNG-file-signature
-_signature = struct.pack('8B', 137, 80, 78, 71, 13, 10, 26, 10)
+signature = struct.pack('8B', 137, 80, 78, 71, 13, 10, 26, 10)
 
 # The xstart, ystart, xstep, ystep for the Adam7 interlace passes.
-_adam7 = ((0, 0, 8, 8),
-          (4, 0, 8, 8),
-          (0, 4, 4, 8),
-          (2, 0, 4, 4),
-          (0, 2, 2, 4),
-          (1, 0, 2, 2),
-          (0, 1, 1, 2))
+adam7 = ((0, 0, 8, 8),
+         (4, 0, 8, 8),
+         (0, 4, 4, 8),
+         (2, 0, 4, 4),
+         (0, 2, 2, 4),
+         (1, 0, 2, 2),
+         (0, 1, 1, 2))
 
 
-def adam7generate(width, height):
+def adam7_generate(width, height):
     """
     Generate the coordinates for the reduced scanlines
     of an Adam7 interlaced image
@@ -201,14 +201,14 @@ def adam7generate(width, height):
     pixels starting at (x, y) and taking every xstep pixel to the right.
     """
 
-    for xstart, ystart, xstep, ystep in _adam7:
+    for xstart, ystart, xstep, ystep in adam7:
         if xstart >= width:
             continue
         yield ((xstart, y, xstep) for y in range(ystart, height, ystep))
 
 
-# Holds information about the 'pHYs' chunk (used by the Reader, only)
-_Resolution = collections.namedtuple('_Resolution', 'x y unit_is_meter')
+# Models the 'pHYs' chunk (used by the Reader)
+Resolution = collections.namedtuple('_Resolution', 'x y unit_is_meter')
 
 
 def group(s, n):
@@ -711,7 +711,7 @@ class Writer:
         """
 
         # http://www.w3.org/TR/PNG/#5PNG-file-signature
-        outfile.write(_signature)
+        outfile.write(signature)
 
         # http://www.w3.org/TR/PNG/#11IHDR
         write_chunk(outfile, b'IHDR',
@@ -1001,7 +1001,7 @@ class Writer:
 
         # Each iteration generates a scanline starting at (x, y)
         # and consisting of every xstep pixels.
-        for lines in adam7generate(self.width, self.height):
+        for lines in adam7_generate(self.width, self.height):
             for x, y, xstep in lines:
                 # Pixels per row (of reduced image)
                 ppr = int(math.ceil((self.width - x) / float(xstep)))
@@ -1046,7 +1046,7 @@ def write_chunk(outfile, tag, data=b''):
 def write_chunks(out, chunks):
     """Create a PNG file by writing out the chunks."""
 
-    out.write(_signature)
+    out.write(signature)
     for chunk in chunks:
         write_chunk(out, *chunk)
 
@@ -1381,7 +1381,7 @@ class Image:
             close()
 
 
-class _readable:
+class Readable:
     """
     A simple file-like interface for strings and arrays.
     """
@@ -1454,7 +1454,7 @@ class Reader:
         elif "file" in kw:
             self.file = kw["file"]
         elif "bytes" in kw:
-            self.file = _readable(kw["bytes"])
+            self.file = Readable(kw["bytes"])
         else:
             raise TypeError("expecting filename, file or bytes array")
 
@@ -1592,7 +1592,7 @@ class Reader:
         a = array(fmt, [0] * (vpr * self.height))
         source_offset = 0
 
-        for lines in adam7generate(self.width, self.height):
+        for lines in adam7_generate(self.width, self.height):
             # The previous (reconstructed) scanline.
             # `None` at the beginning of a pass
             # to indicate that there is no previous line.
@@ -1719,7 +1719,7 @@ class Reader:
         if self.signature:
             return
         self.signature = self.file.read(8)
-        if self.signature != _signature:
+        if self.signature != signature:
             raise FormatError("PNG file has invalid signature.")
 
     def preamble(self, lenient=False):
@@ -1967,9 +1967,9 @@ class Reader:
             if a is not None:
                 meta[attr] = a
         if getattr(self, 'x_pixels_per_unit', None):
-            meta['physical'] = _Resolution(self.x_pixels_per_unit,
-                                           self.y_pixels_per_unit,
-                                           self.unit_is_meter)
+            meta['physical'] = Resolution(self.x_pixels_per_unit,
+                                          self.y_pixels_per_unit,
+                                          self.unit_is_meter)
         if self.plte:
             meta['palette'] = self.palette()
         return self.width, self.height, pixels, meta
@@ -2587,7 +2587,7 @@ def color_triple(color):
                 int(color[9:13], 16))
 
 
-def _add_common_options(parser):
+def add_common_options(parser):
     """Call *parser.add_option* for each of the options that are
     common between this PNG--PNM conversion tool and the gen
     tool.
@@ -2610,7 +2610,7 @@ def _add_common_options(parser):
     return parser
 
 
-def _main(argv):
+def main(argv):
     """
     Run the PNG encoder with options from the command line.
     """
@@ -2626,7 +2626,7 @@ def _main(argv):
     parser.add_option("-a", "--alpha",
                       action="store", type="string", metavar="pgmfile",
                       help="alpha channel transparency (RGBA)")
-    _add_common_options(parser)
+    add_common_options(parser)
 
     (options, args) = parser.parse_args(args=argv[1:])
 
@@ -2704,6 +2704,6 @@ def _main(argv):
 
 if __name__ == '__main__':
     try:
-        _main(sys.argv)
+        main(sys.argv)
     except Error as e:
         print(e, file=sys.stderr)

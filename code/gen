@@ -220,7 +220,7 @@ def main(argv=None):
     parser.add_option("-S", "--size",
                       action="store", type="string", metavar="w[,h]",
                       help="width and height of the test image")
-    png._add_common_options(parser)
+    png.add_common_options(parser)
 
     (options, args) = parser.parse_args(args=argv[1:])
 

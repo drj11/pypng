@@ -292,7 +292,7 @@ class Test(unittest.TestCase):
     def testPGMin(self):
         """Test that the command line tool can read PGM files."""
         def do():
-            return png._main(['testPGMin'])
+            return png.main(['testPGMin'])
         s = BytesIO()
         s.write(b'P5 2 2 3\n')
         s.write(b'\x00\x01\x02\x03')
@@ -308,7 +308,7 @@ class Test(unittest.TestCase):
     def testPAMin(self):
         """Test that the command line tool can read PAM file."""
         def do():
-            return png._main(['testPAMin'])
+            return png.main(['testPAMin'])
         s = BytesIO()
         s.write(b'P7\nWIDTH 3\nHEIGHT 1\nDEPTH 4\nMAXVAL 255\n'
                 b'TUPLTYPE RGB_ALPHA\nENDHDR\n')
@@ -382,7 +382,7 @@ class Test(unittest.TestCase):
     def testPNMsbit(self):
         """Test that PNM files can generates sBIT chunk."""
         def do():
-            return png._main(['testPNMsbit'])
+            return png.main(['testPNMsbit'])
         s = BytesIO()
         s.write(b'P6 8 1 1\n')
         for pixel in range(8):
