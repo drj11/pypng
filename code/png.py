@@ -348,6 +348,12 @@ class FormatError(Error):
     """
 
 
+class ProtocolError(Error):
+    """Problem with the way the programming interface has been used,
+    or the data presented to it.
+    """
+
+
 class ChunkError(FormatError):
     pass
 
@@ -651,12 +657,35 @@ class Writer:
           memory.
         """
 
+        # Values per row
+        vpr = self.width * self.planes
+
+        def check_rows(rows):
+            """
+            Yield each row in rows,
+            but check each row first (for correct width).
+            """
+            for i, row in enumerate(rows):
+                try:
+                    wrong_length = len(row) != vpr
+                except TypeError:
+                    # When using an itertools.ichain object or
+                    # other generator not supporting __len__,
+                    # we set this to False to skip the check.
+                    wrong_length = False
+                if wrong_length:
+                    # Note: row numbers start at 0.
+                    raise ProtocolError(
+                        "Expected %d values but got %d value, in row %d" %
+                        (vpr, len(row), i))
+                yield row
+
         if self.interlace:
             fmt = 'BH'[self.bitdepth > 8]
-            a = array(fmt, itertools.chain(*rows))
+            a = array(fmt, itertools.chain(*check_rows(rows)))
             return self.write_array(outfile, a)
 
-        nrows = self.write_passes(outfile, rows)
+        nrows = self.write_passes(outfile, check_rows(rows))
         if nrows != self.height:
             raise ValueError(
                 "rows supplied (%d) does not match height (%d)" %
