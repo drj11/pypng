@@ -841,6 +841,14 @@ class Test(unittest.TestCase):
         """Invoking Writer with no args should raise error."""
         self.assertRaises(png.ProtocolError, png.Writer)
 
+    def test_write_width_bad(self):
+        """Invoking Writer with bad width should raise error."""
+        self.assertRaises(png.ProtocolError, png.Writer, 0, 4)
+
+    def test_write_height_bad(self):
+        """Invoking Writer with bad height should raise error."""
+        self.assertRaises(png.ProtocolError, png.Writer, -4, 4)
+
     # Command line tests
 
     def test_cli_pgm_in(self):
