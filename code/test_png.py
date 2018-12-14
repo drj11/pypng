@@ -837,6 +837,10 @@ class Test(unittest.TestCase):
             png.Writer,
             1, 4, bitdepth=2, palette=[a, b, c])
 
+    def test_write_noargs(self):
+        """Invoking Writer with no args should raise error."""
+        self.assertRaises(png.ProtocolError, png.Writer)
+
     # Command line tests
 
     def test_cli_pgm_in(self):
