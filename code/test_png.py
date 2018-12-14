@@ -512,8 +512,6 @@ class Test(unittest.TestCase):
             return (chunk[0], data)
         self.assertRaises(png.FormatError, read_modify_chunks, corrupt_filter)
 
-    # Less common methods
-
     def testFlat(self):
         """Test read_flat."""
         import hashlib
@@ -522,53 +520,6 @@ class Test(unittest.TestCase):
         x, y, pixel, meta = r.read_flat()
         d = hashlib.md5(seqtobytes(pixel)).hexdigest()
         self.assertEqual(d, '255cd971ab8cd9e7275ff906e5041aa0')
-
-    def testfromarray(self):
-        img = png.from_array([[0, 0x33, 0x66], [0xff, 0xcc, 0x99]], 'L')
-        img.save(BytesIO())
-
-    def testfromarray3D(self):
-        img = png.from_array(
-            [[[0, 0, 0], [255, 0, 0]],
-             [[255, 0, 0], [0, 0, 0]]], 'RGB')
-        img.save(BytesIO())
-
-    def testfromarrayL16(self):
-        img = png.from_array(group(range(2**16), 256), 'L;16')
-        img.save(BytesIO())
-
-    def testfromarrayRGB(self):
-        img = png.from_array([[0, 0, 0,
-                               0, 0, 1,
-                               0, 1, 0,
-                               0, 1, 1],
-                             [1, 0, 0,
-                              1, 0, 1,
-                              1, 1, 0,
-                              1, 1, 1]], 'RGB;1')
-        o = BytesIO()
-        img.save(o)
-
-    def testfromarrayIter(self):
-        i = itertools.islice(itertools.count(10), 20)
-        i = ([x, x, x] for x in i)
-        img = png.from_array(i, 'RGB;5', dict(height=20))
-        f = BytesIO()
-        img.save(f)
-
-    def testfromarrayWrong(self):
-        try:
-            png.from_array([[1]], 'gray')
-        except png.Error:
-            return
-        assert 0, "Expected from_array() to raise png.Error exception"
-
-    def testfromarrayShortMode(self):
-        png.from_array([[0, 1], [2, 3]], 'L2').save(BytesIO())
-
-    def testFromarrayLA(self):
-        png.from_array([[3, 1], [0, 3]], 'LA2',
-                       info=dict(greyscale=True)).save(BytesIO())
 
     def test_phys(self):
         """
@@ -649,6 +600,55 @@ class Test(unittest.TestCase):
                   [2, 3, 0]]
         meta = dict(alpha=False, greyscale=True, bitdepth=2, planes=1)
         png.write_pnm(o, w, h, pixels, meta)
+
+    # from_array
+
+    def test_from_array_L(self):
+        img = png.from_array([[0, 0x33, 0x66], [0xff, 0xcc, 0x99]], 'L')
+        img.save(BytesIO())
+
+    def test_from_array_3D(self):
+        img = png.from_array(
+            [[[0, 0, 0], [255, 0, 0]],
+             [[255, 0, 0], [0, 0, 0]]], 'RGB')
+        img.save(BytesIO())
+
+    def test_from_array_L16(self):
+        img = png.from_array(group(range(2**16), 256), 'L;16')
+        img.save(BytesIO())
+
+    def test_from_array_RGB(self):
+        img = png.from_array([[0, 0, 0,
+                               0, 0, 1,
+                               0, 1, 0,
+                               0, 1, 1],
+                             [1, 0, 0,
+                              1, 0, 1,
+                              1, 1, 0,
+                              1, 1, 1]], 'RGB;1')
+        o = BytesIO()
+        img.save(o)
+
+    def test_from_array_iterator(self):
+        i = itertools.islice(itertools.count(10), 20)
+        i = ([x, x, x] for x in i)
+        img = png.from_array(i, 'RGB;5', dict(height=20))
+        f = BytesIO()
+        img.save(f)
+
+    def test_from_array_bad(self):
+        """Invoke from_array incorrectly to provoke Error."""
+        self.assertRaises(
+            png.Error,
+            png.from_array,
+            [[1]], 'gray')
+
+    def test_from_array_L2(self):
+        png.from_array([[0, 1], [2, 3]], 'L2').save(BytesIO())
+
+    def test_from_array_LA(self):
+        png.from_array([[3, 1], [0, 3]], 'LA2',
+                       info=dict(greyscale=True)).save(BytesIO())
 
 # numpy dependent tests.
 
