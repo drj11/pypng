@@ -817,6 +817,16 @@ class Test(unittest.TestCase):
             png.Writer,
             1, 4, bitdepth=2, palette=[a, b, c])
 
+    def test_write_palette_bad_transparency(self):
+        """Palette with transparent entries following opaque ones."""
+        a = (255, 255, 255, 255)
+        b = (200, 120, 120)
+        c = (50, 99, 50, 50)
+        self.assertRaises(
+            png.ProtocolError,
+            png.Writer,
+            1, 4, bitdepth=2, palette=[a, b, c])
+
     # Command line tests
 
     def test_cli_pgm_in(self):
