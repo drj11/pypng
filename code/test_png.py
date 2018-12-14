@@ -342,22 +342,6 @@ class Test(unittest.TestCase):
         r.preamble()
         r.palette(alpha='force')
 
-    def testPNMsbit(self):
-        """Test that PNM files can generates sBIT chunk."""
-        def do():
-            return png.main(['testPNMsbit'])
-        s = BytesIO()
-        s.write(b'P6 8 1 1\n')
-        for pixel in range(8):
-            s.write(struct.pack('<I', (0x4081 * pixel) & 0x10101)[:3])
-        s.flush()
-        s.seek(0)
-        o = BytesIO()
-        _redirect_io(s, o, do)
-        r = png.Reader(bytes=o.getvalue())
-        sbit = r.chunk(b'sBIT')[1]
-        self.assertEqual(sbit, b'\x01\x01\x01')
-
     def test_L_trns_0(self):
         """Create greyscale image with tRNS chunk."""
         return self.helper_L_trns(0)
@@ -885,6 +869,22 @@ class Test(unittest.TestCase):
         self.assertTrue(r.alpha)
         self.assertTrue(not r.greyscale)
         self.assertEqual(list(itertools.chain(*pixels)), flat)
+
+    def test_pnm_sbit(self):
+        """Test that (certain) PNM files generate sBIT chunk."""
+        def do():
+            return png.main(['testPNMsbit'])
+        s = BytesIO()
+        s.write(b'P6 8 1 1\n')
+        for pixel in range(8):
+            s.write(struct.pack('<I', (0x4081 * pixel) & 0x10101)[:3])
+        s.flush()
+        s.seek(0)
+        o = BytesIO()
+        _redirect_io(s, o, do)
+        r = png.Reader(bytes=o.getvalue())
+        sbit = r.chunk(b'sBIT')[1]
+        self.assertEqual(sbit, b'\x01\x01\x01')
 
 
 def read_modify_chunks(modify_chunk):
