@@ -473,10 +473,10 @@ class Test(unittest.TestCase):
             self.assertTrue(isinstance(e, png.FormatError))
             self.assertTrue('checksum' in str(e))
 
-    def testExtraPixels(self):
+    def test_extra_pixels(self):
         """Test file that contains too many pixels."""
 
-        def eachchunk(chunk):
+        def add_garbage(chunk):
             if chunk[0] != b'IDAT':
                 return chunk
             data = zlib.decompress(chunk[1])
@@ -484,10 +484,12 @@ class Test(unittest.TestCase):
             data = zlib.compress(data)
             chunk = (chunk[0], data)
             return chunk
-        self.assertRaises(png.FormatError, self.helperFormat, eachchunk)
+        self.assertRaises(png.FormatError, read_modify_chunks, add_garbage)
 
-    def testNotEnoughPixels(self):
-        def eachchunk(chunk):
+    def test_lack_pixels(self):
+        """Test file that contains too few pixels."""
+
+        def truncate_idat(chunk):
             if chunk[0] != b'IDAT':
                 return chunk
             # Remove last byte.
@@ -495,22 +497,12 @@ class Test(unittest.TestCase):
             data = data[:-1]
             data = zlib.compress(data)
             return (chunk[0], data)
-        self.assertRaises(png.FormatError, self.helperFormat, eachchunk)
+        self.assertRaises(png.FormatError, read_modify_chunks, truncate_idat)
 
-    def helperFormat(self, f):
-        r = png.Reader(bytes=pngsuite.basn0g01)
-        o = BytesIO()
+    def test_bad_filter(self):
+        """Test file that contains impossible filter type."""
 
-        def newchunks():
-            for chunk in r.chunks():
-                yield f(chunk)
-
-        png.write_chunks(o, newchunks())
-        r = png.Reader(bytes=o.getvalue())
-        return list(r.asDirect()[2])
-
-    def testBadFilter(self):
-        def eachchunk(chunk):
+        def corrupt_filter(chunk):
             if chunk[0] != b'IDAT':
                 return chunk
             data = zlib.decompress(chunk[1])
@@ -518,7 +510,7 @@ class Test(unittest.TestCase):
             data = b'\x99' + data[1:]
             data = zlib.compress(data)
             return (chunk[0], data)
-        self.assertRaises(png.FormatError, self.helperFormat, eachchunk)
+        self.assertRaises(png.FormatError, read_modify_chunks, corrupt_filter)
 
     # Less common methods
 
@@ -894,6 +886,24 @@ class Test(unittest.TestCase):
         self.assertTrue(r.alpha)
         self.assertTrue(not r.greyscale)
         self.assertEqual(list(itertools.chain(*pixels)), flat)
+
+
+def read_modify_chunks(modify_chunk):
+    """Create a temporary PNG file by modifying the chunks of
+    an existing one, then read that temporary file.
+    Each chunk is passed through the function `modify_chunk`.
+    """
+
+    r = png.Reader(bytes=pngsuite.basn0g01)
+    o = BytesIO()
+
+    def newchunks():
+        for chunk in r.chunks():
+            yield modify_chunk(chunk)
+
+    png.write_chunks(o, newchunks())
+    r = png.Reader(bytes=o.getvalue())
+    return list(r.asDirect()[2])
 
 
 def group(s, n):
