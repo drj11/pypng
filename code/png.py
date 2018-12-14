@@ -931,27 +931,6 @@ class Writer:
         else:
             self.write_passes(outfile, self.file_scanlines(infile))
 
-    def convert_ppm_and_pgm(self, ppmfile, pgmfile, outfile):
-        """
-        Convert a PPM and PGM file containing raw pixel data into a
-        PNG outfile with the parameters set in the writer object.
-        """
-        pixels = array('B')
-        pixels.fromfile(ppmfile,
-                        (self.bitdepth / 8) * self.color_planes *
-                        self.width * self.height)
-        apixels = array('B')
-        apixels.fromfile(pgmfile,
-                         (self.bitdepth / 8) *
-                         self.width * self.height)
-        pixels = interleave_planes(pixels, apixels,
-                                   (self.bitdepth / 8) * self.color_planes,
-                                   (self.bitdepth / 8))
-        if self.interlace:
-            self.write_passes(outfile, self.array_scanlines_interlace(pixels))
-        else:
-            self.write_passes(outfile, self.array_scanlines(pixels))
-
     def file_scanlines(self, infile):
         """
         Generates boxed rows in flat pixel format, from the input file
@@ -2415,6 +2394,33 @@ except NameError:
 
 # === Command Line Support ===
 
+# Much of which is NetPBM encoding / decoding.
+
+
+def merge_ppm_and_pgm(ppmfile, pgmfile, info):
+    """
+    Merge input PPM and PGM files together as RGB and A
+    channels.
+
+    Output the resulting array, suitable for `.write_array`.
+
+    Assumes the inputs, `ppmfile` and `pgmfile`, are cued up to
+    the start of their binary sections.
+    """
+
+    # Bytes per plane
+    plane_bytes = (info['bitdepth'] / 8) * info['width'] * info['height']
+
+    pixels = array('B')
+    pixels.fromfile(ppmfile, plane_bytes * info['color_planes'])
+    apixels = array('B')
+    apixels.fromfile(pgmfile, plane_bytes)
+    pixels = interleave_planes(pixels, apixels,
+                               (info['bitdepth'] / 8) * info['color_planes'],
+                               (info['bitdepth'] / 8))
+    return pixels
+
+
 def read_pam_header(infile):
     """
     Read (the rest of a) PAM header.  `infile` should be positioned
@@ -2703,7 +2709,7 @@ def main(argv):
             pgmfile = open(options.alpha, 'rb')
             format, awidth, aheight, adepth, amaxval = \
                 read_pnm_header(pgmfile, 'P5')
-            if amaxval != '255':
+            if amaxval != 255:
                 raise NotImplementedError(
                     'maxval %s not supported for alpha channel' % amaxval)
             if (awidth, aheight) != (width, height):
@@ -2711,7 +2717,14 @@ def main(argv):
                                  " (%s has %sx%s but %s has %sx%s)"
                                  % (infilename, width, height,
                                     options.alpha, awidth, aheight))
-            writer.convert_ppm_and_pgm(infile, pgmfile, outfile)
+            writer.write_array(
+                outfile,
+                merge_ppm_and_pgm(infile, pgmfile,
+                    dict(
+                        bitdepth=bitdepth,
+                        color_planes=writer.color_planes,
+                        width=width,
+                        height=height)))
         else:
             writer.convert_pnm(infile, outfile)
 
