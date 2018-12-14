@@ -203,7 +203,7 @@ class Test(unittest.TestCase):
         self.assertEqual([list(row) for row in pixels],
                          [list(row) for row in flat])
 
-    def testRGBtoRGBA(self):
+    def test_RGB_to_RGBA(self):
         """asRGBA8() on colour type 2 source."""
         # Test for Issue 26 (googlecode)
         # Also test that png.Reader can take a "file-like" object.
@@ -214,7 +214,7 @@ class Test(unittest.TestCase):
         self.assertEqual(list(row9[0:8]),
                          [0xff, 0xdf, 0xff, 0xff, 0xff, 0xde, 0xff, 0xff])
 
-    def testLtoRGBA(self):
+    def test_L_to_RGBA(self):
         """asRGBA() on grey source."""
         # Test for Issue 60 (googlecode)
         r = png.Reader(bytes=pngsuite.basi0g08)
@@ -223,7 +223,7 @@ class Test(unittest.TestCase):
         self.assertEqual(row9[0:8],
                          [222, 222, 222, 255, 221, 221, 221, 255])
 
-    def testCtrns(self):
+    def test_RGB_trns(self):
         "Test colour type 2 and tRNS chunk."
         # Test for Issue 25 (googlecode)
         r = png.Reader(bytes=pngsuite.tbrn2c08)
@@ -233,11 +233,11 @@ class Test(unittest.TestCase):
         row0 = list(pixels)[0]
         self.assertEqual(tuple(row0[0:4]), (0x7f, 0x7f, 0x7f, 0x00))
 
-    def testAdam7read(self):
+    def test_interlace_read(self):
         """Adam7 interlace reading.
-        Specifically, test that for images in the PngSuite that
-        have both an interlaced and straightlaced pair that both
-        images from the pair produce the same array of pixels."""
+        For images in the PngSuite that have both
+        an interlaced and straightlaced pair,
+        test that both images of the pair give the same array of pixels."""
         for candidate in pngsuite.png:
             if not candidate.startswith('basn'):
                 continue
@@ -254,7 +254,7 @@ class Test(unittest.TestCase):
             self.assertEqual([list(row) for row in straight],
                              [list(row) for row in adam7])
 
-    def testAdam7write(self):
+    def test_interlace_write(self):
         """Adam7 interlace writing.
         For each test image in the PngSuite, write an interlaced
         and a straightlaced version.  Decode both, and compare results.
@@ -287,7 +287,7 @@ class Test(unittest.TestCase):
             self.assertEqual([list(row) for row in ps],
                              [list(row) for row in pi])
 
-    def testInterlaceWriteArrayBytes(self):
+    def test_interlace_write_array_bytes(self):
         """
         Test that when using `write_array` a bytes instance
         can be used.
