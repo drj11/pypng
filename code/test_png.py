@@ -289,43 +289,6 @@ class Test(unittest.TestCase):
         w = png.Writer(3, 2, interlace=True, greyscale=True)
         w.write_array(f, bytes([0x55, 0xaa, 0xff, 0xaa, 0x55, 0x00]))
 
-    def testPGMin(self):
-        """Test that the command line tool can read PGM files."""
-        def do():
-            return png.main(['testPGMin'])
-        s = BytesIO()
-        s.write(b'P5 2 2 3\n')
-        s.write(b'\x00\x01\x02\x03')
-        s.flush()
-        s.seek(0)
-        o = BytesIO()
-        _redirect_io(s, o, do)
-        r = png.Reader(bytes=o.getvalue())
-        x, y, pixels, meta = r.read()
-        self.assertTrue(r.greyscale)
-        self.assertEqual(r.bitdepth, 2)
-
-    def testPAMin(self):
-        """Test that the command line tool can read PAM file."""
-        def do():
-            return png.main(['testPAMin'])
-        s = BytesIO()
-        s.write(b'P7\nWIDTH 3\nHEIGHT 1\nDEPTH 4\nMAXVAL 255\n'
-                b'TUPLTYPE RGB_ALPHA\nENDHDR\n')
-        # The pixels in flat row flat pixel format
-        flat = [255, 0, 0, 255, 0, 255, 0, 120, 0, 0, 255, 30]
-        asbytes = seqtobytes(flat)
-        s.write(asbytes)
-        s.flush()
-        s.seek(0)
-        o = BytesIO()
-        _redirect_io(s, o, do)
-        r = png.Reader(bytes=o.getvalue())
-        x, y, pixels, meta = r.read()
-        self.assertTrue(r.alpha)
-        self.assertTrue(not r.greyscale)
-        self.assertEqual(list(itertools.chain(*pixels)), flat)
-
     def testLA4(self):
         """Create an LA image with bitdepth 4."""
         bytes = topngbytes('la4.png', [[5, 12]], 1, 1,
@@ -831,6 +794,45 @@ class Test(unittest.TestCase):
                   [2, 3, 0]]
         meta = dict(alpha=False, greyscale=True, bitdepth=2, planes=1)
         png.write_pnm(o, w, h, pixels, meta)
+
+    # Command line tests
+
+    def testPGMin(self):
+        """Test that the command line tool can read PGM files."""
+        def do():
+            return png.main(['testPGMin'])
+        s = BytesIO()
+        s.write(b'P5 2 2 3\n')
+        s.write(b'\x00\x01\x02\x03')
+        s.flush()
+        s.seek(0)
+        o = BytesIO()
+        _redirect_io(s, o, do)
+        r = png.Reader(bytes=o.getvalue())
+        x, y, pixels, meta = r.read()
+        self.assertTrue(r.greyscale)
+        self.assertEqual(r.bitdepth, 2)
+
+    def testPAMin(self):
+        """Test that the command line tool can read PAM file."""
+        def do():
+            return png.main(['testPAMin'])
+        s = BytesIO()
+        s.write(b'P7\nWIDTH 3\nHEIGHT 1\nDEPTH 4\nMAXVAL 255\n'
+                b'TUPLTYPE RGB_ALPHA\nENDHDR\n')
+        # The pixels in flat row flat pixel format
+        flat = [255, 0, 0, 255, 0, 255, 0, 120, 0, 0, 255, 30]
+        asbytes = seqtobytes(flat)
+        s.write(asbytes)
+        s.flush()
+        s.seek(0)
+        o = BytesIO()
+        _redirect_io(s, o, do)
+        r = png.Reader(bytes=o.getvalue())
+        x, y, pixels, meta = r.read()
+        self.assertTrue(r.alpha)
+        self.assertTrue(not r.greyscale)
+        self.assertEqual(list(itertools.chain(*pixels)), flat)
 
 
 def group(s, n):
