@@ -678,7 +678,7 @@ class Test(unittest.TestCase):
             paeth(233, 32, 211, 21), paeth(236, 34, 212, 22)
         ])
 
-    def testUnfilterScanline(self):
+    def test_undo_filter(self):
         reader = png.Reader(bytes='')
         reader.psize = 3
         scanprev = array('B', [20, 21, 22, 210, 211, 212])
@@ -687,26 +687,31 @@ class Test(unittest.TestCase):
         def cp(a):
             return array('B', a)
 
+        # none
         out = reader.undo_filter(0, cp(scanline), cp(scanprev))
-        self.assertEqual(list(out), list(scanline))  # none
+        self.assertEqual(list(out), list(scanline))
+        # sub
         out = reader.undo_filter(1, cp(scanline), cp(scanprev))
-        self.assertEqual(list(out), [30, 32, 34, 4, 9, 14])  # sub
+        self.assertEqual(list(out), [30, 32, 34, 4, 9, 14])
+        # up
         out = reader.undo_filter(2, cp(scanline), cp(scanprev))
-        self.assertEqual(list(out), [50, 53, 56, 184, 188, 192])  # up
+        self.assertEqual(list(out), [50, 53, 56, 184, 188, 192])
+        # average
         out = reader.undo_filter(3, cp(scanline), cp(scanprev))
-        self.assertEqual(list(out), [40, 42, 45, 99, 103, 108])  # average
+        self.assertEqual(list(out), [40, 42, 45, 99, 103, 108])
+        # paeth
         out = reader.undo_filter(4, cp(scanline), cp(scanprev))
-        self.assertEqual(list(out), [50, 53, 56, 184, 188, 192])  # paeth
+        self.assertEqual(list(out), [50, 53, 56, 184, 188, 192])
 
-    def testUnfilterScanlinePaeth(self):
-        # This tests more edge cases in the paeth unfilter
+    def test_undo_filter_paeth(self):
+        """Edge cases for undoing paeth filter."""
         reader = png.Reader(bytes='')
         reader.psize = 3
         scanprev = array('B', [2, 0, 0, 0, 9, 11])
         scanline = array('B', [6, 10, 9, 100, 101, 102])
 
         out = reader.undo_filter(4, scanline, scanprev)
-        self.assertEqual(list(out), [8, 10, 9, 108, 111, 113])  # paeth
+        self.assertEqual(list(out), [8, 10, 9, 108, 111, 113])
 
     def test_phys(self):
         """
