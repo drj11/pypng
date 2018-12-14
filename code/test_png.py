@@ -557,6 +557,8 @@ class Test(unittest.TestCase):
             return (chunk[0], data)
         self.assertRaises(png.FormatError, self.helperFormat, eachchunk)
 
+    # Less common methods
+
     def testFlat(self):
         """Test read_flat."""
         import hashlib
@@ -668,6 +670,8 @@ class Test(unittest.TestCase):
         pnp = numpy.array(palette)
         png.Writer(len(s[0]), len(s), palette=pnp, bitdepth=1)
 
+    # Filters and unfilters
+
     def paeth(self, x, a, b, c):
         p = a + b - c
         pa = abs(p - a)
@@ -681,7 +685,6 @@ class Test(unittest.TestCase):
             pr = c
         return x - pr
 
-    # test filters and unfilters
     def testFilterScanlineFirstLine(self):
         fo = 3  # bytes per pixel
         line = [30, 31, 32, 230, 231, 232]
