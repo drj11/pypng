@@ -536,8 +536,8 @@ class Writer:
         if width <= 0 or height <= 0:
             raise ProtocolError("width and height must be greater than zero")
         # http://www.w3.org/TR/PNG/#7Integers-and-byte-order
-        if width > 2 ** 32 - 1 or height > 2 ** 32 - 1:
-            raise ValueError("width and height cannot exceed 2**32-1")
+        if width > 2 ** 31 - 1 or height > 2 ** 31 - 1:
+            raise ProtocolError("width and height cannot exceed 2**31-1")
 
         if alpha and transparent is not None:
             raise ValueError(
