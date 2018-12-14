@@ -275,7 +275,9 @@ def check_palette(palette):
 
     p = list(palette)
     if not (0 < len(p) <= 256):
-        raise ValueError("a palette must have between 1 and 256 entries")
+        raise ProtocolError(
+            "a palette must have between 1 and 256 entries,"
+            " see https://www.w3.org/TR/PNG/#11PLTE")
     seen_triple = False
     for i, t in enumerate(p):
         if len(t) not in (3, 4):
