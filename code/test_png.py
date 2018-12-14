@@ -797,7 +797,7 @@ class Test(unittest.TestCase):
 
     # Command line tests
 
-    def testPGMin(self):
+    def test_cli_pgm_in(self):
         """Test that the command line tool can read PGM files."""
         def do():
             return png.main(['testPGMin'])
@@ -813,7 +813,7 @@ class Test(unittest.TestCase):
         self.assertTrue(r.greyscale)
         self.assertEqual(r.bitdepth, 2)
 
-    def testPAMin(self):
+    def test_cli_pam_in(self):
         """Test that the command line tool can read PAM file."""
         def do():
             return png.main(['testPAMin'])
