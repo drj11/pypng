@@ -423,95 +423,6 @@ class Test(unittest.TestCase):
                           writer.write,
                           o, [[1, 111, 222]])
 
-    # Invalid file format tests.  These construct various badly
-    # formatted PNG files, then feed them into a Reader.  When
-    # everything is working properly, we should get FormatError
-    # exceptions raised.
-
-    def testEmpty(self):
-        """Test empty file."""
-
-        r = png.Reader(bytes='')
-        self.assertRaises(png.FormatError, r.asDirect)
-
-    def testSigOnly(self):
-        """Test file containing just signature bytes."""
-
-        r = png.Reader(bytes=pngsuite.basi0g01[:8])
-        self.assertRaises(png.FormatError, r.asDirect)
-
-    def testChun(self):
-        """
-        Chunk doesn't have length and type.
-        """
-        r = png.Reader(bytes=pngsuite.basi0g01[:13])
-        try:
-            r.asDirect()
-        except Exception as e:
-            self.assertTrue(isinstance(e, png.FormatError))
-            self.assertTrue('chunk length' in str(e))
-
-    def testChunkShort(self):
-        """
-        Chunk that is too short.
-        """
-        r = png.Reader(bytes=pngsuite.basi0g01[:21])
-        try:
-            r.asDirect()
-        except Exception as e:
-            self.assertTrue(isinstance(e, png.FormatError))
-            self.assertTrue('too short' in str(e))
-
-    def testNoChecksum(self):
-        """
-        Chunk that's too small to contain a checksum.
-        """
-        r = png.Reader(bytes=pngsuite.basi0g01[:29])
-        try:
-            r.asDirect()
-        except Exception as e:
-            self.assertTrue(isinstance(e, png.FormatError))
-            self.assertTrue('checksum' in str(e))
-
-    def test_extra_pixels(self):
-        """Test file that contains too many pixels."""
-
-        def add_garbage(chunk):
-            if chunk[0] != b'IDAT':
-                return chunk
-            data = zlib.decompress(chunk[1])
-            data += b'\x00garbage'
-            data = zlib.compress(data)
-            chunk = (chunk[0], data)
-            return chunk
-        self.assertRaises(png.FormatError, read_modify_chunks, add_garbage)
-
-    def test_lack_pixels(self):
-        """Test file that contains too few pixels."""
-
-        def truncate_idat(chunk):
-            if chunk[0] != b'IDAT':
-                return chunk
-            # Remove last byte.
-            data = zlib.decompress(chunk[1])
-            data = data[:-1]
-            data = zlib.compress(data)
-            return (chunk[0], data)
-        self.assertRaises(png.FormatError, read_modify_chunks, truncate_idat)
-
-    def test_bad_filter(self):
-        """Test file that contains impossible filter type."""
-
-        def corrupt_filter(chunk):
-            if chunk[0] != b'IDAT':
-                return chunk
-            data = zlib.decompress(chunk[1])
-            # Corrupt the first filter byte
-            data = b'\x99' + data[1:]
-            data = zlib.compress(data)
-            return (chunk[0], data)
-        self.assertRaises(png.FormatError, read_modify_chunks, corrupt_filter)
-
     def testFlat(self):
         """Test read_flat."""
         import hashlib
@@ -578,9 +489,10 @@ class Test(unittest.TestCase):
         self.assertEqual(1, res.y)
         self.assertFalse(res.unit_is_meter)
 
-    def testModifyRows(self):
-        # Tests that the rows yielded by the pixels generator
-        # can be safely modified.
+    def test_modify_rows(self):
+        """Tests that the rows yielded by the pixels generator
+        can be safely modified.
+        """
         k = 'f02n0g08'
         r1 = png.Reader(bytes=pngsuite.png[k])
         r2 = png.Reader(bytes=pngsuite.png[k])
@@ -592,7 +504,7 @@ class Test(unittest.TestCase):
             for i in range(len(row1)):
                 row1[i] = 11117 % (i + 1)
 
-    def testPNMWrite(self):
+    def test_write_pnm(self):
         o = BytesIO()
         w, h = 3, 3
         pixels = [[0, 1, 2],
@@ -600,6 +512,95 @@ class Test(unittest.TestCase):
                   [2, 3, 0]]
         meta = dict(alpha=False, greyscale=True, bitdepth=2, planes=1)
         png.write_pnm(o, w, h, pixels, meta)
+
+    # Invalid file format tests.  These construct various badly
+    # formatted PNG files, then feed them into a Reader.  When
+    # everything is working properly, we should get FormatError
+    # exceptions raised.
+
+    def test_empty(self):
+        """Test empty file."""
+
+        r = png.Reader(bytes='')
+        self.assertRaises(png.FormatError, r.asDirect)
+
+    def test_signature_only(self):
+        """Test file containing just signature bytes."""
+
+        r = png.Reader(bytes=pngsuite.basi0g01[:8])
+        self.assertRaises(png.FormatError, r.asDirect)
+
+    def test_chunk_truncated(self):
+        """
+        Chunk doesn't have length and type.
+        """
+        r = png.Reader(bytes=pngsuite.basi0g01[:13])
+        try:
+            r.asDirect()
+        except Exception as e:
+            self.assertTrue(isinstance(e, png.FormatError))
+            self.assertTrue('chunk length' in str(e))
+
+    def test_chunk_short(self):
+        """
+        Chunk that is too short.
+        """
+        r = png.Reader(bytes=pngsuite.basi0g01[:21])
+        try:
+            r.asDirect()
+        except Exception as e:
+            self.assertTrue(isinstance(e, png.FormatError))
+            self.assertTrue('too short' in str(e))
+
+    def test_no_checksum(self):
+        """
+        Chunk that's too small to contain a checksum.
+        """
+        r = png.Reader(bytes=pngsuite.basi0g01[:29])
+        try:
+            r.asDirect()
+        except Exception as e:
+            self.assertTrue(isinstance(e, png.FormatError))
+            self.assertTrue('checksum' in str(e))
+
+    def test_extra_pixels(self):
+        """Test file that contains too many pixels."""
+
+        def add_garbage(chunk):
+            if chunk[0] != b'IDAT':
+                return chunk
+            data = zlib.decompress(chunk[1])
+            data += b'\x00garbage'
+            data = zlib.compress(data)
+            chunk = (chunk[0], data)
+            return chunk
+        self.assertRaises(png.FormatError, read_modify_chunks, add_garbage)
+
+    def test_lack_pixels(self):
+        """Test file that contains too few pixels."""
+
+        def truncate_idat(chunk):
+            if chunk[0] != b'IDAT':
+                return chunk
+            # Remove last byte.
+            data = zlib.decompress(chunk[1])
+            data = data[:-1]
+            data = zlib.compress(data)
+            return (chunk[0], data)
+        self.assertRaises(png.FormatError, read_modify_chunks, truncate_idat)
+
+    def test_bad_filter(self):
+        """Test file that contains impossible filter type."""
+
+        def corrupt_filter(chunk):
+            if chunk[0] != b'IDAT':
+                return chunk
+            data = zlib.decompress(chunk[1])
+            # Corrupt the first filter byte
+            data = b'\x99' + data[1:]
+            data = zlib.compress(data)
+            return (chunk[0], data)
+        self.assertRaises(png.FormatError, read_modify_chunks, corrupt_filter)
 
     # from_array
 
