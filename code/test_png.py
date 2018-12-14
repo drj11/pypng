@@ -124,7 +124,15 @@ class Test(unittest.TestCase):
     class failureException(Exception):
         pass
 
-    def helperLN(self, n):
+    def test_L8(self):
+        """Test L8."""
+        return self.helper_L(8)
+
+    def test_L4(self):
+        """Test L4."""
+        return self.helper_L(4)
+
+    def helper_L(self, n):
         mask = (1 << n) - 1
         # Use small chunk_limit so that multiple chunk writing is
         # tested.  Making it a test for Issue 20 (googlecode).
@@ -138,14 +146,8 @@ class Test(unittest.TestCase):
         self.assertEqual(list(itertools.chain(*pixels)),
                          [mask & x for x in range(1, 256)])
 
-    def testL8(self):
-        return self.helperLN(8)
-
-    def testL4(self):
-        return self.helperLN(4)
-
-    def testL2(self):
-        "Also tests asRGB8."
+    def test_L2(self):
+        """Test L2 (and asRGB8)."""
         w = png.Writer(1, 4, greyscale=True, bitdepth=2)
         f = BytesIO()
         w.write_array(f, array('B', range(4)))
@@ -157,8 +159,15 @@ class Test(unittest.TestCase):
             self.assertEqual(len(row), 3)
             self.assertEqual(list(row), [0x55 * i] * 3)
 
-    def testP2(self):
-        "2-bit palette."
+    def test_LA4(self):
+        """Create an LA image with bitdepth 4."""
+        bytes = topngbytes('la4.png', [[5, 12]], 1, 1,
+                           greyscale=True, alpha=True, bitdepth=4)
+        sbit = png.Reader(bytes=bytes).chunk(b'sBIT')[1]
+        self.assertEqual(sbit, b'\x04\x04')
+
+    def test_P2(self):
+        """2-bit palette."""
         a = (255, 255, 255)
         b = (200, 120, 120)
         c = (50, 99, 50)
@@ -172,8 +181,8 @@ class Test(unittest.TestCase):
         self.assertEqual([list(row) for row in pixels],
                          [list(row) for row in [a, b, b, c]])
 
-    def testPtrns(self):
-        "Test colour type 3 and tRNS chunk (and 4-bit palette)."
+    def test_palette_trns(self):
+        """Test colour type 3 and tRNS chunk (and 4-bit palette)."""
         a = (50, 99, 50, 50)
         b = (200, 120, 120, 80)
         c = (255, 255, 255)
@@ -289,14 +298,7 @@ class Test(unittest.TestCase):
         w = png.Writer(3, 2, interlace=True, greyscale=True)
         w.write_array(f, bytes([0x55, 0xaa, 0xff, 0xaa, 0x55, 0x00]))
 
-    def testLA4(self):
-        """Create an LA image with bitdepth 4."""
-        bytes = topngbytes('la4.png', [[5, 12]], 1, 1,
-                           greyscale=True, alpha=True, bitdepth=4)
-        sbit = png.Reader(bytes=bytes).chunk(b'sBIT')[1]
-        self.assertEqual(sbit, b'\x04\x04')
-
-    def testPal(self):
+    def test_palette_info(self):
         """Test that a palette PNG returns the palette in info."""
         r = png.Reader(bytes=pngsuite.basn3p04)
         x, y, pixels, info = r.read()
@@ -304,7 +306,7 @@ class Test(unittest.TestCase):
         self.assertEqual(y, 32)
         self.assertTrue('palette' in info)
 
-    def testPalWrite(self):
+    def test_read_palette_write(self):
         """Test metadata for paletted PNG can be passed from one PNG
         to another."""
         r = png.Reader(bytes=pngsuite.basn3p04)
@@ -319,8 +321,9 @@ class Test(unittest.TestCase):
         # Same palette
         self.assertEqual(again_info['palette'], info['palette'])
 
-    def testPalExpand(self):
-        """Test that bitdepth can be used to fiddle with palette image."""
+    def test_deepen_palette(self):
+        """Test that palette bitdepth can be increased,
+        without change of pixel values."""
         r = png.Reader(bytes=pngsuite.basn3p04)
         x, y, pixels, info = r.read()
         pixels = [list(row) for row in pixels]
