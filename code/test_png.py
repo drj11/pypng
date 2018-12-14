@@ -570,61 +570,6 @@ class Test(unittest.TestCase):
         png.from_array([[3, 1], [0, 3]], 'LA2',
                        info=dict(greyscale=True)).save(BytesIO())
 
-# numpy dependent tests.
-
-    def testNumpyuint16(self):
-        """numpy uint16."""
-
-        numpy or self.skipTest("numpy is not available")
-
-        rows = [map(numpy.uint16, range(0, 0x10000, 0x5555))]
-        topngbytes('numpyuint16.png', rows, 4, 1,
-                   greyscale=True, alpha=False, bitdepth=16)
-
-    def testNumpyuint8(self):
-        """numpy uint8."""
-
-        numpy or self.skipTest("numpy is not available")
-
-        rows = [map(numpy.uint8, range(0, 0x100, 0x55))]
-        topngbytes('numpyuint8.png', rows, 4, 1,
-                   greyscale=True, alpha=False, bitdepth=8)
-
-    def testNumpybool(self):
-        """numpy bool."""
-
-        numpy or self.skipTest("numpy is not available")
-
-        rows = [map(numpy.bool, [0, 1])]
-        topngbytes('numpybool.png', rows, 2, 1,
-                   greyscale=True, alpha=False, bitdepth=1)
-
-    def testNumpyarray(self):
-        """numpy array."""
-
-        numpy or self.skipTest("numpy is not available")
-
-        pixels = numpy.array([[0, 0x5555], [0x5555, 0xaaaa]], numpy.uint16)
-        img = png.from_array(pixels, 'L')
-        img.save(BytesIO())
-
-    def testNumpyPalette(self):
-        """numpy palette."""
-
-        numpy or self.skipTest("numpy is not available")
-
-        s = ['110010010011',
-             '101011010100',
-             '110010110101',
-             '100010010011']
-
-        s = [[int(p) for p in row] for row in s]
-
-        palette = [(0x55, 0x55, 0x55), (0xff, 0x99, 0x99)]
-        # Creates a 2x3 array
-        pnp = numpy.array(palette)
-        png.Writer(len(s[0]), len(s), palette=pnp, bitdepth=1)
-
     def test_phys(self):
         """
         Check if pHYs chunk is written
@@ -704,6 +649,61 @@ class Test(unittest.TestCase):
                   [2, 3, 0]]
         meta = dict(alpha=False, greyscale=True, bitdepth=2, planes=1)
         png.write_pnm(o, w, h, pixels, meta)
+
+# numpy dependent tests.
+
+    def testNumpyuint16(self):
+        """numpy uint16."""
+
+        numpy or self.skipTest("numpy is not available")
+
+        rows = [map(numpy.uint16, range(0, 0x10000, 0x5555))]
+        topngbytes('numpyuint16.png', rows, 4, 1,
+                   greyscale=True, alpha=False, bitdepth=16)
+
+    def testNumpyuint8(self):
+        """numpy uint8."""
+
+        numpy or self.skipTest("numpy is not available")
+
+        rows = [map(numpy.uint8, range(0, 0x100, 0x55))]
+        topngbytes('numpyuint8.png', rows, 4, 1,
+                   greyscale=True, alpha=False, bitdepth=8)
+
+    def testNumpybool(self):
+        """numpy bool."""
+
+        numpy or self.skipTest("numpy is not available")
+
+        rows = [map(numpy.bool, [0, 1])]
+        topngbytes('numpybool.png', rows, 2, 1,
+                   greyscale=True, alpha=False, bitdepth=1)
+
+    def testNumpyarray(self):
+        """numpy array."""
+
+        numpy or self.skipTest("numpy is not available")
+
+        pixels = numpy.array([[0, 0x5555], [0x5555, 0xaaaa]], numpy.uint16)
+        img = png.from_array(pixels, 'L')
+        img.save(BytesIO())
+
+    def testNumpyPalette(self):
+        """numpy palette."""
+
+        numpy or self.skipTest("numpy is not available")
+
+        s = ['110010010011',
+             '101011010100',
+             '110010110101',
+             '100010010011']
+
+        s = [[int(p) for p in row] for row in s]
+
+        palette = [(0x55, 0x55, 0x55), (0xff, 0x99, 0x99)]
+        # Creates a 2x3 array
+        pnp = numpy.array(palette)
+        png.Writer(len(s[0]), len(s), palette=pnp, bitdepth=1)
 
     # Filters and unfilters
 
