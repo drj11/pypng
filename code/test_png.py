@@ -635,20 +635,10 @@ class Test(unittest.TestCase):
 
     # Filters and unfilters
 
-    def paeth(self, x, a, b, c):
-        p = a + b - c
-        pa = abs(p - a)
-        pb = abs(p - b)
-        pc = abs(p - c)
-        if pa <= pb and pa <= pc:
-            pr = a
-        elif pb <= pc:
-            pr = b
-        else:
-            pr = c
-        return x - pr
-
-    def testFilterScanlineFirstLine(self):
+    def test_filter_first(self):
+        """Test that filter_scanline works for the first line
+        when there is no previous line.
+        """
         fo = 3  # bytes per pixel
         line = [30, 31, 32, 230, 231, 232]
         out = png.filter_scanline(0, line, fo, None)  # none
@@ -661,12 +651,15 @@ class Test(unittest.TestCase):
         self.assertEqual(list(out), [3, 30, 31, 32, 215, 216, 216])
         out = png.filter_scanline(4, line, fo, None)  # paeth
         self.assertEqual(list(out), [
-            4, self.paeth(30, 0, 0, 0), self.paeth(31, 0, 0, 0),
-            self.paeth(32, 0, 0, 0), self.paeth(230, 30, 0, 0),
-            self.paeth(231, 31, 0, 0), self.paeth(232, 32, 0, 0)
+            4, paeth(30, 0, 0, 0), paeth(31, 0, 0, 0),
+            paeth(32, 0, 0, 0), paeth(230, 30, 0, 0),
+            paeth(231, 31, 0, 0), paeth(232, 32, 0, 0)
         ])
 
     def testFilterScanline(self):
+        """Test that filter_scanline works for lines subsequent
+        to the first line.
+        """
         prev = [20, 21, 22, 210, 211, 212]
         line = [30, 32, 34, 230, 233, 236]
         fo = 3
@@ -680,9 +673,9 @@ class Test(unittest.TestCase):
         self.assertEqual(list(out), [3, 20, 22, 23, 110, 112, 113])
         out = png.filter_scanline(4, line, fo, prev)  # paeth
         self.assertEqual(list(out), [
-            4, self.paeth(30, 0, 20, 0), self.paeth(32, 0, 21, 0),
-            self.paeth(34, 0, 22, 0), self.paeth(230, 30, 210, 20),
-            self.paeth(233, 32, 211, 21), self.paeth(236, 34, 212, 22)
+            4, paeth(30, 0, 20, 0), paeth(32, 0, 21, 0),
+            paeth(34, 0, 22, 0), paeth(230, 30, 210, 20),
+            paeth(233, 32, 211, 21), paeth(236, 34, 212, 22)
         ])
 
     def testUnfilterScanline(self):
@@ -901,6 +894,20 @@ class Test(unittest.TestCase):
 def group(s, n):
     # See http://www.python.org/doc/2.6/library/functions.html#zip
     return list(zip(* [iter(s)] * n))
+
+
+def paeth(x, a, b, c):
+    p = a + b - c
+    pa = abs(p - a)
+    pb = abs(p - b)
+    pc = abs(p - c)
+    if pa <= pb and pa <= pc:
+        pr = a
+    elif pb <= pc:
+        pr = b
+    else:
+        pr = c
+    return x - pr
 
 
 if __name__ == '__main__':
