@@ -656,7 +656,7 @@ class Test(unittest.TestCase):
             paeth(231, 31, 0, 0), paeth(232, 32, 0, 0)
         ])
 
-    def testFilterScanline(self):
+    def test_filter(self):
         """Test that filter_scanline works for lines subsequent
         to the first line.
         """
