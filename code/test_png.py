@@ -807,6 +807,16 @@ class Test(unittest.TestCase):
             png.Writer,
             1, 4, bitdepth=2, palette=[a, b, c]*86)
 
+    def test_write_palette_bad_tuples(self):
+        """Palette with incorrect size tuples should raise error."""
+        a = (255, 255, 255)
+        b = (200, 120, 120)
+        c = (50, 99)    # Deliberately short
+        self.assertRaises(
+            png.ProtocolError,
+            png.Writer,
+            1, 4, bitdepth=2, palette=[a, b, c])
+
     # Command line tests
 
     def test_cli_pgm_in(self):
