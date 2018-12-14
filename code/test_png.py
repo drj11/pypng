@@ -357,7 +357,7 @@ class Test(unittest.TestCase):
         self.assertEqual(again_info['palette'], info['palette'])
 
     def testPalExpand(self):
-        """Test that bitdepth can be used to fiddle with pallete image."""
+        """Test that bitdepth can be used to fiddle with palette image."""
         r = png.Reader(bytes=pngsuite.basn3p04)
         x, y, pixels, info = r.read()
         pixels = [list(row) for row in pixels]
