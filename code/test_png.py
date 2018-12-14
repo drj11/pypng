@@ -419,7 +419,7 @@ class Test(unittest.TestCase):
         writer = png.Writer(width=4, height=1, greyscale=True)
         o = BytesIO()
 
-        self.assertRaises(png.Error,
+        self.assertRaises(png.ProtocolError,
                           writer.write,
                           o, [[1, 111, 222]])
 
