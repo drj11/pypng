@@ -2719,7 +2719,8 @@ def main(argv):
                                     options.alpha, awidth, aheight))
             writer.write_array(
                 outfile,
-                merge_ppm_and_pgm(infile, pgmfile,
+                merge_ppm_and_pgm(
+                    infile, pgmfile,
                     dict(
                         bitdepth=bitdepth,
                         color_planes=writer.color_planes,
