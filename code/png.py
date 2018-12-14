@@ -1423,7 +1423,8 @@ class Reader:
 
         The constructor expects exactly one keyword argument. If you
         supply a positional argument instead, it will guess the input
-        type. You can choose among the following keyword arguments:
+        type.
+        Choose from the following keyword arguments:
 
         filename
           Name of input file (a PNG file).
