@@ -226,15 +226,23 @@ def tostring(row):
 
 def interleave_planes(ipixels, apixels, ipsize, apsize):
     """
-    Interleave (colour) planes, e.g. RGB + A = RGBA.
+    Interleave planes.
+    Typically used to interleave intensity planes (RGB) with
+    alpha planes (A): RGB + A = RGBA.
 
-    Return an array of pixels consisting of the `ipsize` elements of
-    data from each pixel in `ipixels` followed by the `apsize` elements
-    of data from each pixel in `apixels`.  Conventionally `ipixels`
-    and `apixels` are byte arrays so the sizes are bytes, but it
-    actually works with any arrays of the same type.  The returned
-    array is the same type as the input arrays which should be the
-    same type as each other.
+    Return an array where each pixel of the output constists of
+    `ipsize` elements from `ipixels` immediately followed by
+    `apsize` elements from `apixels`.
+
+    Typically (when performing RGB + A on 8-bit inputs)
+    `ipsize` = 3, and `apsize` = 1.
+
+    Conventionally `ipixels` and `apixels` are byte arrays
+    so the sizes are bytes, but
+    it actually works with any arrays of the same type.
+
+    The returned array is the same type as the input arrays
+    which should be the same type as each other.
     """
 
     itotal = len(ipixels)
