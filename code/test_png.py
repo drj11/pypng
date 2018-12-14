@@ -336,8 +336,8 @@ class Test(unittest.TestCase):
         again_pixels = [list(row) for row in again_pixels]
         self.assertEqual(again_pixels, pixels)
 
-    def testPaletteForcealpha(self):
-        """Test forcing alpha channel for palette"""
+    def test_palette_force_alpha(self):
+        """Test forcing alpha channel for palette."""
         r = png.Reader(bytes=pngsuite.basn3p04)
         r.preamble()
         r.palette(alpha='force')
@@ -358,16 +358,16 @@ class Test(unittest.TestCase):
         sbit = r.chunk(b'sBIT')[1]
         self.assertEqual(sbit, b'\x01\x01\x01')
 
-    def testLtrns0(self):
+    def test_L_trns_0(self):
         """Create greyscale image with tRNS chunk."""
-        return self.helperLtrns(0)
+        return self.helper_L_trns(0)
 
-    def testLtrns1(self):
+    def test_L_trns_tuple(self):
         """Using 1-tuple for transparent arg."""
-        return self.helperLtrns((0,))
+        return self.helper_L_trns((0,))
 
-    def helperLtrns(self, transparent):
-        """Helper used by :meth:`testLtrns*`."""
+    def helper_L_trns(self, transparent):
+        """Helper used by :meth:`test_L_trns*`."""
         pixels = zip([0x00, 0x38, 0x4c, 0x54, 0x5c, 0x40, 0x38, 0x00])
         o = BytesIO()
         w = png.Writer(8, 8,
@@ -379,15 +379,15 @@ class Test(unittest.TestCase):
         self.assertTrue(meta['greyscale'])
         self.assertEqual(meta['bitdepth'], 1)
 
-    def testWinfo(self):
-        """Test the dictionary returned by a `read` method can be used
-        as args for :meth:`Writer`.
+    def test_read_info_write(self):
+        """Test that the dictionary returned by `read`
+        can be used as args for :meth:`Writer`.
         """
         r = png.Reader(bytes=pngsuite.basn2c16)
         info = r.read()[3]
         png.Writer(**info)
 
-    def testPackedIter(self):
+    def test_write_packed(self):
         """Test iterator for row when using write_packed.
 
         Indicative for Issue 47 (googlecode).
@@ -402,19 +402,18 @@ class Test(unittest.TestCase):
         self.assertEqual(len(pixels), 2)
         self.assertEqual(len(pixels[0]), 16)
 
-    def testInterlacedArray(self):
-        """Test that reading an interlaced PNG yields each row as an
-        array."""
+    def test_interlaced_array(self):
+        """Reading an interlaced PNG yields each row as an array."""
         r = png.Reader(bytes=pngsuite.basi0g08)
         list(r.read()[2])[0].tostring
 
-    def testTrnsArray(self):
-        """Test that reading a type 2 PNG with tRNS chunk yields each
-        row as an array (using asDirect)."""
+    def test_trns_array(self):
+        """A type 2 PNG with tRNS chunk yields each row
+        as an array (using asDirect)."""
         r = png.Reader(bytes=pngsuite.tbrn2c08)
         list(r.asDirect()[2])[0].tostring
 
-    def testRowLengthError(self):
+    def test_row_length_bad(self):
         # See https://github.com/drj11/pypng/issues/28
         writer = png.Writer(width=4, height=1, greyscale=True)
         o = BytesIO()
@@ -423,7 +422,7 @@ class Test(unittest.TestCase):
                           writer.write,
                           o, [[1, 111, 222]])
 
-    def testFlat(self):
+    def test_flat(self):
         """Test read_flat."""
         import hashlib
 
