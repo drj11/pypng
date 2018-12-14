@@ -849,6 +849,15 @@ class Test(unittest.TestCase):
         """Invoking Writer with bad height should raise error."""
         self.assertRaises(png.ProtocolError, png.Writer, -4, 4)
 
+    def test_write_width_big(self):
+        """Invoking Writer with big width should raise error."""
+        self.assertRaises(png.ProtocolError, png.Writer, 2**31, 4)
+
+    def test_write_height_big(self):
+        """Invoking Writer with big height should raise error."""
+        self.assertRaises(png.ProtocolError, png.Writer, 4, 2**31)
+
+
     # Command line tests
 
     def test_cli_pgm_in(self):
