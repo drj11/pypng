@@ -795,6 +795,18 @@ class Test(unittest.TestCase):
         meta = dict(alpha=False, greyscale=True, bitdepth=2, planes=1)
         png.write_pnm(o, w, h, pixels, meta)
 
+    # Generally, protocol errors
+
+    def test_write_palette_big(self):
+        """Palette too big should raise error."""
+        a = (255, 255, 255)
+        b = (200, 120, 120)
+        c = (50, 99, 50)
+        self.assertRaises(
+            png.ProtocolError,
+            png.Writer,
+            1, 4, bitdepth=2, palette=[a, b, c]*86)
+
     # Command line tests
 
     def test_cli_pgm_in(self):
