@@ -834,61 +834,6 @@ class Test(unittest.TestCase):
         """Invoking Writer with big height should raise error."""
         self.assertRaises(png.ProtocolError, png.Writer, 4, 2**31)
 
-    # Command line tests
-
-    def test_cli_pgm_in(self):
-        """Test that the command line tool can read PGM files."""
-        def do():
-            return png.main(['testPGMin'])
-        s = BytesIO()
-        s.write(b'P5 2 2 3\n')
-        s.write(b'\x00\x01\x02\x03')
-        s.flush()
-        s.seek(0)
-        o = BytesIO()
-        redirect_io(s, o, do)
-        r = png.Reader(bytes=o.getvalue())
-        x, y, pixels, meta = r.read()
-        self.assertTrue(r.greyscale)
-        self.assertEqual(r.bitdepth, 2)
-
-    def test_cli_pam_in(self):
-        """Test that the command line tool can read PAM file."""
-        def do():
-            return png.main(['testPAMin'])
-        s = BytesIO()
-        s.write(b'P7\nWIDTH 3\nHEIGHT 1\nDEPTH 4\nMAXVAL 255\n'
-                b'TUPLTYPE RGB_ALPHA\nENDHDR\n')
-        # The pixels in flat row flat pixel format
-        flat = [255, 0, 0, 255, 0, 255, 0, 120, 0, 0, 255, 30]
-        asbytes = seqtobytes(flat)
-        s.write(asbytes)
-        s.flush()
-        s.seek(0)
-        o = BytesIO()
-        redirect_io(s, o, do)
-        r = png.Reader(bytes=o.getvalue())
-        x, y, pixels, meta = r.read()
-        self.assertTrue(r.alpha)
-        self.assertTrue(not r.greyscale)
-        self.assertEqual(list(itertools.chain(*pixels)), flat)
-
-    def test_pnm_sbit(self):
-        """Test that (certain) PNM files generate sBIT chunk."""
-        def do():
-            return png.main(['testPNMsbit'])
-        s = BytesIO()
-        s.write(b'P6 8 1 1\n')
-        for pixel in range(8):
-            s.write(struct.pack('<I', (0x4081 * pixel) & 0x10101)[:3])
-        s.flush()
-        s.seek(0)
-        o = BytesIO()
-        redirect_io(s, o, do)
-        r = png.Reader(bytes=o.getvalue())
-        sbit = r.chunk(b'sBIT')[1]
-        self.assertEqual(sbit, b'\x01\x01\x01')
-
 
 def read_modify_chunks(modify_chunk):
     """Create a temporary PNG file by modifying the chunks of
