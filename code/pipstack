@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-# $URL$
-# $Rev$
 
 # pipstack
 # Combine input PNG files into a multi-channel output PNG.
