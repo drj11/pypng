@@ -62,7 +62,7 @@ def topngbytes(name, rows, x, y, **k):
     return f.getvalue()
 
 
-def _redirect_io(inp, out, f):
+def redirect_io(inp, out, f):
     """Calls the function `f` with ``sys.stdin`` changed to `inp`
     and ``sys.stdout`` changed to `out`.  They are restored when `f`
     returns.  This function returns whatever `f` returns.
@@ -846,7 +846,7 @@ class Test(unittest.TestCase):
         s.flush()
         s.seek(0)
         o = BytesIO()
-        _redirect_io(s, o, do)
+        redirect_io(s, o, do)
         r = png.Reader(bytes=o.getvalue())
         x, y, pixels, meta = r.read()
         self.assertTrue(r.greyscale)
@@ -866,7 +866,7 @@ class Test(unittest.TestCase):
         s.flush()
         s.seek(0)
         o = BytesIO()
-        _redirect_io(s, o, do)
+        redirect_io(s, o, do)
         r = png.Reader(bytes=o.getvalue())
         x, y, pixels, meta = r.read()
         self.assertTrue(r.alpha)
@@ -884,7 +884,7 @@ class Test(unittest.TestCase):
         s.flush()
         s.seek(0)
         o = BytesIO()
-        _redirect_io(s, o, do)
+        redirect_io(s, o, do)
         r = png.Reader(bytes=o.getvalue())
         sbit = r.chunk(b'sBIT')[1]
         self.assertEqual(sbit, b'\x01\x01\x01')
