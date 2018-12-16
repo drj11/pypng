@@ -2398,30 +2398,6 @@ except NameError:
 # Much of which is NetPBM encoding / decoding.
 
 
-def merge_ppm_and_pgm(ppmfile, pgmfile, info):
-    """
-    Merge input PPM and PGM files together as RGB and A
-    channels.
-
-    Output the resulting array, suitable for `.write_array`.
-
-    Assumes the inputs, `ppmfile` and `pgmfile`, are cued up to
-    the start of their binary sections.
-    """
-
-    # Bytes per plane
-    plane_bytes = (info['bitdepth'] / 8) * info['width'] * info['height']
-
-    pixels = array('B')
-    pixels.fromfile(ppmfile, plane_bytes * info['color_planes'])
-    apixels = array('B')
-    apixels.fromfile(pgmfile, plane_bytes)
-    pixels = interleave_planes(pixels, apixels,
-                               (info['bitdepth'] / 8) * info['color_planes'],
-                               (info['bitdepth'] / 8))
-    return pixels
-
-
 def read_pam_header(infile):
     """
     Read (the rest of a) PAM header.  `infile` should be positioned
@@ -2644,9 +2620,6 @@ def main(argv):
     parser.add_option('-r', '--read-png', default=False,
                       action='store_true',
                       help='Read PNG, write PNM')
-    parser.add_option("-a", "--alpha",
-                      action="store", type="string", metavar="pgmfile",
-                      help="alpha channel transparency (RGBA)")
     add_common_options(parser)
 
     (options, args) = parser.parse_args(args=argv[1:])
@@ -2703,32 +2676,10 @@ def main(argv):
                         interlace=options.interlace,
                         transparent=options.transparent,
                         background=options.background,
-                        alpha=bool(pamalpha or options.alpha),
+                        alpha=pamalpha,
                         gamma=options.gamma,
                         compression=options.compression)
-        if options.alpha:
-            pgmfile = open(options.alpha, 'rb')
-            format, awidth, aheight, adepth, amaxval = \
-                read_pnm_header(pgmfile, 'P5')
-            if amaxval != 255:
-                raise NotImplementedError(
-                    'maxval %s not supported for alpha channel' % amaxval)
-            if (awidth, aheight) != (width, height):
-                raise ValueError("alpha channel image size mismatch"
-                                 " (%s has %sx%s but %s has %sx%s)"
-                                 % (infilename, width, height,
-                                    options.alpha, awidth, aheight))
-            writer.write_array(
-                outfile,
-                merge_ppm_and_pgm(
-                    infile, pgmfile,
-                    dict(
-                        bitdepth=bitdepth,
-                        color_planes=writer.color_planes,
-                        width=width,
-                        height=height)))
-        else:
-            writer.convert_pnm(infile, outfile)
+        writer.convert_pnm(infile, outfile)
 
 
 if __name__ == '__main__':
