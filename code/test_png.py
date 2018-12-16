@@ -10,7 +10,7 @@
 # PNG file we produce is valid.
 
 # Run the tests from the command line:
-#   python -c 'import test_png;test_png.runTest()'
+#   python -m test_png
 # If you have nose installed you can use that:
 #   nosetests .
 
