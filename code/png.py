@@ -916,48 +916,6 @@ class Writer:
                 self.rescale[0])
         return self.write_passes(outfile, rows, packed=True)
 
-    def convert_pnm(self, infile, outfile):
-        """
-        Convert a PNM file containing raw pixel data into a PNG file
-        with the parameters set in the writer object.  Works for
-        (binary) PGM, PPM, and PAM formats.
-        """
-
-        if self.interlace:
-            pixels = array('B')
-            pixels.fromfile(infile,
-                            (self.bitdepth / 8) * self.color_planes *
-                            self.width * self.height)
-            self.write_passes(outfile, self.array_scanlines_interlace(pixels))
-        else:
-            self.write_passes(outfile, self.file_scanlines(infile))
-
-    def file_scanlines(self, infile):
-        """
-        Generates boxed rows in flat pixel format, from the input file
-        `infile`.  It assumes that the input file is in a "Netpbm-like"
-        binary format, and is positioned at the beginning of the first
-        pixel.  The number of pixels to read is taken from the image
-        dimensions (`width`, `height`, `planes`) and the number of bytes
-        per value is implied by the image `bitdepth`.
-        """
-
-        # Values per row
-        vpr = self.width * self.planes
-        row_bytes = vpr
-        if self.bitdepth > 8:
-            assert self.bitdepth == 16
-            row_bytes *= 2
-            fmt = '>%dH' % vpr
-
-            def line():
-                return array('H', struct.unpack(fmt, infile.read(row_bytes)))
-        else:
-            def line():
-                scanline = array('B', infile.read(row_bytes))
-                return scanline
-        for y in range(self.height):
-            yield line()
 
     def array_scanlines(self, pixels):
         """
