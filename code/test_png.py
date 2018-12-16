@@ -814,23 +814,23 @@ class Test(unittest.TestCase):
             png.Writer,
             1, 4, bitdepth=2, palette=[a, b, c])
 
-    def test_write_noargs(self):
+    def test_writer_noargs(self):
         """Invoking Writer with no args should raise error."""
         self.assertRaises(png.ProtocolError, png.Writer)
 
-    def test_write_width_bad(self):
+    def test_writer_width_bad(self):
         """Invoking Writer with bad width should raise error."""
         self.assertRaises(png.ProtocolError, png.Writer, 0, 4)
 
-    def test_write_height_bad(self):
+    def test_writer_height_bad(self):
         """Invoking Writer with bad height should raise error."""
         self.assertRaises(png.ProtocolError, png.Writer, -4, 4)
 
-    def test_write_width_big(self):
+    def test_writer_width_big(self):
         """Invoking Writer with big width should raise error."""
         self.assertRaises(png.ProtocolError, png.Writer, 2**31, 4)
 
-    def test_write_height_big(self):
+    def test_writer_height_big(self):
         """Invoking Writer with big height should raise error."""
         self.assertRaises(png.ProtocolError, png.Writer, 4, 2**31)
 
