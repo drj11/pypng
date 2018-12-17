@@ -3,7 +3,7 @@ matrix:
   include:
   - python: "2.6"
     install: true  # flake8 no longer supports Python 2.6
-    before_script: true
+    before_script: flake8 () { echo flake8 disabled on Python 2.6 ; }
   - python: "2.7"
   - python: "3.4"
   - python: "3.5"
@@ -11,5 +11,6 @@ matrix:
   - python: "3.7"
     dist: xenial  # required for Python >= 3.7 (travis-ci/travis-ci#9069)
 install: pip install flake8
-before_script: flake8 . --count --show-source --statistics
-script: cd code; nosetests
+script:
+  - flake8 . --count --show-source --statistics
+  - cd code; nosetests
