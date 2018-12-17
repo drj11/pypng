@@ -144,7 +144,7 @@ class Test(unittest.TestCase):
         self.assertEqual(x, 15)
         self.assertEqual(y, 17)
         self.assertEqual(list(itertools.chain(*pixels)),
-                         [mask & x for x in range(1, 256)])
+                         list(map(mask.__and__, range(1, 256))))
 
     def test_L2(self):
         """Test L2 (and asRGB8)."""
