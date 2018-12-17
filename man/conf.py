@@ -1,6 +1,3 @@
-# $URL$
-# $Rev$
-
 # PyPNG documentation build configuration file, created by
 # sphinx-quickstart on Mon Mar 16 13:12:26 2009.
 # Then brutally hacked down by drj.
