@@ -12,6 +12,13 @@ from array import array
 
 import png
 
+try:
+    # Ensure sys.stdin returns bytes
+    sys.stdin = sys.stdin.buffer
+except AttributeError:
+    # Probably Python 2, where bytes are strings.
+    pass
+
 
 def read_pam_header(infile):
     """
@@ -242,11 +249,9 @@ def main(argv=None):
     infilename = args[0]
     infile = cli_open(infilename)
 
+    # Call after parsing, so that --version and --help work.
+    ensure_binary_stdout()
     outfile = sys.stdout
-    if sys.platform == "win32":
-        import msvcrt
-        import os
-        msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
 
     # Encode PNM to PNG
     format, width, height, depth, maxval = \
@@ -286,9 +291,28 @@ def cli_open(path):
     return open(path, 'rb')
 
 
+def ensure_binary_stdout():
+    """
+    Ensure sys.stdout accepts bytes.
+    """
+
+    # First there is a Python3 issue.
+    try:
+        sys.stdout = sys.stdout.buffer
+    except AttributeError:
+        # Probably Python 2, where bytes are strings.
+        pass
+
+    # On Windows the C runtime file orientation needs changing.
+    if sys.platform == "win32":
+        import msvcrt
+        import os
+        msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
+
+
 if __name__ == '__main__':
     try:
         sys.exit(main())
-    except Exception as e:
+    except png.Error as e:
         print(e, file=sys.stderr)
         sys.exit(99)
