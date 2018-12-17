@@ -16,6 +16,7 @@
 
 from __future__ import print_function
 
+import glob
 import itertools
 import os
 import struct
@@ -838,12 +839,14 @@ class Test(unittest.TestCase):
     # scripts in test directory
 
     def test_test_dir(self):
-        for base in os.listdir('test'):
-            path = os.path.join('test', base)
+        runs = []
+        for path in sorted(glob.glob('test/*')):
             status = os.system(path)
-            self.assertEqual(
-                status, 0,
-                msg="%r failed with status %r" % (path, status))
+            runs.append((path, status))
+        failed_runs = [run for run in runs if run[1]]
+        self.assertTrue(
+            len(failed_runs) == 0,
+            msg="%r failed" % failed_runs)
 
 
 def read_modify_chunks(modify_chunk):
