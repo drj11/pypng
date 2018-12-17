@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# Check that 4-bit hex numbers are expanded into 8-bit
+
+PATH=${PWD%code*}code:$PATH
+
+#                   R G B R G B R G B r g b r g b r g b R G B R G B R G B
+printf 'P6\n3 3 3\n\1\0\0\0\1\0\0\0\1\2\1\1\1\2\1\1\1\2\3\2\2\2\3\2\2\2\3' |
+pripamtopng --transparent '#005' - | pipcolours | file - | grep -q RGBA
