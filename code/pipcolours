@@ -4,6 +4,7 @@
 
 # pipcolours - extract all colours present in source image.
 
+
 def colours(out, inp):
     import itertools
     import png
@@ -11,25 +12,34 @@ def colours(out, inp):
     r = png.Reader(file=inp)
     _,_,pixels,info = r.asDirect()
     planes = info['planes']
+    bitdepth = info['bitdepth']
     col = set()
     for row in pixels:
         # Ewgh, side effects on col
         map(col.add, png.group(row, planes))
-    col,planes = channel_reduce(col, planes)
-    col = list(col)
-    col.sort()
+    col, planes = channel_reduce(col, planes, bitdepth)
+    col = sorted(col)
     col = list(itertools.chain(*col))
-    width = len(col)//planes
+    width = len(col) // planes
     greyscale = planes in (1,2)
     alpha = planes in (2,4)
-    bitdepth = info['bitdepth']
     w = png.Writer(width, 1,
         bitdepth=bitdepth, greyscale=greyscale, alpha=alpha)
     w.write(out, [col])
 
-def channel_reduce(col, planes):
-    """Attempt to reduce the number of channels in the set of
-    colours."""
+
+def channel_reduce(col, planes, bitdepth):
+    """Attempt to reduce the number of channels in the set of colours."""
+    col, planes = reduce_grey(col, planes)
+    col, planes = reduce_alpha(col, planes, bitdepth)
+    return col, planes
+
+
+def reduce_grey(col, planes):
+    """
+    Reduce a colour image to grey if
+    all intensities match in all pixels.
+    """
     if planes >= 3:
         def isgrey(c):
             return c[0] == c[1] == c[2]
@@ -37,7 +47,23 @@ def channel_reduce(col, planes):
             # Every colour is grey.
             col = set(map(lambda x: x[0::3], col))
             planes -= 2
-    return col,planes
+    return col, planes
+
+
+def reduce_alpha(col, planes, bitdepth):
+    """
+    Remove alpha channel if all pixels are fully opaque.
+    """
+    maxval = 2 ** bitdepth - 1
+    if planes in (2, 4):
+        def isopaque(c):
+            return c[-1] == maxval
+        if min(map(isopaque, col)) == True:
+            # Every pixel is opaque
+            col = set(map(lambda x: x[:-1], col))
+            planes -= 1
+    return col, planes
+
 
 def main(argv=None):
     import sys
@@ -51,6 +77,7 @@ def main(argv=None):
     else:
         f = sys.stdin
     return colours(sys.stdout, f)
+
 
 if __name__ == '__main__':
     main()
