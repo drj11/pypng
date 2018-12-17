@@ -17,6 +17,7 @@
 from __future__ import print_function
 
 import itertools
+import os
 import struct
 import sys
 # http://www.python.org/doc/2.4.4/lib/module-unittest.html
@@ -833,6 +834,15 @@ class Test(unittest.TestCase):
     def test_writer_height_big(self):
         """Invoking Writer with big height should raise error."""
         self.assertRaises(png.ProtocolError, png.Writer, 4, 2**31)
+
+    # scripts in test directory
+
+    def test_test_dir(self):
+        for base in os.listdir('test'):
+            path = os.path.join('test', base)
+            status = os.system(path)
+            self.assertEqual(status, 0,
+                msg="%r failed with status %r" % (path, status))
 
 
 def read_modify_chunks(modify_chunk):
