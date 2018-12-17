@@ -916,7 +916,6 @@ class Writer:
                 self.rescale[0])
         return self.write_passes(outfile, rows, packed=True)
 
-
     def array_scanlines(self, pixels):
         """
         Generates boxed rows (flat pixels) from flat rows (flat pixels)
