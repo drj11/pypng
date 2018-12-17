@@ -3,7 +3,8 @@
 # Then brutally hacked down by drj.
 # See http://sphinx.pocoo.org/config.html
 
-import sys, os
+import sys
+import os
 
 # So that local modules get picked up, and picked up first.
 sys.path.insert(0, os.path.abspath('../code'))
@@ -11,7 +12,7 @@ sys.path.insert(0, os.path.abspath('../code'))
 sys.path.insert(0, os.path.abspath('..'))
 
 # Expecting to find ../setup.py
-from setup import conf
+from setup import conf  # noqa: E402
 
 # General configuration
 # ---------------------
@@ -24,7 +25,7 @@ project = u'PyPNG'
 copyright = u'2009, ' + conf['author']
 release = conf['version']
 version = release[:release.rfind('.')]
-language='en'
+language = 'en'
 today_fmt = '%Y-%m-%d'
 exclude_trees = ['build']
 
@@ -44,18 +45,19 @@ htmlhelp_basename = 'PyPNGdoc'
 latex_paper_size = 'a4'
 
 # The font size ('10pt', '11pt' or '12pt').
-#latex_font_size = '10pt'
+# latex_font_size = '10pt'
 
 # Grouping the document tree into LaTeX files. List of tuples
-# (source start file, target name, title, author, document class [howto/manual]).
+# (source start file, target name,
+#  title, author, document class [howto/manual]).
 latex_documents = [
-  ('index', 'PyPNG.tex', ur'PyPNG Documentation',
-   ur'David Jones', 'manual'),
+  ('index', 'PyPNG.tex', u'PyPNG Documentation',
+   u'David Jones', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
 # the title page.
-#latex_logo = None
+# latex_logo = None
 
 # http://sphinx.pocoo.org/ext/autodoc.html?highlight=__init__
-autoclass_content='both'
+autoclass_content = 'both'
