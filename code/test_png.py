@@ -841,7 +841,8 @@ class Test(unittest.TestCase):
         for base in os.listdir('test'):
             path = os.path.join('test', base)
             status = os.system(path)
-            self.assertEqual(status, 0,
+            self.assertEqual(
+                status, 0,
                 msg="%r failed with status %r" % (path, status))
 
 
