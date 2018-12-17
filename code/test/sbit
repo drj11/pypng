@@ -1,0 +1,8 @@
+#!/bin/sh
+
+# Test that a PPM file with MAXVAL 1 generates an sBIT chunk.
+
+PATH=${PWD%code*}code:$PATH
+
+printf 'P6 8 1 1\n\0\0\0\0\0\1\0\1\0\0\1\1\1\0\0\1\0\1\1\1\0\1\1\1\n' |
+pripamtopng - | strings | grep -q sBIT

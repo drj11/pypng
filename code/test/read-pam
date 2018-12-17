@@ -1,0 +1,11 @@
+#!/bin/sh
+
+PATH=${PWD%code*}code:$PATH
+
+{
+printf 'P7\n'
+printf 'WIDTH 3\nHEIGHT 1\nDEPTH 4\nMAXVAL 255\nTUPLTYPE RGB_ALPHA\n'
+printf 'ENDHDR\n'
+printf '\377\0\0\377\0\377\0\170\0\0\377\36'
+} |
+pripamtopng - | file - | grep -q PNG

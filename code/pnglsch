@@ -4,19 +4,30 @@
 # pnglsch
 # PNG List Chunks
 
+from __future__ import print_function
+
+import binascii
+import sys
+
 import png
+
+try:
+    # Ensure sys.stdin returns bytes
+    sys.stdin = sys.stdin.buffer
+except AttributeError:
+    # Probably Python 2, where bytes are strings.
+    pass
+
 
 def list(out, inp):
     r = png.Reader(file=inp)
     for t,v in r.chunks():
         add = ''
         if len(v) <= 28:
-            add = ' ' + v.encode('hex')
-        print >>out, "%s %10d%s" % (t, len(v), add)
+            add = ' ' + binascii.hexlify(v).decode('ascii')
+        print("%s %10d%s" % (t, len(v), add), file=out)
 
 def main(argv=None):
-    import sys
-
     if argv is None:
         argv = sys.argv
     arg = argv[1:]
