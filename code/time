@@ -1,3 +1,0 @@
-#!/bin/sh
-
-time -p code/piprgb < code/greytv.png > /dev/null
