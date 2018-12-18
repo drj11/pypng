@@ -1,0 +1,9 @@
+#!/bin/sh
+
+PATH=${PWD%code*}code:$PATH
+
+python -m pngsuite basi0g04 |
+pripngtopam - |
+# The last 1024 bytes (32x32) are binary data; extract header
+head -c -1024 | tr -cs 0-9A-Z |
+grep -q 'P5 32 32 15'

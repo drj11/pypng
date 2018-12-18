@@ -1,0 +1,6 @@
+#!/bin/sh
+
+PATH=${PWD%code*}code:$PATH
+
+python -m pngsuite basn4a16 |
+pripngtopam - | file - | grep -q PAM

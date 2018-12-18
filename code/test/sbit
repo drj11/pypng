@@ -5,4 +5,4 @@
 PATH=${PWD%code*}code:$PATH
 
 printf 'P6 8 1 1\n\0\0\0\0\0\1\0\1\0\0\1\1\1\0\0\1\0\1\1\1\0\1\1\1\n' |
-pripamtopng - | strings | grep -q sBIT
+pripamtopng - | tr -dc a-zA-Z | grep -q sBIT

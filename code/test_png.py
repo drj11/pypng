@@ -492,15 +492,6 @@ class Test(unittest.TestCase):
             for i in range(len(row1)):
                 row1[i] = 11117 % (i + 1)
 
-    def test_write_pnm(self):
-        o = BytesIO()
-        w, h = 3, 3
-        pixels = [[0, 1, 2],
-                  [3, 0, 1],
-                  [2, 3, 0]]
-        meta = dict(alpha=False, greyscale=True, bitdepth=2, planes=1)
-        png.write_pnm(o, w, h, pixels, meta)
-
     # Invalid file format tests.  These construct various badly
     # formatted PNG files, then feed them into a Reader.  When
     # everything is working properly, we should get FormatError
