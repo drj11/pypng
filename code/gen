@@ -112,11 +112,8 @@ def generate(options, args):
 
     writer = png.Writer(size[0], size[1],
                     bitdepth=options.bitdepth,
-                    gamma=options.gamma,
                     greyscale=True,
-                    alpha=False,
-                    compression=options.compression,
-                    interlace=options.interlace)
+                    alpha=False)
     writer.write_array(sys.stdout, pixels)
 
 def main(argv=None):
@@ -137,7 +134,6 @@ def main(argv=None):
     parser.add_option("-S", "--size",
                       action="store", type="string", metavar="w[,h]",
                       help="width and height of the test image")
-    png.add_common_options(parser)
 
     (options, args) = parser.parse_args(args=argv[1:])
 
