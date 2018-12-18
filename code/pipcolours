@@ -1,8 +1,15 @@
 #!/usr/bin/env python
-# $URL$
-# $Rev$
 
-# pipcolours - extract all colours present in source image.
+"""
+pipcolours - extract all colours present in source image.
+Produces a PNG that has each colour exactly once.
+
+Also performs grey and alpha reduction when possible:
+if all colour pixels are grey, output PNG is grey;
+if all pixels are opaque, output PNG has no alpha channel.
+"""
+
+import sys
 
 
 def colours(out, inp):
@@ -13,11 +20,13 @@ def colours(out, inp):
     _,_,pixels,info = r.asDirect()
     planes = info['planes']
     bitdepth = info['bitdepth']
+
     col = set()
     for row in pixels:
-        # Ewgh, side effects on col
-        map(col.add, png.group(row, planes))
+        col = col.union(png.group(row, planes))
+
     col, planes = channel_reduce(col, planes, bitdepth)
+
     col = sorted(col)
     col = list(itertools.chain(*col))
     width = len(col) // planes
@@ -65,9 +74,39 @@ def reduce_alpha(col, planes, bitdepth):
     return col, planes
 
 
-def main(argv=None):
-    import sys
+def ensure_binary_stdin():
+    """
+    Ensure sys.stdin returns bytes.
+    """
 
+    try:
+        # Ensure sys.stdin returns bytes
+        sys.stdin = sys.stdin.buffer
+    except AttributeError:
+        # Probably Python 2, where bytes are strings.
+        pass
+
+
+def ensure_binary_stdout():
+    """
+    Ensure sys.stdout accepts bytes.
+    """
+
+    # First there is a Python3 issue.
+    try:
+        sys.stdout = sys.stdout.buffer
+    except AttributeError:
+        # Probably Python 2, where bytes are strings.
+        pass
+
+    # On Windows the C runtime file orientation needs changing.
+    if sys.platform == "win32":
+        import msvcrt
+        import os
+        msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
+
+
+def main(argv=None):
     if argv is None:
         argv = sys.argv
 
@@ -75,7 +114,9 @@ def main(argv=None):
     if len(argv) > 0:
         f = open(argv[0], 'rb')
     else:
+        ensure_binary_stdin()
         f = sys.stdin
+    ensure_binary_stdout()
     return colours(sys.stdout, f)
 
 

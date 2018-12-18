@@ -12,13 +12,6 @@ from array import array
 
 import png
 
-try:
-    # Ensure sys.stdin returns bytes
-    sys.stdin = sys.stdin.buffer
-except AttributeError:
-    # Probably Python 2, where bytes are strings.
-    pass
-
 
 def read_pam_header(infile):
     """
@@ -285,8 +278,22 @@ def main(argv=None):
 
 def cli_open(path):
     if path == "-":
+        ensure_binary_stdin()
         return sys.stdin
     return open(path, 'rb')
+
+
+def ensure_binary_stdin():
+    """
+    Ensure sys.stdin returns bytes.
+    """
+
+    try:
+        # Ensure sys.stdin returns bytes
+        sys.stdin = sys.stdin.buffer
+    except AttributeError:
+        # Probably Python 2, where bytes are strings.
+        pass
 
 
 def ensure_binary_stdout():
