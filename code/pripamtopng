@@ -39,21 +39,20 @@ def read_pam_header(infile):
             header[key] += b' ' + line[1]
 
     required = [b'WIDTH', b'HEIGHT', b'DEPTH', b'MAXVAL']
-    WIDTH, HEIGHT, DEPTH, MAXVAL = required
-    present = [x for x in required if x in header]
-    if len(present) != len(required):
-        raise Error('PAM file must specify WIDTH, HEIGHT, DEPTH, and MAXVAL')
-    width = int(header[WIDTH])
-    height = int(header[HEIGHT])
-    depth = int(header[DEPTH])
-    maxval = int(header[MAXVAL])
-    if (width <= 0 or
-            height <= 0 or
-            depth <= 0 or
-            maxval <= 0):
-        raise Error(
-            'WIDTH, HEIGHT, DEPTH, MAXVAL must all be positive integers')
-    return 'P7', width, height, depth, maxval
+    required_str = b', '.join(required).decode('ascii')
+    result = []
+    for token in required:
+        if token not in header:
+            raise png.Error('PAM file must specify ' + required_str)
+        try:
+            x = int(header[token])
+        except ValueError:
+            raise png.Error(required_str + ' must all be valid integers')
+        if x <= 0:
+            raise png.Error(required_str + ' must all be positive integers')
+        result.append(x)
+
+    return ('P7',) + tuple(result)
 
 
 def read_pnm_header(infile, supported=(b'P5', b'P6')):
