@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-# $URL$
-# $Rev$
 
 # pipcolours - extract all colours present in source image.
 
