@@ -15,9 +15,10 @@ import png
 
 def read_pam_header(infile):
     """
-    Read (the rest of a) PAM header.  `infile` should be positioned
-    immediately after the initial 'P7' line (at the beginning of the
-    second line).  Returns are as for `read_pnm_header`.
+    Read (the rest of a) PAM header.
+    `infile` should be positioned immediately after the initial 'P7' line
+    (at the beginning of the second line).
+    Returns are as for `read_pnm_header`.
     """
 
     # Unlike PBM, PGM, and PPM, we can read the header a line at a time.
@@ -58,10 +59,12 @@ def read_pam_header(infile):
 def read_pnm_header(infile, supported=(b'P5', b'P6')):
     """
     Read a PNM header, returning (format,width,height,depth,maxval).
-    `width` and `height` are in pixels.  `depth` is the number of
-    channels in the image; for PBM and PGM it is synthesized as 1, for
-    PPM as 3; for PAM images it is read from the header.  `maxval` is
-    synthesized (as 1) for PBM images.
+    Also reads a PAM header (by using a helper function).
+    `width` and `height` are in pixels.
+    `depth` is the number of channels in the image;
+    for PBM and PGM it is synthesized as 1, for PPM as 3;
+    for PAM images it is read from the header.
+    `maxval` is synthesized (as 1) for PBM images.
     """
 
     # Generally, see http://netpbm.sourceforge.net/doc/ppm.html
@@ -247,12 +250,15 @@ def main(argv=None):
     # Encode PNM to PNG
     format, width, height, depth, maxval = \
         read_pnm_header(infile, (b'P5', b'P6', b'P7'))
-    # When it comes to the variety of input formats, we do something
-    # rather rude.  Observe that L, LA, RGB, RGBA are the 4 colour
-    # types supported by PNG and that they correspond to 1, 2, 3, 4
-    # channels respectively.  So we use the number of channels in
-    # the source image to determine which one we have.  We do not
-    # care about TUPLTYPE.
+
+    # The NetPBM depth (number of channels) completely
+    # determines the PNG format.
+    # Observe:
+    # - L, LA, RGB, RGBA are the 4 modes supported by PNG;
+    # - they correspond to 1, 2, 3, 4 channels respectively.
+    # We use the number of channels in the source image to
+    # determine which one we have.
+    # We ignore the NetPBM image type and the PAM TUPLTYPE.
     greyscale = depth <= 2
     pamalpha = depth in (2, 4)
     supported = [2 ** x - 1 for x in range(1, 17)]
@@ -260,7 +266,7 @@ def main(argv=None):
         mi = supported.index(maxval)
     except ValueError:
         raise NotImplementedError(
-            'your maxval (%s) not in supported list %s' %
+            'input maxval (%s) not in supported list %s' %
             (maxval, str(supported)))
     bitdepth = mi + 1
     writer = png.Writer(
