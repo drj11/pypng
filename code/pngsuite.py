@@ -559,10 +559,31 @@ acf0c6211c036f14a239703741740adc7da227edd7e56b833d0ae92549b4d357
 sys.modules[__name__].__dict__.update(png)
 
 
+def ensure_binary_stdout():
+    """
+    Ensure sys.stdout accepts bytes.
+    """
+
+    # First there is a Python3 issue.
+    try:
+        sys.stdout = sys.stdout.buffer
+    except AttributeError:
+        # Probably Python 2, where bytes are strings.
+        pass
+
+    # On Windows the C runtime file orientation needs changing.
+    if sys.platform == "win32":
+        import msvcrt
+        import os
+        msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(
         description="Output a PNG file from the PNG suite")
-    parser.add_argument('--list', action='store_true')
+    either = parser.add_mutually_exclusive_group(required=True)
+    either.add_argument('--list', action='store_true')
+    either.add_argument('image', nargs='?')
 
     args = parser.parse_args()
 
@@ -570,6 +591,12 @@ def main(argv=None):
         for name in sorted(png):
             print(name)
         return 0
+
+    if args.image not in png:
+        raise ValueError("cannot find PNG suite image " + args.image)
+
+    ensure_binary_stdout()
+    sys.stdout.write(png[args.image])
 
 
 if __name__ == '__main__':
