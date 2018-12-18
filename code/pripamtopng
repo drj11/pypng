@@ -139,9 +139,9 @@ def read_pnm_header(infile):
 
 def convert_pnm(w, infile, outfile):
     """
-    Convert a PNM file containing raw pixel data into a PNG file
-    with the parameters set in the writer object.  Works for
-    (binary) PGM, PPM, and PAM formats.
+    Convert a PNM file containing raw pixel data into
+    a PNG file with the parameters set in the writer object.
+    Works for (binary) PGM, PPM, and PAM formats.
     """
 
     rows = scan_rows_from_file(infile, w.width, w.height, w.planes, w.bitdepth)
