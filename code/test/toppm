@@ -3,4 +3,4 @@
 PATH=${PWD%code*}code:$PATH
 
 python -m pngsuite basn2c08 |
-pripngtopam - | file - | grep -q -i netpbm
+pripngtopam - | file - | grep -q -i 'netpbm.*pixmap'
