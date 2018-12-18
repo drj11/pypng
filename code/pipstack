@@ -56,10 +56,8 @@ gAMA, pHYs, iCCP, sRGB, tIME, any other chunks.
 
 Image = collections.namedtuple("Image", "rows info")
 
-class Error(Exception):
-    pass
 
-class NotImplemented(Error):
+class Error(Exception):
     pass
 
 
@@ -80,24 +78,25 @@ def stack(out, paths):
 
     if not (0 < totalchannels <= 4):
         raise Error("Too many channels in inputs")
-    alpha = totalchannels in (2,4)
-    greyscale = totalchannels in (1,2)
+    alpha = totalchannels in (2, 4)
+    greyscale = totalchannels in (1, 2)
 
     bitdepth = [image.info['bitdepth'] for image in images]
     # Currently, fail unless all bitdepths equal.
     if len(set(bitdepth)) > 1:
-        raise NotImplemented("Cannot cope when bitdepths differ - sorry!")
+        raise NotImplementedError("Cannot cope when bitdepths differ - sorry!")
     bitdepth = bitdepth[0]
     arraytype = 'BH'[bitdepth > 8]
 
     size = [image.info['size'] for image in images]
     # Currently, fail unless all images same size.
     if len(set(size)) > 1:
-        raise NotImplemented("Cannot cope when sizes differ - sorry!")
+        raise NotImplementedError("Cannot cope when sizes differ - sorry!")
     size = size[0]
 
     # Values per row
     vpr = totalchannels * size[0]
+
     def iterstack():
         # the izip call creates an iterator that yields the next row
         # from all the input images combined into a tuple.
@@ -113,8 +112,9 @@ def stack(out, paths):
                     row[out_channel_i::totalchannels] = arow[j::n]
                     out_channel_i += 1
             yield row
-    w = png.Writer(size[0], size[1],
-      greyscale=greyscale, alpha=alpha, bitdepth=bitdepth)
+    w = png.Writer(
+        size[0], size[1],
+        greyscale=greyscale, alpha=alpha, bitdepth=bitdepth)
     w.write(out, iterstack())
 
 
