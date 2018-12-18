@@ -1,0 +1,119 @@
+#!/usr/bin/env python
+
+from __future__ import print_function
+
+import argparse
+import struct
+import sys
+
+import png
+
+def write_pnm(file, rows, meta):
+    """Write a Netpbm PNM/PAM file.
+    """
+
+    meta = dict(meta)
+    meta['maxval'] = 2**meta['bitdepth'] - 1
+    meta['width'], meta['height'] = meta['size']
+
+    # Number of planes determines both image formats:
+    # 1 : L to PGM
+    # 2 : LA to PAM
+    # 3 : RGB to PPM
+    # 4 : RGBA to PAM
+    planes = meta['planes']
+
+    # Assume inputs are from a PNG file.
+    assert planes in (1, 2, 3, 4)
+    if planes in (1, 3):
+        if 1 == planes:
+            # PGM
+            # Even if maxval is 1 we use PGM instead of PBM,
+            # to avoid conerting data.
+            magic = 'P5'
+        else:
+            # PPM
+            magic = 'P6'
+        header = "{magic} {width:d} {height:d} {maxval:d}\n".format(
+            magic=magic, **meta)
+    if planes in (2, 4):
+        # PAM
+        # See http://netpbm.sourceforge.net/doc/pam.html
+        if 2 == planes:
+            tupltype = 'GRAYSCALE_ALPHA'
+        else:
+            tupltype = 'RGB_ALPHA'
+        header = ('P7\nWIDTH {width:d}\nHEIGHT {height:d}\n'
+                  'DEPTH {planes:d}\nMAXVAL {maxval:d}\n'
+                  'TUPLTYPE {tupltype}\nENDHDR\n'.format(
+                  tupltype=tupltype, **meta))
+    file.write(header.encode('ascii'))
+    # Values per row
+    vpr = planes * meta['width']
+    # format for struct.pack
+    fmt = '>%d' % vpr
+    if meta['maxval'] > 0xFF:
+        fmt = fmt + 'H'
+    else:
+        fmt = fmt + 'B'
+    for row in rows:
+        file.write(struct.pack(fmt, *row))
+    file.flush()
+
+
+def cli_open(path):
+    if path == "-":
+        ensure_binary_stdin()
+        return sys.stdin
+    return open(path, 'rb')
+
+
+def ensure_binary_stdin():
+    """
+    Ensure sys.stdin returns bytes.
+    """
+
+    try:
+        # Ensure sys.stdin returns bytes
+        sys.stdin = sys.stdin.buffer
+    except AttributeError:
+        # Probably Python 2, where bytes are strings.
+        pass
+
+
+def ensure_binary_stdout():
+    """
+    Ensure sys.stdout accepts bytes.
+    """
+
+    # First there is a Python3 issue.
+    try:
+        sys.stdout = sys.stdout.buffer
+    except AttributeError:
+        # Probably Python 2, where bytes are strings.
+        pass
+
+    # On Windows the C runtime file orientation needs changing.
+    if sys.platform == "win32":
+        import msvcrt
+        import os
+        msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description='Convert PNG to PAM')
+    parser.add_argument('png', nargs='?', default='-')
+
+    args = parser.parse_args()
+
+    inp = cli_open(args.png)
+
+    # Encode PNG to PPM
+    image = png.Reader(file=inp)
+    _, _, rows, info = image.asDirect()
+    ensure_binary_stdout()
+    write_pnm(sys.stdout, rows, info)
+
+
+if __name__ == '__main__':
+    sys.exit(main())
