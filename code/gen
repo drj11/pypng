@@ -65,33 +65,33 @@ PATTERN = {
     'ONE': test_one,
     }
 
+
+def generate_image(size, bitdepth, pattern):
+    """Create a single plane (monochrome) test pattern.  Returns a
+    flat row flat pixel array.
+    """
+
+    width, height = size
+
+    maxval = 2**bitdepth-1
+    if maxval > 255:
+        a = array('H')
+    else:
+        a = array('B')
+    fw = float(width)
+    fh = float(height)
+    pfun = PATTERN[pattern]
+    for y in range(height):
+        fy = float(y)/fh
+        for x in range(width):
+            a.append(int(round(pfun(float(x)/fw, fy) * maxval)))
+    return a
+
+
 def generate(options, args):
     """
     Create a PNG test image and write the file to stdout.
     """
-
-    def generate_image(size, bitdepth, pattern):
-        """Create a single plane (monochrome) test pattern.  Returns a
-        flat row flat pixel array.
-        """
-
-        width, height = size
-
-        maxval = 2**bitdepth-1
-        if maxval > 255:
-            a = array('H')
-        else:
-            a = array('B')
-        fw = float(width)
-        fh = float(height)
-        pfun = PATTERN[pattern]
-        for y in range(height):
-            fy = float(y)/fh
-            for x in range(width):
-                a.append(int(round(pfun(float(x)/fw, fy) * maxval)))
-        return a
-
-    # The body of test_suite()
 
     size = (256,256)
     # Expect option of the form '64,40'.
