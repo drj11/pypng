@@ -9,6 +9,7 @@ Generate a PNG test image on stdout.
 from array import array
 import itertools
 import math
+import re
 import sys
 
 import png
@@ -69,12 +70,12 @@ def generate(options, args):
     Create a PNG test image and write the file to stdout.
     """
 
-    import re
-
-    def test_pattern(width, height, bitdepth, pattern):
+    def generate_image(size, bitdepth, pattern):
         """Create a single plane (monochrome) test pattern.  Returns a
         flat row flat pixel array.
         """
+
+        width, height = size
 
         maxval = 2**bitdepth-1
         if maxval > 255:
@@ -90,26 +91,6 @@ def generate(options, args):
                 a.append(int(round(pfun(float(x)/fw, fy) * maxval)))
         return a
 
-    def test_rgba(size=(256,256), bitdepth=8,
-                  red=None, green=None, blue=None, alpha=None):
-        """
-        Create a test image.  Each channel is generated from the
-        specified pattern; any channel apart from red can be set to
-        None, which will cause it not to be in the image.  It
-        is possible to create all PNG channel types (L, RGB, LA, RGBA),
-        as well as non PNG channel types (RGA, and so on).
-        *size* is a pair: (*width*,*height).
-        """
-
-        i = test_pattern(size[0], size[1], bitdepth, red)
-        psize = 1
-        for channel in (green, blue, alpha):
-            if channel:
-                c = test_pattern(size[0], size[1], bitdepth, channel)
-                i = png.interleave_planes(i, c, psize, 1)
-                psize += 1
-        return i
-
     # The body of test_suite()
 
     size = (256,256)
@@ -124,32 +105,14 @@ def generate(options, args):
         assert len(size) == 2
         size = map(int, size)
     options.bitdepth = options.depth
-    options.greyscale=bool(options.black)
 
-    kwargs = {}
-    if options.red:
-        kwargs["red"] = options.red
-    if options.green:
-        kwargs["green"] = options.green
-    if options.blue:
-        kwargs["blue"] = options.blue
-    if options.alpha:
-        kwargs["alpha"] = options.alpha
-    if options.greyscale:
-        if options.red or options.green or options.blue:
-            raise ValueError("cannot specify colours (R, G, B) when greyscale image (black channel, K) is specified")
-        kwargs["red"] = options.black
-        kwargs["green"] = None
-        kwargs["blue"] = None
-    options.alpha = bool(options.alpha)
-
-    pixels = test_rgba(size, options.bitdepth, **kwargs)
+    pixels = generate_image(size, options.bitdepth, options.black)
 
     writer = png.Writer(size[0], size[1],
                     bitdepth=options.bitdepth,
                     gamma=options.gamma,
-                    greyscale=options.greyscale,
-                    alpha=options.alpha,
+                    greyscale=True,
+                    alpha=False,
                     compression=options.compression,
                     interlace=options.interlace)
     writer.write_array(sys.stdout, pixels)
@@ -165,18 +128,6 @@ def main(argv=None):
     parser.add_option('-p', '--patterns',
                       default=False, action='store_true',
                       help="print list of patterns")
-    parser.add_option("-R", "--red",
-                      action="store", type="string", metavar="pattern",
-                      help="test pattern for the red image layer")
-    parser.add_option("-G", "--green",
-                      action="store", type="string", metavar="pattern",
-                      help="test pattern for the green image layer")
-    parser.add_option("-B", "--blue",
-                      action="store", type="string", metavar="pattern",
-                      help="test pattern for the blue image layer")
-    parser.add_option("-A", "--alpha",
-                      action="store", type="string", metavar="pattern",
-                      help="test pattern for the alpha image layer")
     parser.add_option("-K", "--black",
                       action="store", type="string", metavar="pattern",
                       help="test pattern for greyscale image")
