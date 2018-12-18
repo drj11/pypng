@@ -2352,54 +2352,6 @@ except NameError:
 
 # === Command Line Support ===
 
-# Much of which is NetPBM encoding / decoding.
-
-def write_pnm(file, width, height, pixels, meta):
-    """Write a Netpbm PNM/PAM file.
-    """
-
-    bitdepth = meta['bitdepth']
-    maxval = 2**bitdepth - 1
-    # Rudely, the number of image planes can be used to determine
-    # whether we are L (PGM), LA (PAM), RGB (PPM), or RGBA (PAM).
-    planes = meta['planes']
-    # Can be an assert as long as we assume that pixels and meta came
-    # from a PNG file.
-    assert planes in (1, 2, 3, 4)
-    if planes in (1, 3):
-        if 1 == planes:
-            # PGM
-            # Could generate PBM if maxval is 1, but we don't (for one
-            # thing, we'd have to convert the data, not just blat it
-            # out).
-            fmt = 'P5'
-        else:
-            # PPM
-            fmt = 'P6'
-        header = '%s %d %d %d\n' % (fmt, width, height, maxval)
-    if planes in (2, 4):
-        # PAM
-        # See http://netpbm.sourceforge.net/doc/pam.html
-        if 2 == planes:
-            tupltype = 'GRAYSCALE_ALPHA'
-        else:
-            tupltype = 'RGB_ALPHA'
-        header = ('P7\nWIDTH %d\nHEIGHT %d\nDEPTH %d\nMAXVAL %d\n'
-                  'TUPLTYPE %s\nENDHDR\n' %
-                  (width, height, planes, maxval, tupltype))
-    file.write(header.encode('ascii'))
-    # Values per row
-    vpr = planes * width
-    # struct format
-    fmt = '>%d' % vpr
-    if maxval > 0xff:
-        fmt = fmt + 'H'
-    else:
-        fmt = fmt + 'B'
-    for row in pixels:
-        file.write(struct.pack(fmt, *row))
-    file.flush()
-
 
 def add_common_options(parser):
     """Call *parser.add_option* for each of the options that are
@@ -2428,9 +2380,6 @@ def main(argv):
     version = '%prog ' + __version__
     parser = OptionParser(version=version)
     parser.set_usage("%prog [options] [imagefile]")
-    parser.add_option('-r', '--read-png', default=False,
-                      action='store_true',
-                      help='Read PNG, write PNM')
 
     (options, args) = parser.parse_args(args=argv[1:])
 
@@ -2443,17 +2392,8 @@ def main(argv):
         infile = open(infilename, 'rb')
     else:
         parser.error("more than one input file")
-    outfile = sys.stdout
-    if sys.platform == "win32":
-        import msvcrt
-        import os
-        msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
 
-    if options.read_png:
-        # Encode PNG to PPM
-        png = Reader(file=infile)
-        width, height, pixels, meta = png.asDirect()
-        write_pnm(outfile, width, height, pixels, meta)
+    png = Reader(file=infile)
 
 
 if __name__ == '__main__':
