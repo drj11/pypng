@@ -2393,7 +2393,8 @@ def main(argv):
     else:
         parser.error("more than one input file")
 
-    png = Reader(file=infile)
+    image = Reader(file=infile)
+    image
 
 
 if __name__ == '__main__':
