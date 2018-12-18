@@ -55,7 +55,7 @@ def read_pam_header(infile):
     return ('P7',) + tuple(result)
 
 
-def read_pnm_header(infile, supported=(b'P5', b'P6')):
+def read_pnm_header(infile):
     """
     Read a PNM header, returning (format,width,height,depth,maxval).
     Also reads a PAM header (by using a helper function).
@@ -69,6 +69,8 @@ def read_pnm_header(infile, supported=(b'P5', b'P6')):
     # Generally, see http://netpbm.sourceforge.net/doc/ppm.html
     # and http://netpbm.sourceforge.net/doc/pam.html
 
+    supported = (b'P5', b'P6', b'P7')
+
     # Technically 'P7' must be followed by a newline, so by using
     # rstrip() we are being liberal in what we accept.  I think this
     # is acceptable.
@@ -78,6 +80,7 @@ def read_pnm_header(infile, supported=(b'P5', b'P6')):
     if type == b'P7':
         # PAM header parsing is completely different.
         return read_pam_header(infile)
+
     # Expected number of tokens in header (3 for P4, 4 for P6)
     expected = 4
     pbm = (b'P1', b'P4')
@@ -247,8 +250,7 @@ def main(argv=None):
     outfile = sys.stdout
 
     # Encode PNM to PNG
-    format, width, height, depth, maxval = \
-        read_pnm_header(infile, (b'P5', b'P6', b'P7'))
+    format, width, height, depth, maxval = read_pnm_header(infile)
 
     # The NetPBM depth (number of channels) completely
     # determines the PNG format.
