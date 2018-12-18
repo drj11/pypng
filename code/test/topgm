@@ -1,0 +1,6 @@
+#!/bin/sh
+
+PATH=${PWD%code*}code:$PATH
+
+python -m pngsuite basi0g04 |
+pripngtopam - | file - | grep -q -i 'netpbm.*gr[ae]ymap'
