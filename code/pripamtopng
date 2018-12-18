@@ -182,16 +182,20 @@ def color_triple(color):
     Convert a command line colour value to a RGB triple of integers.
     FIXME: Somewhere we need support for greyscale backgrounds etc.
     """
-    if color.startswith('#') and len(color) == 4:
-        return tuple(17*int(h, 16) for h in color[1:4])
-    if color.startswith('#') and len(color) == 7:
-        return (int(color[1:3], 16),
-                int(color[3:5], 16),
-                int(color[5:7], 16))
-    elif color.startswith('#') and len(color) == 13:
-        return (int(color[1:5], 16),
-                int(color[5:9], 16),
-                int(color[9:13], 16))
+
+    if color.startswith('#'):
+        color = color[1:]
+    if len(color) not in (3, 6, 12):
+        raise png.Error('colour triple should have 3, 6, or 12, hex digits')
+
+    if len(color) == 3:
+        return tuple(17*int(h, 16) for h in color)
+    if len(color) == 6:
+        return tuple(int(h, 16) for h in
+                (color[0:2], color[2:4], color[4:6]))
+    if len(color) == 12:
+        return tuple(int(h, 16) for h in
+                (color[0:4], color[4:8], color[8:12]))
 
 
 def add_common_options(parser):
