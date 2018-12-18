@@ -106,7 +106,9 @@ def generate(options, args):
         size = map(int, size)
     options.bitdepth = options.depth
 
-    pixels = generate_image(size, options.bitdepth, options.black)
+    pattern = args[0]
+
+    pixels = generate_image(size, options.bitdepth, pattern)
 
     writer = png.Writer(size[0], size[1],
                     bitdepth=options.bitdepth,
@@ -128,9 +130,6 @@ def main(argv=None):
     parser.add_option('-p', '--patterns',
                       default=False, action='store_true',
                       help="print list of patterns")
-    parser.add_option("-K", "--black",
-                      action="store", type="string", metavar="pattern",
-                      help="test pattern for greyscale image")
     parser.add_option("-d", "--depth",
                       default=8, action="store", type="int",
                       metavar='NBITS',
