@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # pngsuite.py
 
 # PngSuite Test PNGs.
