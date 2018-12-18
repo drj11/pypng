@@ -175,8 +175,6 @@ def generate(options, args):
 
     writer = png.Writer(size[0], size[1],
                     bitdepth=options.bitdepth,
-                    transparent=options.transparent,
-                    background=options.background,
                     gamma=options.gamma,
                     greyscale=options.greyscale,
                     alpha=options.alpha,
@@ -236,12 +234,6 @@ def main(argv=None):
         for name in names:
             print name
         return
-
-    # Convert options
-    if options.transparent is not None:
-        options.transparent = color_triple(options.transparent)
-    if options.background is not None:
-        options.background = color_triple(options.background)
 
     generate(options, args)
 

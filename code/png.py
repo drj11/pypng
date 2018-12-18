@@ -2409,12 +2409,6 @@ def add_common_options(parser):
     parser.add_option("-i", "--interlace",
                       default=False, action="store_true",
                       help="create an interlaced PNG file (Adam7)")
-    parser.add_option("-t", "--transparent",
-                      action="store", type="string", metavar="#RRGGBB",
-                      help="mark the specified colour as transparent")
-    parser.add_option("-b", "--background",
-                      action="store", type="string", metavar="#RRGGBB",
-                      help="save the specified background colour")
     parser.add_option("-g", "--gamma",
                       action="store", type="float", metavar="value",
                       help="save the specified gamma value")
