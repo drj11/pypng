@@ -1,6 +1,13 @@
 #!/usr/bin/env python
 
-# pipcolours - extract all colours present in source image.
+"""
+pipcolours - extract all colours present in source image.
+Produces a PNG that has each colour exactly once.
+
+Also performs grey and alpha reduction when possible:
+if all colour pixels are grey, output PNG is grey;
+if all pixels are opaque, output PNG has no alpha channel.
+"""
 
 
 def colours(out, inp):
