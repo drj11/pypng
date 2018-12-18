@@ -2,6 +2,8 @@
 
 # PngSuite Test PNGs.
 
+# https://docs.python.org/3.2/library/argparse.html
+import argparse
 import sys
 
 """
@@ -555,3 +557,20 @@ acf0c6211c036f14a239703741740adc7da227edd7e56b833d0ae92549b4d357
 
 # Make each of the dict entries also be a module entry.
 sys.modules[__name__].__dict__.update(png)
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(
+        description="Output a PNG file from the PNG suite")
+    parser.add_argument('--list', action='store_true')
+
+    args = parser.parse_args()
+
+    if args.list:
+        for name in sorted(png):
+            print(name)
+        return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())
