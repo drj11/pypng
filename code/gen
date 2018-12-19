@@ -3,10 +3,7 @@
 
 from __future__ import print_function
 
-"""gen [options]
-
-Generate a PNG test image on stdout.
-"""
+# Generate a PNG test image on stdout.
 
 from array import array
 
@@ -19,7 +16,6 @@ import sys
 import png
 
 # Below is a big stack of test image generators.
-# They're all really tiny, so PEP 8 rules are suspended.
 
 
 def test_gradient_horizontal_lr(x, y):
@@ -140,8 +136,9 @@ PATTERN = {
 
 
 def generate_image(size, bitdepth, pattern):
-    """Create a single plane (monochrome) test pattern.  Returns a
-    flat row flat pixel array.
+    """
+    Create a single plane (monochrome) test pattern.
+    Returns a flat row flat pixel array.
     """
 
     width, height = size
@@ -165,7 +162,7 @@ def generate(args):
     """
     Create a PNG test image and write the file to stdout.
 
-    `args` should be a argparse Namespace instance or similar.
+    `args` should be an argparse Namespace instance or similar.
     """
 
     size = (256, 256)
