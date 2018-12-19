@@ -2350,26 +2350,6 @@ except NameError:
         convert_rgb_to_rgba = staticmethod(convert_rgb_to_rgba)
 
 
-# === Command Line Support ===
-
-
-def add_common_options(parser):
-    """Call *parser.add_option* for each of the options that are
-    common between this PNG--PNM conversion tool and the gen
-    tool.
-    """
-    parser.add_option("-i", "--interlace",
-                      default=False, action="store_true",
-                      help="create an interlaced PNG file (Adam7)")
-    parser.add_option("-g", "--gamma",
-                      action="store", type="float", metavar="value",
-                      help="save the specified gamma value")
-    parser.add_option("-c", "--compression",
-                      action="store", type="int", metavar="level",
-                      help="zlib compression level (0-9)")
-    return parser
-
-
 def main(argv):
     """
     Run the PNG encoder with options from the command line.
