@@ -165,18 +165,7 @@ def generate(args):
     `args` should be an argparse Namespace instance or similar.
     """
 
-    size = (256, 256)
-    # Expect option of the form '64,40'.
-    if args.size:
-        size = re.findall(r"\d+", args.size)
-        if len(size) not in [1, 2]:
-            raise ValueError(
-                "size should be one or two numbers, separated by punctuation"
-            )
-        if len(size) == 1:
-            size *= 2
-        assert len(size) == 2
-        size = list(map(int, size))
+    size = args.size
     args.bitdepth = args.depth
 
     pattern = args.pattern[0]
@@ -189,6 +178,22 @@ def generate(args):
     writer.write_array(sys.stdout, pixels)
 
 
+def dimensions(s):
+    """
+    Typecheck the --size option, which should be
+    one or two comma separated numbers.
+    Example: "64,40".
+    """
+
+    tupl = re.findall(r"\d+", s)
+    if len(tupl) not in (1, 2):
+        raise ValueError("%r should be one or two whole numbers, separated by comma")
+    if len(tupl) == 1:
+        tupl *= 2
+    assert len(tupl) == 2
+    return list(map(int, tupl))
+
+
 def main(argv=None):
     if argv is None:
         argv = sys.argv
@@ -198,16 +203,13 @@ def main(argv=None):
         "-l", "--list", action="store_true", help="print list of patterns and exit"
     )
     parser.add_argument(
-        "-d",
-        "--depth",
-        default=8,
-        type=int,
-        metavar="N",
-        help="N bits per pixel",
+        "-d", "--depth", default=8, type=int, metavar="N", help="N bits per pixel"
     )
     parser.add_argument(
         "-s",
         "--size",
+        default=[256, 256],
+        type=dimensions,
         metavar="w[,h]",
         help="width and height of the image in pixels",
     )
