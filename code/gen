@@ -34,7 +34,7 @@ def test_gradient_vertical_bt(x, y):
 
 
 def test_radial_tl(x, y):
-    return max(1 - (x * x + y * y)**0.5, 0.0)
+    return max(1 - (x * x + y * y) ** 0.5, 0.0)
 
 
 def test_radial_center(x, y):
@@ -156,9 +156,9 @@ def generate_image(size, bitdepth, pattern):
     # This is morally better, and produces all 256 sample values
     # in a 256-pixel wide gradient.
     for y in range(height):
-        fy = Fraction(Fraction(y+0.5), height)
+        fy = Fraction(Fraction(y + 0.5), height)
         for x in range(width):
-            fx = Fraction(Fraction(x+0.5), width)
+            fx = Fraction(Fraction(x + 0.5), width)
             a.append(int(round(maxval * pfun(fx, fy))))
     return a
 
