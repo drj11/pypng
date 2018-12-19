@@ -180,7 +180,16 @@ def generate(args):
     writer = png.Writer(
         size[0], size[1], bitdepth=args.bitdepth, greyscale=True, alpha=False
     )
-    writer.write_array(sys.stdout, pixels)
+    writer.write_array(binary_stdout(), pixels)
+
+
+def binary_stdout():
+    try:
+        # Probably Python3
+        return sys.stdout.buffer
+    except:
+        pass
+    return sys.stdout
 
 
 def dimensions(s):
