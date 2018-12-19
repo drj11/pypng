@@ -187,7 +187,7 @@ def binary_stdout():
     try:
         # Probably Python3
         return sys.stdout.buffer
-    except:
+    except AttributeError:
         pass
     return sys.stdout
 
