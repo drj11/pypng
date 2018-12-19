@@ -102,7 +102,7 @@ def generate(args):
     size = (256,256)
     # Expect option of the form '64,40'.
     if args.size:
-        size = re.findall(r'\d+', options.size)
+        size = re.findall(r'\d+', args.size)
         if len(size) not in [1,2]:
             raise ValueError(
               'size should be one or two numbers, separated by punctuation')
