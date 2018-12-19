@@ -201,9 +201,6 @@ def add_options(parser):
     """
     Call *parser.add_argument* for each of the options.
     """
-    parser.add_argument("-i", "--interlace",
-                        action="store_true",
-                        help="create an interlaced PNG file (Adam7)")
     parser.add_argument("-t", "--transparent",
                         type=str, metavar="#RRGGBB",
                         help="create tRNS chunk with transparent colour")
@@ -272,7 +269,6 @@ def main(argv=None):
         width, height,
         greyscale=greyscale,
         bitdepth=bitdepth,
-        interlace=args.interlace,
         transparent=args.transparent,
         background=args.background,
         alpha=pamalpha,
