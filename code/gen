@@ -152,7 +152,8 @@ def generate_image(size, bitdepth, pattern):
     for y in range(height):
         fy = float(y) / fh
         for x in range(width):
-            a.append(int(round(pfun(float(x) / fw, fy) * maxval)))
+            fx = float(x) / fw
+            a.append(int(round(pfun(fx, fy) * maxval)))
     return a
 
 
