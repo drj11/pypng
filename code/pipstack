@@ -98,9 +98,9 @@ def stack(out, paths):
     vpr = totalchannels * size[0]
 
     def iterstack():
-        # the izip call creates an iterator that yields the next row
+        # the zip call creates an iterator that yields the next row
         # from all the input images combined into a tuple.
-        for irow in itertools.izip(*(image.rows for image in images)):
+        for irow in zip(*(image.rows for image in images)):
             row = array(arraytype, [0]*vpr)
             # output channel index
             out_channel_i = 0
