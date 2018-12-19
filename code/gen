@@ -6,6 +6,7 @@ from __future__ import print_function
 # Generate a PNG test image on stdout.
 
 from array import array
+from fractions import Fraction
 
 import argparse
 import re
@@ -155,9 +156,9 @@ def generate_image(size, bitdepth, pattern):
     # This is morally better, and produces all 256 sample values
     # in a 256-pixel wide gradient.
     for y in range(height):
-        fy = (y+0.5) / fh
+        fy = Fraction(Fraction(y+0.5), height)
         for x in range(width):
-            fx = (x+0.5) / fw
+            fx = Fraction(Fraction(x+0.5), width)
             a.append(int(round(maxval * pfun(fx, fy))))
     return a
 
