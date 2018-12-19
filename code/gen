@@ -149,10 +149,15 @@ def generate_image(size, bitdepth, pattern):
     fw = float(width)
     fh = float(height)
     pfun = PATTERN[pattern]
+
+    # We add (0.5, 0.5) to each coordinate, effectively sampling
+    # each pixel at its centre.
+    # This is morally better, and produces all 256 sample values
+    # in a 256-pixel wide gradient.
     for y in range(height):
-        fy = float(y) / fh
+        fy = (y+0.5) / fh
         for x in range(width):
-            fx = float(x) / fw
+            fx = (x+0.5) / fw
             a.append(int(round(maxval * pfun(fx, fy))))
     return a
 
