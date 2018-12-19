@@ -201,7 +201,6 @@ def main(argv=None):
         "-d",
         "--depth",
         default=8,
-        action="store",
         type=int,
         metavar="N",
         help="N bits per pixel",
@@ -209,7 +208,6 @@ def main(argv=None):
     parser.add_argument(
         "-s",
         "--size",
-        action="store",
         metavar="w[,h]",
         help="width and height of the image in pixels",
     )
