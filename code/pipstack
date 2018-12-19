@@ -3,8 +3,8 @@
 # pipstack
 # Combine input PNG files into a multi-channel output PNG.
 
+import argparse
 import collections
-import itertools
 import sys
 
 from array import array
@@ -61,8 +61,10 @@ class Error(Exception):
     pass
 
 
-def stack(out, paths):
+def stack(out, args):
     """Stack the input PNG files into a single output PNG."""
+
+    paths = args.input
 
     if len(paths) < 1:
         raise Error("Required input is missing.")
@@ -116,7 +118,8 @@ def stack(out, paths):
             yield row
     w = png.Writer(
         size[0], size[1],
-        greyscale=greyscale, alpha=alpha, bitdepth=bitdepth)
+        greyscale=greyscale, alpha=alpha, bitdepth=bitdepth,
+        interlace=args.interlace)
     w.write(out, iterstack())
 
 
@@ -163,9 +166,14 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv
     argv = argv[1:]
-    arg = argv[:]
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--interlace", action="store_true")
+    parser.add_argument("input", nargs="+")
+    args = parser.parse_args(argv)
+
     ensure_binary_stdout()
-    return stack(sys.stdout, arg)
+    return stack(sys.stdout, args)
 
 
 if __name__ == '__main__':
