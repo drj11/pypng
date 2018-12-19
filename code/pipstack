@@ -71,7 +71,9 @@ def stack(out, paths):
 
     for path in paths:
         inp = cli_open(path)
-        image = Image(*png.Reader(file=inp).asDirect()[2:])
+        rows, info = png.Reader(file=inp).asDirect()[2:]
+        rows = list(rows)
+        image = Image(rows, info)
         images.append(image)
 
     totalchannels = sum(image.info['planes'] for image in images)
