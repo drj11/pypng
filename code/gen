@@ -227,6 +227,8 @@ def main(argv=None):
             print(name)
         return
 
+    if not args.pattern:
+        parser.error("--list or pattern is required")
     return generate(args)
 
 
