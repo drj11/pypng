@@ -112,7 +112,7 @@ def generate(args):
         size = list(map(int, size))
     args.bitdepth = args.depth
 
-    pattern = args.patterns[0]
+    pattern = args.pattern[0]
 
     pixels = generate_image(size, args.bitdepth, pattern)
 
@@ -138,7 +138,7 @@ def main(argv=None):
     parser.add_argument("-s", "--size",
                         action="store", metavar="w[,h]",
                         help="width and height of the image in pixels")
-    parser.add_argument("patterns", nargs='*',
+    parser.add_argument("pattern", nargs='*',
                         help="name of pattern")
 
     args = parser.parse_args(argv[1:])
