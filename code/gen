@@ -1,12 +1,16 @@
 #!/usr/bin/env python
 # gen
 
+from __future__ import print_function
+
 """gen [options]
 
 Generate a PNG test image on stdout.
 """
 
 from array import array
+
+import argparse
 import itertools
 import math
 import re
@@ -88,14 +92,16 @@ def generate_image(size, bitdepth, pattern):
     return a
 
 
-def generate(options, args):
+def generate(args):
     """
     Create a PNG test image and write the file to stdout.
+
+    `args` should be a argparse Namespace instance or similar.
     """
 
     size = (256,256)
     # Expect option of the form '64,40'.
-    if options.size:
+    if args.size:
         size = re.findall(r'\d+', options.size)
         if len(size) not in [1,2]:
             raise ValueError(
@@ -103,48 +109,45 @@ def generate(options, args):
         if len(size) == 1:
             size *= 2
         assert len(size) == 2
-        size = map(int, size)
-    options.bitdepth = options.depth
+        size = list(map(int, size))
+    args.bitdepth = args.depth
 
-    pattern = args[0]
+    pattern = args.patterns[0]
 
-    pixels = generate_image(size, options.bitdepth, pattern)
+    pixels = generate_image(size, args.bitdepth, pattern)
 
     writer = png.Writer(size[0], size[1],
-                    bitdepth=options.bitdepth,
+                    bitdepth=args.bitdepth,
                     greyscale=True,
                     alpha=False)
     writer.write_array(sys.stdout, pixels)
 
 def main(argv=None):
-    import sys
     if argv is None:
         argv = sys.argv
-    from optparse import OptionParser
-    import re
-    parser = OptionParser()
+    parser = argparse.ArgumentParser("Generate greyscale PNG patterns")
 
-    parser.add_option('-p', '--patterns',
-                      default=False, action='store_true',
-                      help="print list of patterns")
-    parser.add_option("-d", "--depth",
-                      default=8, action="store", type="int",
-                      metavar='NBITS',
-                      help="create test PNGs that are NBITS bits per channel")
-    parser.add_option("-S", "--size",
-                      action="store", type="string", metavar="w[,h]",
-                      help="width and height of the test image")
+    parser.add_argument('-l', '--list',
+                        action='store_true',
+                        help="print list of patterns")
+    parser.add_argument("-d", "--depth",
+                        default=8, action="store", type=int,
+                        metavar='N',
+                        help="use N bits per channel")
+    parser.add_argument("-S", "--size",
+                        action="store", metavar="w[,h]",
+                        help="width and height of the image")
+    parser.add_argument("patterns", nargs='*',
+                        help="name of pattern")
 
-    (options, args) = parser.parse_args(args=argv[1:])
+    args = parser.parse_args(argv[1:])
 
-    if options.patterns:
-        names = list(PATTERN)
-        names.sort()
-        for name in names:
-            print name
+    if args.list:
+        for name in sorted(PATTERN):
+            print(name)
         return
 
-    generate(options, args)
+    return generate(args)
 
 
 if __name__ == '__main__':
