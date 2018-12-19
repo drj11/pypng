@@ -197,26 +197,27 @@ def color_triple(color):
                 (color[0:4], color[4:8], color[8:12]))
 
 
-def add_common_options(parser):
-    """Call *parser.add_option* for each of the options that are
-    common between this PNG--PNM conversion tool and the gen
-    tool.
+def add_options(parser):
     """
-    parser.add_option("-i", "--interlace",
-                      default=False, action="store_true",
-                      help="create an interlaced PNG file (Adam7)")
-    parser.add_option("-t", "--transparent",
-                      action="store", type="string", metavar="#RRGGBB",
-                      help="mark the specified colour as transparent")
-    parser.add_option("-b", "--background",
-                      action="store", type="string", metavar="#RRGGBB",
-                      help="save the specified background colour")
-    parser.add_option("-g", "--gamma",
-                      action="store", type="float", metavar="value",
-                      help="save the specified gamma value")
-    parser.add_option("-c", "--compression",
-                      action="store", type="int", metavar="level",
-                      help="zlib compression level (0-9)")
+    Call *parser.add_argument* for each of the options.
+    """
+    parser.add_argument("-i", "--interlace",
+                        action="store_true",
+                        help="create an interlaced PNG file (Adam7)")
+    parser.add_argument("-t", "--transparent",
+                        type=str, metavar="#RRGGBB",
+                        help="create tRNS chunk with transparent colour")
+    parser.add_argument("-b", "--background",
+                        type=str, metavar="#RRGGBB",
+                        help="save the specified background colour")
+    parser.add_argument("-g", "--gamma",
+                        type=float, metavar="value",
+                        help="create gAMA chunk with gamma value")
+    parser.add_argument("-c", "--compression",
+                        type=int, metavar="level",
+                        help="zlib compression level (0-9)")
+    parser.add_argument("file",
+                        help="input PAM/PNM file to convert")
     return parser
 
 
@@ -225,28 +226,22 @@ def main(argv=None):
         argv = sys.argv
 
     # Parse command line arguments
-    from optparse import OptionParser
-    version = '%prog ' + png.__version__
-    parser = OptionParser(version=version)
-    parser.set_usage("%prog [options] [imagefile]")
-    add_common_options(parser)
+    from argparse import ArgumentParser
+    parser = ArgumentParser()
+    version = '%(prog)s ' + png.__version__
+    parser.add_argument("--version", action='version', version=version)
+    add_options(parser)
 
-    (options, args) = parser.parse_args(args=argv[1:])
+    args = parser.parse_args(args=argv[1:])
 
     # Convert options
-    if options.transparent is not None:
-        options.transparent = color_triple(options.transparent)
-    if options.background is not None:
-        options.background = color_triple(options.background)
+    if args.transparent is not None:
+        args.transparent = color_triple(args.transparent)
+    if args.background is not None:
+        args.background = color_triple(args.background)
 
     # Prepare input and output files
-    if len(args) == 0:
-        args = ['-']
-    if len(args) > 1:
-        parser.error("more than one input file; not allowed")
-
-    infilename = args[0]
-    infile = cli_open(infilename)
+    infile = cli_open(args.file)
 
     # Call after parsing, so that --version and --help work.
     ensure_binary_stdout()
@@ -277,12 +272,12 @@ def main(argv=None):
         width, height,
         greyscale=greyscale,
         bitdepth=bitdepth,
-        interlace=options.interlace,
-        transparent=options.transparent,
-        background=options.background,
+        interlace=args.interlace,
+        transparent=args.transparent,
+        background=args.background,
         alpha=pamalpha,
-        gamma=options.gamma,
-        compression=options.compression)
+        gamma=args.gamma,
+        compression=args.compression)
     convert_pnm(writer, infile, outfile)
 
 
