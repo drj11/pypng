@@ -125,18 +125,19 @@ def generate(args):
 def main(argv=None):
     if argv is None:
         argv = sys.argv
-    parser = argparse.ArgumentParser("Generate greyscale PNG patterns")
+    parser = argparse.ArgumentParser(
+        description="Generate greyscale PNG patterns")
 
     parser.add_argument('-l', '--list',
                         action='store_true',
-                        help="print list of patterns")
+                        help="print list of patterns and exit")
     parser.add_argument("-d", "--depth",
                         default=8, action="store", type=int,
                         metavar='N',
-                        help="use N bits per channel")
-    parser.add_argument("-S", "--size",
+                        help="N bits per pixel")
+    parser.add_argument("-s", "--size",
                         action="store", metavar="w[,h]",
-                        help="width and height of the image")
+                        help="width and height of the image in pixels")
     parser.add_argument("patterns", nargs='*',
                         help="name of pattern")
 
