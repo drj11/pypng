@@ -53,7 +53,7 @@ def test_radial_br(x, y):
 
 
 def test_stripe(x, n):
-    return float(int(x * n) & 1)
+    return int(x * n) & 1
 
 
 def test_stripe_h_2(x, y):
@@ -89,7 +89,7 @@ def test_stripe_rl_10(x, y):
 
 
 def test_checker(x, y, n):
-    return float((int(x * n) & 1) ^ (int(y * n) & 1))
+    return test_stripe(x, n) ^ test_stripe(y, n)
 
 
 def test_checker_8(x, y):
@@ -153,7 +153,7 @@ def generate_image(size, bitdepth, pattern):
         fy = float(y) / fh
         for x in range(width):
             fx = float(x) / fw
-            a.append(int(round(pfun(fx, fy) * maxval)))
+            a.append(int(round(maxval * pfun(fx, fy))))
     return a
 
 
