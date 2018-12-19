@@ -171,14 +171,14 @@ def generate(args):
     """
 
     size = args.size
-    args.bitdepth = args.depth
+    bitdepth = args.depth
 
     pattern = args.pattern[0]
 
-    pixels = generate_image(size, args.bitdepth, pattern)
+    pixels = generate_image(size, bitdepth, pattern)
 
     writer = png.Writer(
-        size[0], size[1], bitdepth=args.bitdepth, greyscale=True, alpha=False
+        size[0], size[1], bitdepth=bitdepth, greyscale=True, alpha=False
     )
     writer.write_array(binary_stdout(), pixels)
 
