@@ -1,0 +1,9 @@
+#!/bin/sh
+
+PATH=${PWD%code*}code:$PATH
+
+# Note basn0g08 includes a gAMA chunk
+python -m pngsuite basn0g08 | pnglsch | grep -q gAMA || exit 9
+python -m pngsuite basn0g08 | pripngchunk --delete gAMA - |
+  pnglsch | grep -q gAMA && exit 1
+exit 0

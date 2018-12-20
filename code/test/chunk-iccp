@@ -1,0 +1,8 @@
+#!/bin/sh
+
+Code=${PWD%code*}code
+PATH=$Code:$PATH
+
+python -m pngsuite basi6a08 |
+  pripngchunk --iccprofile "$Code/test/snibgoGBR.icc" - |
+  pnglsch | grep -q iCCP
