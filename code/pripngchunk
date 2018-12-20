@@ -59,6 +59,11 @@ def process(out, args):
         v = struct.pack('>%dH' % len(args.transparent), *args.transparent)
         bs = io.BytesIO(v)
         args.chunk.insert(0, Chunk(b'tRNS', bs))
+    if args.background:
+        # https://www.w3.org/TR/2003/REC-PNG-20031110/#11bKGD
+        v = struct.pack('>%dH' % len(args.background), *args.background)
+        bs = io.BytesIO(v)
+        args.chunk.insert(0, Chunk(b'bKGD', bs))
 
     # Create:
     # - a set of chunks to delete
@@ -145,14 +150,11 @@ def hex_color(s):
     if not valid:
         raise ValueError("colour must be 1,2,3,4,6, or 12 hex-digits")
 
-    # For the 4-bit cases, 1 or 3 4-bit numbers,
-    # repeat the digits to get 8-bit numbers.
-    if len(s) == 1:
-        s = s + s
+    # For the 4-bit RGB, expand to 8-bit, by repeating digits.
     if len(s) == 3:
         s = ''.join(c + c for c in s)
 
-    if len(s) in [2,4]:
+    if len(s) in [1, 2,4]:
         # Single grey value.
         return (int(s, 16),)
 
@@ -184,6 +186,9 @@ def main(argv=None):
             metavar="D[,D[,D[,D]]]")
     parser.add_argument('--iccprofile', type=argparse.FileType('rb'))
     parser.add_argument('--transparent', type=hex_color, metavar="#RRGGBB")
+    parser.add_argument("--background",
+                        type=hex_color, metavar="#RRGGBB",
+                        help="background colour for bKGD chunk")
     parser.add_argument(
             '--delete', action='append',
             default=[],

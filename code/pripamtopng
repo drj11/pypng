@@ -176,34 +176,10 @@ def scan_rows_from_file(infile, width, height, planes, bitdepth):
         yield line()
 
 
-def color_triple(color):
-    """
-    Convert a command line colour value to a RGB triple of integers.
-    FIXME: Somewhere we need support for greyscale backgrounds etc.
-    """
-
-    if color.startswith('#'):
-        color = color[1:]
-    if len(color) not in (3, 6, 12):
-        raise png.Error('colour triple should have 3, 6, or 12, hex digits')
-
-    if len(color) == 3:
-        return tuple(17*int(h, 16) for h in color)
-    if len(color) == 6:
-        return tuple(int(h, 16) for h in
-                (color[0:2], color[2:4], color[4:6]))
-    if len(color) == 12:
-        return tuple(int(h, 16) for h in
-                (color[0:4], color[4:8], color[8:12]))
-
-
 def add_options(parser):
     """
     Call *parser.add_argument* for each of the options.
     """
-    parser.add_argument("-b", "--background",
-                        type=str, metavar="#RRGGBB",
-                        help="save the specified background colour")
     parser.add_argument("-g", "--gamma",
                         type=float, metavar="value",
                         help="create gAMA chunk with gamma value")
@@ -227,10 +203,6 @@ def main(argv=None):
     add_options(parser)
 
     args = parser.parse_args(args=argv[1:])
-
-    # Convert options
-    if args.background is not None:
-        args.background = color_triple(args.background)
 
     # Prepare input and output files
     infile = cli_open(args.file)
@@ -263,7 +235,6 @@ def main(argv=None):
         width, height,
         greyscale=greyscale,
         bitdepth=bitdepth,
-        background=args.background,
         alpha=pamalpha,
         gamma=args.gamma,
         compression=args.compression)
