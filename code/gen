@@ -147,8 +147,6 @@ def generate_image(size, bitdepth, pattern):
         a = array("H")
     else:
         a = array("B")
-    fw = float(width)
-    fh = float(height)
     pfun = PATTERN[pattern]
 
     # We add (0.5, 0.5) to each coordinate, effectively sampling
