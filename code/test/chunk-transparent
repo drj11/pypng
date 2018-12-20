@@ -4,4 +4,4 @@ PATH=${PWD%code*}code:$PATH
 
 #                   R G B R G B R G B r g b r g b r g b R G B R G B R G B
 printf 'P6\n3 3 3\n\1\0\0\0\1\0\0\0\1\2\1\1\1\2\1\1\1\2\3\2\2\2\3\2\2\2\3' |
-pripamtopng --transparent '#000055' - | pnglsch | grep -q tRNS
+pripamtopng - | pripngchunk --transparent '#000055' - | pnglsch | grep -q tRNS
