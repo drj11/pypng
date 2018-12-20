@@ -832,6 +832,9 @@ class Test(unittest.TestCase):
     def test_test_dir(self):
         runs = []
         for path in sorted(glob.glob('test/*')):
+            if not os.access(path, os.X_OK):
+                # Skip non-executables (probably fixtures?)
+                continue
             status = os.system(path)
             runs.append((path, status))
         failed_runs = [run for run in runs if run[1]]

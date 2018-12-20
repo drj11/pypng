@@ -50,7 +50,7 @@ def process(out, args):
         args.chunk.insert(0, Chunk('sBIT', bs))
     if args.iccprofile:
         # http://www.w3.org/TR/PNG/#11iCCP
-        v = 'a color profile\x00\x00' + args.iccpprofile.read().encode('zip')
+        v = 'a color profile\x00\x00' + args.iccprofile.read().encode('zip')
         bs = io.BytesIO(v)
         args.chunk.insert(0, Chunk('iCCP', bs))
 
