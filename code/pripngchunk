@@ -43,16 +43,16 @@ def process(out, args):
     if args.gamma:
         v = int(round(1e5*args.gamma))
         bs = io.BytesIO(struct.pack('>I', v))
-        args.chunk.insert(0, Chunk('gAMA', bs))
+        args.chunk.insert(0, Chunk(b'gAMA', bs))
     if args.sigbit:
         v = struct.pack('%dB' % len(args.sigbit), *args.sigbit)
         bs = io.BytesIO(v)
-        args.chunk.insert(0, Chunk('sBIT', bs))
+        args.chunk.insert(0, Chunk(b'sBIT', bs))
     if args.iccprofile:
         # http://www.w3.org/TR/PNG/#11iCCP
         v = 'a color profile\x00\x00' + args.iccprofile.read().encode('zip')
         bs = io.BytesIO(v)
-        args.chunk.insert(0, Chunk('iCCP', bs))
+        args.chunk.insert(0, Chunk(b'iCCP', bs))
 
     # Create:
     # - a set of chunks to delete
@@ -61,7 +61,8 @@ def process(out, args):
 
     delete = set(args.delete)
     # Generally, there should be at most one of the 'replacing' chunks.
-    replacing = set(['gAMA', 'sBIT', 'PLTE', 'tRNS', 'sPLT', 'IHDR'])
+    replacing = set([b'gAMA', b'sBIT', b'PLTE', b'tRNS',
+        b'sPLT', b'IHDR'])
     replace = dict()
     add = []
 
@@ -90,7 +91,7 @@ def edit_chunks(chunks, delete, replace, add):
             del replace[type]
             continue
 
-        if 'IDAT' <= type <= 'IDAT' and replace:
+        if b'IDAT' <= type <= b'IDAT' and replace:
             # If there are any chunks on the replace list by
             # the time we reach IDAT, add then all now.
             # put them all on the add list.
@@ -98,7 +99,7 @@ def edit_chunks(chunks, delete, replace, add):
                 yield chunk.type, chunk.content.read()
             replace = dict()
 
-        if 'IDAT' <= type <= 'IDAT' and add:
+        if b'IDAT' <= type <= b'IDAT' and add:
             # We reached IDAT; add all remaining chunks now.
             for chunk in add:
                 yield chunk.type, chunk.content.read()
@@ -116,7 +117,7 @@ def chunk_name(s):
     valid = len(s) == 4 and set(s) <= set(string.ascii_letters)
     if not valid:
         raise ValueError("Chunk name must be 4 ASCII letters")
-    return s
+    return s.encode('ascii')
 
 
 def comma_list(s):
@@ -171,7 +172,7 @@ def main(argv=None):
 
     # Reprocess the chunk arguments, converting each pair into a Chunk.
     args.chunk = [
-            Chunk(type, open(path, 'rb')) for type, path in args.chunk]
+            Chunk(chunk_name(type), open(path, 'rb')) for type, path in args.chunk]
 
     return process(binary_stdout(), args)
 
