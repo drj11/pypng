@@ -6,6 +6,7 @@ from __future__ import print_function
 
 import argparse
 import collections
+
 # https://docs.python.org/2.7/library/io.html
 import io
 import string
@@ -42,28 +43,28 @@ def process(out, args):
 
     # Convert options to chunks in the args.chunk list
     if args.gamma:
-        v = int(round(1e5*args.gamma))
-        bs = io.BytesIO(struct.pack('>I', v))
-        args.chunk.insert(0, Chunk(b'gAMA', bs))
+        v = int(round(1e5 * args.gamma))
+        bs = io.BytesIO(struct.pack(">I", v))
+        args.chunk.insert(0, Chunk(b"gAMA", bs))
     if args.sigbit:
-        v = struct.pack('%dB' % len(args.sigbit), *args.sigbit)
+        v = struct.pack("%dB" % len(args.sigbit), *args.sigbit)
         bs = io.BytesIO(v)
-        args.chunk.insert(0, Chunk(b'sBIT', bs))
+        args.chunk.insert(0, Chunk(b"sBIT", bs))
     if args.iccprofile:
         # http://www.w3.org/TR/PNG/#11iCCP
-        v = b'a color profile\x00\x00' + zlib.compress(args.iccprofile.read())
+        v = b"a color profile\x00\x00" + zlib.compress(args.iccprofile.read())
         bs = io.BytesIO(v)
-        args.chunk.insert(0, Chunk(b'iCCP', bs))
+        args.chunk.insert(0, Chunk(b"iCCP", bs))
     if args.transparent:
         # https://www.w3.org/TR/2003/REC-PNG-20031110/#11tRNS
-        v = struct.pack('>%dH' % len(args.transparent), *args.transparent)
+        v = struct.pack(">%dH" % len(args.transparent), *args.transparent)
         bs = io.BytesIO(v)
-        args.chunk.insert(0, Chunk(b'tRNS', bs))
+        args.chunk.insert(0, Chunk(b"tRNS", bs))
     if args.background:
         # https://www.w3.org/TR/2003/REC-PNG-20031110/#11bKGD
-        v = struct.pack('>%dH' % len(args.background), *args.background)
+        v = struct.pack(">%dH" % len(args.background), *args.background)
         bs = io.BytesIO(v)
-        args.chunk.insert(0, Chunk(b'bKGD', bs))
+        args.chunk.insert(0, Chunk(b"bKGD", bs))
 
     # Create:
     # - a set of chunks to delete
@@ -72,8 +73,7 @@ def process(out, args):
 
     delete = set(args.delete)
     # Generally, there should be at most one of the 'replacing' chunks.
-    replacing = set([b'gAMA', b'sBIT', b'PLTE', b'tRNS',
-        b'sPLT', b'IHDR'])
+    replacing = set([b"gAMA", b"sBIT", b"PLTE", b"tRNS", b"sPLT", b"IHDR"])
     replace = dict()
     add = []
 
@@ -85,9 +85,8 @@ def process(out, args):
 
     input = png.Reader(file=args.input)
 
-    return png.write_chunks(
-            out,
-            edit_chunks(input.chunks(), delete, replace, add))
+    return png.write_chunks(out, edit_chunks(input.chunks(), delete, replace, add))
+
 
 def edit_chunks(chunks, delete, replace, add):
     """
@@ -102,7 +101,7 @@ def edit_chunks(chunks, delete, replace, add):
             del replace[type]
             continue
 
-        if b'IDAT' <= type <= b'IDAT' and replace:
+        if b"IDAT" <= type <= b"IDAT" and replace:
             # If there are any chunks on the replace list by
             # the time we reach IDAT, add then all now.
             # put them all on the add list.
@@ -110,7 +109,7 @@ def edit_chunks(chunks, delete, replace, add):
                 yield chunk.type, chunk.content.read()
             replace = dict()
 
-        if b'IDAT' <= type <= b'IDAT' and add:
+        if b"IDAT" <= type <= b"IDAT" and add:
             # We reached IDAT; add all remaining chunks now.
             for chunk in add:
                 yield chunk.type, chunk.content.read()
@@ -128,7 +127,7 @@ def chunk_name(s):
     valid = len(s) == 4 and set(s) <= set(string.ascii_letters)
     if not valid:
         raise ValueError("Chunk name must be 4 ASCII letters")
-    return s.encode('ascii')
+    return s.encode("ascii")
 
 
 def comma_list(s):
@@ -137,30 +136,31 @@ def comma_list(s):
     into a list of int.
     """
 
-    return tuple(int(v) for v in s.split(','))
+    return tuple(int(v) for v in s.split(","))
+
 
 def hex_color(s):
     """
     Type check and convert a hex color.
     """
 
-    if s.startswith('#'):
+    if s.startswith("#"):
         s = s[1:]
-    valid = len(s) in [1,2,3,4,6,12] and set(s) <= set(string.hexdigits)
+    valid = len(s) in [1, 2, 3, 4, 6, 12] and set(s) <= set(string.hexdigits)
     if not valid:
         raise ValueError("colour must be 1,2,3,4,6, or 12 hex-digits")
 
     # For the 4-bit RGB, expand to 8-bit, by repeating digits.
     if len(s) == 3:
-        s = ''.join(c + c for c in s)
+        s = "".join(c + c for c in s)
 
-    if len(s) in [1, 2,4]:
+    if len(s) in [1, 2, 4]:
         # Single grey value.
         return (int(s, 16),)
 
     if len(s) in [6, 12]:
-        w = len(s)//3
-        return tuple(int(s[i:i+w], 16) for i in range(0, len(s), w))
+        w = len(s) // 3
+        return tuple(int(s[i : i + w], 16) for i in range(0, len(s), w))
 
 
 def binary_stdout():
@@ -181,24 +181,32 @@ def main(argv=None):
     argv = argv[1:]
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--gamma', type=float)
-    parser.add_argument('--sigbit', type=comma_list,
-            metavar="D[,D[,D[,D]]]")
-    parser.add_argument('--iccprofile', type=argparse.FileType('rb'))
-    parser.add_argument('--transparent', type=hex_color, metavar="#RRGGBB")
-    parser.add_argument("--background",
-                        type=hex_color, metavar="#RRGGBB",
-                        help="background colour for bKGD chunk")
+    parser.add_argument("--gamma", type=float)
+    parser.add_argument("--sigbit", type=comma_list, metavar="D[,D[,D[,D]]]")
+    parser.add_argument("--iccprofile", type=argparse.FileType("rb"))
+    parser.add_argument("--transparent", type=hex_color, metavar="#RRGGBB")
     parser.add_argument(
-            '--delete', action='append',
-            default=[],
-            type=chunk_name,
-            help="delete the chunk"
-            )
-    parser.add_argument('--chunk', action='append', nargs=2, default=[],
-            type=str,
-            help="insert chunk, taking contents from file")
-    parser.add_argument('input', type=argparse.FileType('rb'))
+        "--background",
+        type=hex_color,
+        metavar="#RRGGBB",
+        help="background colour for bKGD chunk",
+    )
+    parser.add_argument(
+        "--delete",
+        action="append",
+        default=[],
+        type=chunk_name,
+        help="delete the chunk",
+    )
+    parser.add_argument(
+        "--chunk",
+        action="append",
+        nargs=2,
+        default=[],
+        type=str,
+        help="insert chunk, taking contents from file",
+    )
+    parser.add_argument("input", type=argparse.FileType("rb"))
 
     args = parser.parse_args(argv)
 
@@ -210,10 +218,11 @@ def main(argv=None):
 
     # Reprocess the chunk arguments, converting each pair into a Chunk.
     args.chunk = [
-            Chunk(chunk_name(type), open(path, 'rb')) for type, path in args.chunk]
+        Chunk(chunk_name(type), open(path, "rb")) for type, path in args.chunk
+    ]
 
     return process(binary_stdout(), args)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
