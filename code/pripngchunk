@@ -123,6 +123,15 @@ def chunk_pair(s):
     return s
 
 
+def comma_list(s):
+    """
+    Convert s, a command separated list of whole numbers,
+    into a list of int.
+    """
+
+    return tuple(int(v) for v in s.split(','))
+
+
 def binary_stdout():
     try:
         # Probably Python 3
@@ -142,7 +151,8 @@ def main(argv=None):
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--gamma', type=float)
-    parser.add_argument('--sigbit', type=int)
+    parser.add_argument('--sigbit', type=comma_list,
+            metavar="D[,D[,D[,D]]]")
     parser.add_argument('--iccprofile', type=argparse.FileType('rb'))
     parser.add_argument(
             '--delete', action='append',
