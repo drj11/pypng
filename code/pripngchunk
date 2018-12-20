@@ -183,7 +183,7 @@ def main(argv=None):
     parser.add_argument('--sigbit', type=comma_list,
             metavar="D[,D[,D[,D]]]")
     parser.add_argument('--iccprofile', type=argparse.FileType('rb'))
-    parser.add_argument('--transparent', type=hex_color)
+    parser.add_argument('--transparent', type=hex_color, metavar="#RRGGBB")
     parser.add_argument(
             '--delete', action='append',
             default=[],
