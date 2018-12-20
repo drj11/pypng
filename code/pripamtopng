@@ -241,8 +241,7 @@ def main(argv=None):
     infile = cli_open(args.file)
 
     # Call after parsing, so that --version and --help work.
-    ensure_binary_stdout()
-    outfile = sys.stdout
+    outfile = binary_stdout()
 
     # Encode PNM to PNG
     format, width, height, depth, maxval = read_pnm_header(infile)
@@ -296,23 +295,25 @@ def binary_stdin():
     return sys.stdin
 
 
-def ensure_binary_stdout():
+def binary_stdout():
     """
-    Ensure sys.stdout accepts bytes.
+    A sys.stdout that accepts bytes.
     """
 
     # First there is a Python3 issue.
     try:
-        sys.stdout = sys.stdout.buffer
+        stdout = sys.stdout.buffer
     except AttributeError:
         # Probably Python 2, where bytes are strings.
-        pass
+        stdout = sys.stdout
 
     # On Windows the C runtime file orientation needs changing.
     if sys.platform == "win32":
         import msvcrt
         import os
         msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
+
+    return stdout
 
 
 if __name__ == '__main__':
