@@ -2,5 +2,4 @@
 
 PATH=${PWD%code*}code:$PATH
 
-printf 'P5 2 2 3\n\0\1\2\3' |
-pripamtopng - | pripngchunk | file - | grep -q PNG
+python -m pngsuite basn0g08 | pripngchunk - | file - | grep -q PNG
