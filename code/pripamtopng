@@ -279,22 +279,21 @@ def main(argv=None):
 
 def cli_open(path):
     if path == "-":
-        ensure_binary_stdin()
-        return sys.stdin
+        return binary_stdin()
     return open(path, 'rb')
 
 
-def ensure_binary_stdin():
+def binary_stdin():
     """
-    Ensure sys.stdin returns bytes.
+    A sys.stdin that returns bytes.
     """
 
     try:
-        # Ensure sys.stdin returns bytes
         sys.stdin = sys.stdin.buffer
     except AttributeError:
         # Probably Python 2, where bytes are strings.
         pass
+    return sys.stdin
 
 
 def ensure_binary_stdout():
