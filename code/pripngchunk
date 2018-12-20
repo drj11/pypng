@@ -157,7 +157,7 @@ def hex_color(s):
         return (int(s, 16),)
 
     if len(s) in [6, 12]:
-        w = len(s)/3
+        w = len(s)//3
         return tuple(int(s[i:i+w], 16) for i in range(0, len(s), w))
 
 
