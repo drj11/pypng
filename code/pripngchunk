@@ -8,6 +8,7 @@ import argparse
 import collections
 # https://docs.python.org/2.7/library/io.html
 import io
+import string
 import struct
 import sys
 import warnings
