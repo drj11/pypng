@@ -158,7 +158,7 @@ def hex_color(s):
 
     if len(s) in [6, 12]:
         w = len(s)/3
-        return tuple(int(s[i:i+w]) for i in range(0, len(s), w))
+        return tuple(int(s[i:i+w], 16) for i in range(0, len(s), w))
 
 
 def binary_stdout():

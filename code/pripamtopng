@@ -201,9 +201,6 @@ def add_options(parser):
     """
     Call *parser.add_argument* for each of the options.
     """
-    parser.add_argument("-t", "--transparent",
-                        type=str, metavar="#RRGGBB",
-                        help="create tRNS chunk with transparent colour")
     parser.add_argument("-b", "--background",
                         type=str, metavar="#RRGGBB",
                         help="save the specified background colour")
@@ -232,8 +229,6 @@ def main(argv=None):
     args = parser.parse_args(args=argv[1:])
 
     # Convert options
-    if args.transparent is not None:
-        args.transparent = color_triple(args.transparent)
     if args.background is not None:
         args.background = color_triple(args.background)
 
@@ -269,7 +264,6 @@ def main(argv=None):
         width, height,
         greyscale=greyscale,
         bitdepth=bitdepth,
-        transparent=args.transparent,
         background=args.background,
         alpha=pamalpha,
         gamma=args.gamma,
