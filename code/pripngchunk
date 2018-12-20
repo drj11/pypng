@@ -119,10 +119,6 @@ def chunk_name(s):
     return s
 
 
-def chunk_pair(s):
-    return s
-
-
 def comma_list(s):
     """
     Convert s, a command separated list of whole numbers,
@@ -161,7 +157,7 @@ def main(argv=None):
             help="delete the chunk"
             )
     parser.add_argument('--chunk', action='append', nargs=2, default=[],
-            type=chunk_pair,
+            type=str,
             help="insert chunk, taking contents from file")
     parser.add_argument('input', type=argparse.FileType('rb'))
 
@@ -172,6 +168,10 @@ def main(argv=None):
         args.input = args.input.buffer
     except AttributeError:
         pass
+
+    # Reprocess the chunk arguments, converting each pair into a Chunk.
+    args.chunk = [
+            Chunk(type, open(path, 'rb')) for type, path in args.chunk]
 
     return process(binary_stdout(), args)
 
