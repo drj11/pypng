@@ -63,41 +63,42 @@ def write_pnm(file, rows, meta):
 
 def cli_open(path):
     if path == "-":
-        ensure_binary_stdin()
-        return sys.stdin
+        return binary_stdin()
     return open(path, 'rb')
 
 
-def ensure_binary_stdin():
+def binary_stdin():
     """
-    Ensure sys.stdin returns bytes.
+    A sys.stdin that returns bytes.
     """
 
     try:
-        # Ensure sys.stdin returns bytes
-        sys.stdin = sys.stdin.buffer
+        return sys.stdin.buffer
     except AttributeError:
         # Probably Python 2, where bytes are strings.
         pass
+    return sys.stdin
 
 
-def ensure_binary_stdout():
+def binary_stdout():
     """
-    Ensure sys.stdout accepts bytes.
+    A sys.stdout that accepts bytes.
     """
 
     # First there is a Python3 issue.
     try:
-        sys.stdout = sys.stdout.buffer
+        stdout = sys.stdout.buffer
     except AttributeError:
         # Probably Python 2, where bytes are strings.
-        pass
+        stdout = sys.stdout
 
     # On Windows the C runtime file orientation needs changing.
     if sys.platform == "win32":
         import msvcrt
         import os
         msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
+
+    return stdout
 
 
 def main(argv=None):
@@ -111,8 +112,7 @@ def main(argv=None):
     # Encode PNG to PPM
     image = png.Reader(file=inp)
     _, _, rows, info = image.asDirect()
-    ensure_binary_stdout()
-    write_pnm(sys.stdout, rows, info)
+    write_pnm(binary_stdout(), rows, info)
 
 
 if __name__ == '__main__':
