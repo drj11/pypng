@@ -6,3 +6,4 @@ PATH=${PWD%code*}code:$PATH
 python -m pngsuite basn0g08 | pnglsch | grep -q gAMA || exit 9
 python -m pngsuite basn0g08 | pripngchunk --delete gAMA - |
   pnglsch | grep -q gAMA && exit 1
+exit 0
