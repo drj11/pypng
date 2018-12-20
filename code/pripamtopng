@@ -180,9 +180,6 @@ def add_options(parser):
     """
     Call *parser.add_argument* for each of the options.
     """
-    parser.add_argument("-g", "--gamma",
-                        type=float, metavar="value",
-                        help="create gAMA chunk with gamma value")
     parser.add_argument("-c", "--compression",
                         type=int, metavar="level",
                         help="zlib compression level (0-9)")
@@ -236,7 +233,6 @@ def main(argv=None):
         greyscale=greyscale,
         bitdepth=bitdepth,
         alpha=pamalpha,
-        gamma=args.gamma,
         compression=args.compression)
     convert_pnm(writer, infile, outfile)
 
