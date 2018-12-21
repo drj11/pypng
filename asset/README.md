@@ -11,3 +11,8 @@ system, but in fact found here (after some hunting):
 https://github.com/0intro/plan9-contrib/tree/master/sys/games/lib/sokoban/images
 
 Use the `plan9topng.py` tool to convert it.
+
+    snibgoGBR.icc
+
+An ICC Profile that rotates colours. Created by snibgo, but not
+kept in a particularly obvious place.
