@@ -4,8 +4,12 @@
 # Weave selected channels from input PNG files into
 # a multi-channel output PNG.
 
+from __future__ import print_function
+
 import argparse
 import collections
+import itertools
+import re
 import sys
 
 from array import array
@@ -37,31 +41,44 @@ class Error(Exception):
 
 
 def stack(out, args):
-    """Stack the input PNG files into a single output PNG."""
+    """Stack the input PNG files and extract channels
+    into a single output PNG.
+    """
 
     paths = args.input
 
     if len(paths) < 1:
         raise Error("Required input is missing.")
 
+    # List of Image instances
     images = []
+    # Channel map. Maps from channel number (starting from 1)
+    # to an (image_index, channel_index) pair.
+    channel_map = dict()
+    channel = 1
 
-    for path in paths:
+    for image_index,path in enumerate(paths):
         inp = cli_open(path)
         rows, info = png.Reader(file=inp).asDirect()[2:]
         rows = list(rows)
         image = Image(rows, info)
         images.append(image)
+        for i in range(image.info['planes']):
+            channel_map[channel+i] = (image_index, i)
+        channel += image.info['planes']
 
     totalchannels = sum(image.info['planes'] for image in images)
+    assert totalchannels == channel - 1
 
-    if not (0 < totalchannels <= 4):
-        raise Error("Too many channels in inputs")
-    alpha = totalchannels in (2, 4)
-    greyscale = totalchannels in (1, 2)
+    out_channels = len(args.channel)
+    if not (0 < out_channels <= 4):
+        raise Error("Too many channels selected (must be 1 to 4)")
+    alpha = out_channels in (2, 4)
+    greyscale = out_channels in (1, 2)
 
     bitdepth = [image.info['bitdepth'] for image in images]
     # Currently, fail unless all bitdepths equal.
+    # :todo: create sBIT chunk instead of failing.
     if len(set(bitdepth)) > 1:
         raise NotImplementedError("Cannot cope when bitdepths differ - sorry!")
     bitdepth = bitdepth[0]
@@ -73,29 +90,32 @@ def stack(out, args):
         raise NotImplementedError("Cannot cope when sizes differ - sorry!")
     size = size[0]
 
-    # Values per row
-    vpr = totalchannels * size[0]
+    # Values per row, of output image
+    vpr = out_channels * size[0]
 
-    def iterstack():
-        # the zip call creates an iterator that yields the next row
-        # from all the input images combined into a tuple.
-        for irow in zip(*(image.rows for image in images)):
+    def weave_row_iter():
+        """
+        Yield each woven row in turn.
+        """
+        # The zip call creates an iterator that yields
+        # a tuple with each element containing the next row
+        # for each of the input images.
+        for row_tuple in zip(*(image.rows for image in images)):
+            # output row
             row = array(arraytype, [0]*vpr)
-            # output channel index
-            out_channel_i = 0
-            for i, arow in enumerate(irow):
-                # ensure incoming row is an array
-                arow = array(arraytype, arow)
-                n = images[i].info['planes']
-                for j in range(n):
-                    row[out_channel_i::totalchannels] = arow[j::n]
-                    out_channel_i += 1
+            # for each output channel select correct input channel
+            for out_channel_i, channel in enumerate(args.channel):
+                image_i, channel_i = channel_map[channel]
+                # incoming row (make it an array)
+                irow = array(arraytype, row_tuple[image_i])
+                n = images[image_i].info['planes']
+                row[out_channel_i::out_channels] = irow[channel_i::n]
             yield row
     w = png.Writer(
         size[0], size[1],
         greyscale=greyscale, alpha=alpha, bitdepth=bitdepth,
         interlace=args.interlace)
-    w.write(out, iterstack())
+    w.write(out, weave_row_iter())
 
 
 def cli_open(path):
@@ -136,16 +156,29 @@ def ensure_binary_stdout():
         msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
 
 
+def comma_list(s):
+    """
+    Type and return a list of integers.
+    """
+
+    return [int(c) for c in re.findall(r'\d+', s)]
+
+
 def main(argv=None):
     if argv is None:
         argv = sys.argv
     argv = argv[1:]
 
     parser = argparse.ArgumentParser()
+    parser.add_argument("-c", "--channel", action="append",
+            type=comma_list,
+            help="list of channels to extract")
     parser.add_argument("--interlace", action="store_true",
                         help="write interlaced PNG")
     parser.add_argument("input", nargs="+")
     args = parser.parse_args(argv)
+
+    args.channel = list(itertools.chain(*args.channel))
 
     ensure_binary_stdout()
     return stack(sys.stdout, args)
