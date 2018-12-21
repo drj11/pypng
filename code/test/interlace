@@ -3,4 +3,4 @@
 PATH=${PWD%code*}code:$PATH
 
 printf 'P5 2 2 3\n\0\1\2\3' |
-pripamtopng - | pipstack --interlace - | file - | grep -q 'PNG.* interlace'
+pripamtopng - | priweavepng --interlace - | file - | grep -q 'PNG.* interlace'
