@@ -16,3 +16,4 @@ Use the `plan9topng.py` tool to convert it.
 
 An ICC Profile that rotates colours. Created by snibgo, but not
 kept in a particularly obvious place.
+I found it here: https://discuss.pixls.us/t/dispcalgui-3-7-0-cannot-install-profile-mint-19-mate/9603/21
