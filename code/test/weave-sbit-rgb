@@ -1,0 +1,12 @@
+#!/bin/sh
+
+PATH=${PWD%code*}code:$PATH
+
+g () {
+python -m pngsuite basn0g0$1
+}
+
+{ g 4; g 8; g 2; } | priweavepng - - - |
+  pnglsch |
+  grep sBIT |
+  grep -q 040802

@@ -83,6 +83,13 @@ Take Green channel from 3 successive colour images to make a new RGB image:
 
 Image = collections.namedtuple("Image", "rows info")
 
+# For each channel in the intermediate raster,
+# model:
+# - image: the input image (0-based);
+# - i: the channel index within that image (0-based);
+# - bitdepth: the bitdepth of this channel.
+Channel = collections.namedtuple("Channel", "image i bitdepth")
+
 
 class Error(Exception):
     pass
@@ -111,8 +118,13 @@ def stack(out, args):
         rows = list(rows)
         image = Image(rows, info)
         images.append(image)
+        # A later version of PyPNG may intelligently support
+        # PNG files with heterogenous bitdepths.
+        # For now, assumes bitdepth of all channels in image
+        # is the same.
+        channel_bitdepth = (image.info['bitdepth'],) * image.info['planes']
         for i in range(image.info['planes']):
-            channel_map[channel+i] = (image_index, i)
+            channel_map[channel+i] = Channel(image_index, i, channel_bitdepth[i])
         channel += image.info['planes']
 
     assert channel - 1 == sum(image.info['planes'] for image in images)
@@ -127,13 +139,8 @@ def stack(out, args):
     alpha = out_channels in (2, 4)
     greyscale = out_channels in (1, 2)
 
-    bitdepth = [image.info['bitdepth'] for image in images]
-    # Currently, fail unless all bitdepths equal.
-    # :todo: create sBIT chunk instead of failing.
-    if len(set(bitdepth)) > 1:
-        raise NotImplementedError("Cannot cope when bitdepths differ - sorry!")
-    bitdepth = bitdepth[0]
-    arraytype = 'BH'[bitdepth > 8]
+    bitdepth = tuple(image.info['bitdepth'] for image in images)
+    arraytype = 'BH'[max(bitdepth) > 8]
 
     size = [image.info['size'] for image in images]
     # Currently, fail unless all images same size.
@@ -155,12 +162,12 @@ def stack(out, args):
             # output row
             row = array(arraytype, [0]*vpr)
             # for each output channel select correct input channel
-            for out_channel_i, channel in enumerate(args.channel):
-                image_i, channel_i = channel_map[channel]
+            for out_channel_i, selection in enumerate(args.channel):
+                channel = channel_map[selection]
                 # incoming row (make it an array)
-                irow = array(arraytype, row_tuple[image_i])
-                n = images[image_i].info['planes']
-                row[out_channel_i::out_channels] = irow[channel_i::n]
+                irow = array(arraytype, row_tuple[channel.image])
+                n = images[channel.image].info['planes']
+                row[out_channel_i::out_channels] = irow[channel.i::n]
             yield row
     w = png.Writer(
         size[0], size[1],
