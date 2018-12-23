@@ -571,6 +571,7 @@ class Writer:
 
         # Calculate channels, and
         # expand bitdepth to be one element per channel.
+        palette = check_palette(palette)
         alpha = bool(alpha)
         colormap = bool(palette)
         greyscale = bool(greyscale)
@@ -580,7 +581,6 @@ class Writer:
             bitdepth *= planes
 
         self.rescale = None
-        palette = check_palette(palette)
         if palette:
             if len(bitdepth) != 1:
                 raise ValueError(
