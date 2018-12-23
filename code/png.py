@@ -852,7 +852,8 @@ class Writer:
         if self.rescale:
             oldextend = extend
             # One factor for each channel
-            fs = [float(2 ** s[1] - 1)/float(2 ** s[0] - 1) for s in self.rescale]
+            fs = [float(2 ** s[1] - 1)/float(2 ** s[0] - 1)
+                  for s in self.rescale]
 
             def extend(sl):
                 scaled_scanline = sl[:]
