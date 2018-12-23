@@ -57,7 +57,7 @@ def stack(out, args):
     channel_map = dict()
     channel = 1
 
-    for image_index,path in enumerate(paths):
+    for image_index, path in enumerate(paths):
         inp = cli_open(path)
         rows, info = png.Reader(file=inp).asDirect()[2:]
         rows = list(rows)
@@ -174,8 +174,8 @@ def main(argv=None):
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--channel", action="append",
-            type=comma_list,
-            help="list of channels to extract")
+                        type=comma_list,
+                        help="list of channels to extract")
     parser.add_argument("--interlace", action="store_true",
                         help="write interlaced PNG")
     parser.add_argument("input", nargs="+")
