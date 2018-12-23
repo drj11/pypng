@@ -1379,7 +1379,7 @@ class Readable:
     def read(self, n):
         r = self.buf[self.offset: self.offset + n]
         if isarray(r):
-            r = r.tostring()
+            r = tostring(r)
         self.offset += n
         return r
 
