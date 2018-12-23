@@ -139,13 +139,8 @@ def stack(out, args):
     alpha = out_channels in (2, 4)
     greyscale = out_channels in (1, 2)
 
-    bitdepth = [image.info['bitdepth'] for image in images]
-    # Currently, fail unless all bitdepths equal.
-    # :todo: create sBIT chunk instead of failing.
-    if len(set(bitdepth)) > 1:
-        raise NotImplementedError("Cannot cope when bitdepths differ - sorry!")
-    bitdepth = bitdepth[0]
-    arraytype = 'BH'[bitdepth > 8]
+    bitdepth = tuple(image.info['bitdepth'] for image in images)
+    arraytype = 'BH'[max(bitdepth) > 8]
 
     size = [image.info['size'] for image in images]
     # Currently, fail unless all images same size.

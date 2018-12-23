@@ -405,7 +405,7 @@ class Writer:
         alpha
           Input data has alpha channel (RGBA or LA).
         bitdepth
-          Bit depth: from 1 to 16.
+          Bit depth: from 1 to 16 (for each channel).
         palette
           Create a palette for a colour mapped image (colour type 3).
         transparent
@@ -442,15 +442,20 @@ class Writer:
         alpha channel (or not).
 
         `bitdepth` specifies the bit depth of the source pixel values.
-        Each source pixel value must be an integer between 0 and
-        ``2**bitdepth-1``.  For example, 8-bit images have values
-        between 0 and 255.  PNG only stores images with bit depths of
-        1,2,4,8, or 16.  When `bitdepth` is not one of these values,
-        the next highest valid bit depth is selected, and an ``sBIT``
-        (significant bits) chunk is generated that specifies the
-        original precision of the source image.  In this case the
-        supplied pixel values will be rescaled to fit the range of
-        the selected bit depth.
+        Each channel may have a different bit depth.
+        Each source pixel must have values that are
+        an integer between 0 and ``2**bitdepth-1``, where
+        `bitdepth` is the bit depth for the corresponding channel.
+        For example, 8-bit images have values between 0 and 255.
+        PNG only stores images with bit depths of
+        1,2,4,8, or 16 (the same for all channels).
+        When `bitdepth` is not one of these values or where
+        channels have different bit depths,
+        the next highest valid bit depth is selected,
+        and an ``sBIT`` (significant bits) chunk is generated
+        that specifies the original precision of the source image.
+        In this case the supplied pixel values will be rescaled to
+        fit the range of the selected bit depth.
 
         The details of which bit depth / colour model combinations the
         PNG file format supports directly, are somewhat arcane
@@ -551,14 +556,36 @@ class Writer:
                     "bytes per sample must be .125, .25, .5, 1, or 2")
             bitdepth = int(8 * bytes_per_sample)
         del bytes_per_sample
-        if not isinteger(bitdepth) or bitdepth < 1 or 16 < bitdepth:
-            raise ValueError(
-                "bitdepth %r must be a positive integer <= 16" %
-                (bitdepth,))
+        # bitdepth is either single integer, or tuple of integers.
+        # Convert to tuple.
+        try:
+            len(bitdepth)
+        except TypeError:
+            bitdepth = (bitdepth, )
+        for b in bitdepth:
+            valid = isinteger(b) and 1 <= b <= 16
+            if not valid:
+                raise ValueError(
+                    "each bitdepth %r must be a positive integer <= 16" %
+                    (bitdepth,))
+
+        # Calculate channels, and
+        # expand bitdepth to be one element per channel.
+        alpha = bool(alpha)
+        colormap = bool(palette)
+        greyscale = bool(greyscale)
+        color_planes = (3, 1)[greyscale or colormap]
+        planes = color_planes + alpha
+        if len(bitdepth) == 1:
+            bitdepth *= planes
 
         self.rescale = None
         palette = check_palette(palette)
         if palette:
+            if len(bitdepth) != 1:
+                raise ValueError(
+                    "with palette, only a single bitdepth is used")
+            (bitdepth, ) = bitdepth
             if bitdepth not in (1, 2, 4, 8):
                 raise ValueError(
                     "with palette, bitdepth must be 1, 2, 4, or 8")
@@ -571,47 +598,53 @@ class Writer:
         else:
             # No palette, check for sBIT chunk generation.
             if alpha or not greyscale:
-                if bitdepth not in (8, 16):
-                    targetbitdepth = (8, 16)[bitdepth > 8]
-                    self.rescale = (bitdepth, targetbitdepth)
+                depth_set = tuple(set(bitdepth))
+                if depth_set in [(8,), (16,)]:
+                    # No sBIT required.
+                    (bitdepth, ) = depth_set
+                else:
+                    targetbitdepth = (8, 16)[max(bitdepth) > 8]
+                    self.rescale = [(b, targetbitdepth) for b in bitdepth]
                     bitdepth = targetbitdepth
                     del targetbitdepth
             else:
                 assert greyscale
                 assert not alpha
+                (bitdepth,) = bitdepth
                 if bitdepth not in (1, 2, 4, 8, 16):
-                    if bitdepth > 8:
+                    if b > 8:
                         targetbitdepth = 16
-                    elif bitdepth == 3:
+                    elif b == 3:
                         targetbitdepth = 4
                     else:
-                        assert bitdepth in (5, 6, 7)
+                        assert b in (5, 6, 7)
                         targetbitdepth = 8
-                    self.rescale = (bitdepth, targetbitdepth)
+                    self.rescale = [(bitdepth, targetbitdepth)]
                     bitdepth = targetbitdepth
                     del targetbitdepth
 
-        if bitdepth < 8 and (alpha or not greyscale and not palette):
-            raise ValueError(
-                "bitdepth < 8 only permitted with greyscale or palette")
-        if bitdepth > 8 and palette:
-            raise ValueError(
-                "bit depth must be 8 or less for images with palette")
+        # These are assertions, because above logic should have
+        # corrected or raised all problematic cases.
+        if bitdepth < 8:
+            assert greyscale or palette
+            assert not alpha
+        if bitdepth > 8:
+            assert not palette
 
         transparent = check_color(transparent, greyscale, 'transparent')
         background = check_color(background, greyscale, 'background')
 
-        # It's important that the true boolean values (greyscale, alpha,
-        # colormap, interlace) are converted to bool because Iverson's
-        # convention is relied upon later on.
+        # It's important that the true boolean values
+        # (greyscale, alpha, colormap, interlace) are converted
+        # to bool because Iverson's convention is relied upon later on.
         self.width = width
         self.height = height
         self.transparent = transparent
         self.background = background
         self.gamma = gamma
-        self.greyscale = bool(greyscale)
-        self.alpha = bool(alpha)
-        self.colormap = bool(palette)
+        self.greyscale = greyscale
+        self.alpha = alpha
+        self.colormap = colormap
         self.bitdepth = int(bitdepth)
         self.compression = compression
         self.chunk_limit = chunk_limit
@@ -626,8 +659,8 @@ class Writer:
                            1 * self.colormap)
         assert self.color_type in (0, 2, 3, 4, 6)
 
-        self.color_planes = (3, 1)[self.greyscale or self.colormap]
-        self.planes = self.color_planes + self.alpha
+        self.color_planes = color_planes
+        self.planes = planes
         # :todo: fix for bitdepth < 8
         self.psize = (self.bitdepth / 8) * self.planes
 
@@ -740,7 +773,7 @@ class Writer:
             write_chunk(
                 outfile, b'sBIT',
                 struct.pack('%dB' % self.planes,
-                            * [self.rescale[0]] * self.planes))
+                            * [s[0] for s in self.rescale]))
 
         # :chunk:order: Without a palette (PLTE chunk), ordering is
         # relatively relaxed.  With one, gAMA chunk must precede PLTE
@@ -818,11 +851,18 @@ class Writer:
                 data.extend(bytes)
         if self.rescale:
             oldextend = extend
-            factor = (float(2 ** self.rescale[1] - 1) /
-                      float(2 ** self.rescale[0] - 1))
+            # One factor for each channel
+            fs = [float(2 ** s[1] - 1)/float(2 ** s[0] - 1) for s in self.rescale]
 
             def extend(sl):
-                oldextend([int(round(factor * x)) for x in sl])
+                scaled_scanline = sl[:]
+                typecode = 'BH'[self.bitdepth > 8]
+                for i in range(self.planes):
+                    channel = array(
+                        typecode,
+                        (int(round(fs[i] * x)) for x in sl[i::self.planes]))
+                    scaled_scanline[i::self.planes] = channel
+                oldextend(scaled_scanline)
 
         # Build the first row, testing mostly to see if we need to
         # changed the extend function to cope with NumPy integer types
@@ -912,8 +952,8 @@ class Writer:
 
         if self.rescale:
             raise Error(
-                "write_packed method not suitable for bit depth %d" %
-                self.rescale[0])
+                "write_packed method not suitable for bit depth %r" %
+                tuple(s[0] for s in self.rescale))
         return self.write_passes(outfile, rows, packed=True)
 
     def array_scanlines(self, pixels):
