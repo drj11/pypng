@@ -553,8 +553,8 @@ class Writer:
         del bytes_per_sample
         if not isinteger(bitdepth) or bitdepth < 1 or 16 < bitdepth:
             raise ValueError(
-                "bitdepth (%r) must be a positive integer <= 16" %
-                bitdepth)
+                "bitdepth %r must be a positive integer <= 16" %
+                (bitdepth,))
 
         self.rescale = None
         palette = check_palette(palette)
