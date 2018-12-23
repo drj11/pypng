@@ -19,18 +19,66 @@ import png
 """
 priweavepng file1.png [file2.png ...]
 
-priweavepng can be used to combine 3 greyscale PNG files into a colour, RGB,
-PNG file.  In fact it is slightly more general than that.  The number of
-channels in the output PNG is equal to the number of selected
-input channels.
-It is an error if this sum exceeds 4
-(the maximum number of channels in a PNG image is 4, for an RGBA image).
-The output colour mode corresponds to the number of channels:o
-1 - greyscale; 2 - greyscale+alpha; 3 - RGB; 4 - RGB+alpha.
+The `priweavepng` tool combines channels from the input images and
+weaves a selection of those channels into an output image.
 
-In this way it is possible to combine 3 greyscale PNG files into an RGB
-PNG (a common expected use) as well as more esoteric options: rgb.png +
-grey.png = rgba.png; grey.png + grey.png = greyalpha.png.
+Conceptually an intermediate image is formed consisting of
+all channels of all input images in the order given on the command line
+and in the order of each channel in its image.
+Then from 1 to 4 channels are selected and
+an image is output with those channels.
+The limit on the number of selected channels is
+imposed by the PNG image format.
+
+The `-c n` option selects channel `n`.
+Further channels can be selected either by repeating the `-c` option,
+or using a comma separated list.
+For example `-c 3,2,1` will select channels 3, 2, and 1 in that order;
+if the input is an RGB PNG, this will swop the Red and Blue channels.
+The order is significant, the order in which the options are given is
+the order of the output channels.
+It is permissible, and sometimes useful
+(for example, grey to colour expansion, see below),
+to repeat the same channel.
+
+If no `-c` option is used the default is
+to select all of the input channels, up to the first 4.
+
+`priweavepng` does not care about the meaning of the channels
+and treats them as a matrix of values.
+
+The numer of output channels determines the colour mode of the PNG file:
+L (1-channel, Grey), LA (2-channel, Grey+Alpha),
+RGB (3-channel, Red+Green+Blue), RGBA (4-channel, Red+Green+Blue+Alpha).
+
+The `priweavepng` tool can be used for a variety of
+channel building, swopping, and extraction effects:
+
+Combine 3 grayscale images into RGB colour:
+    priweavepng grey1.img grey2.img grey3.img
+
+Swop Red and Blue channels in colour image:
+    priweavepng -c 3 -c 2 -c 1 rgb.img
+
+Extract Green channel as a greyscale image:
+    priweavepng -c 2 rgb.img
+
+Convert a greyscale image to a colour image (all grey):
+    priweavepng -c 1 -c 1 -c 1 grey.img
+
+Add alpha mask from a separate (greyscale) image:
+    priweavepng rgb.img grey.img
+
+Extract alpha mask into a separate (greyscale) image:
+    priweavepng -c 4 rgba.img
+
+Steal alpha mask from second file and add to first.
+Note that the intermediate image in this example has 7 channels:
+    priweavepng -c 1 -c 2 -c 3 -c 7 rgb.img rgba.img
+
+Take Green channel from 3 successive colour images to make a new RGB image:
+    priweavepng -c 2 -c 5 -c 8 rgb1.img rgb2.img rgb3.img
+
 """
 
 Image = collections.namedtuple("Image", "rows info")
