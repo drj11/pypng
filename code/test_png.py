@@ -432,12 +432,12 @@ class Test(unittest.TestCase):
         writer = png.Writer(width=width, height=height, greyscale=True)
         writer.write(out, pixels)
         out.seek(0)
-        self.assert_(b'pHYs' not in out.getvalue())
+        self.assertNotIn(b'pHYs', out.getvalue())
         out.seek(0)
         reader = png.Reader(file=out)
         w, h, _, meta = reader.read()
-        self.assert_('physical' not in meta)
-        self.assert_(not hasattr(reader, 'x_pixels_per_unit'))
+        self.assertNotIn('physical', meta)
+        self.assertTrue(not hasattr(reader, 'x_pixels_per_unit'))
         # = Check if pHYs chunk is generated
         out = BytesIO()
         writer = png.Writer(width=width, height=height, greyscale=True,
@@ -447,16 +447,16 @@ class Test(unittest.TestCase):
         out.seek(0)
         reader = png.Reader(file=out)
         w, h, _, meta = reader.read()
-        self.assert_('physical' in meta)
+        self.assertIn('physical', meta)
         self.assertEqual(2, reader.x_pixels_per_unit)
         self.assertEqual(1, reader.y_pixels_per_unit)
-        self.assert_(reader.unit_is_meter)
+        self.assertTrue(reader.unit_is_meter)
         expected = (2, 1, True)
         self.assertEqual(expected, meta['physical'])
         res = meta['physical']
         self.assertEqual(2, res.x)
         self.assertEqual(1, res.y)
-        self.assert_(res.unit_is_meter)
+        self.assertTrue(res.unit_is_meter)
         # = 2nd check
         out = BytesIO()
         writer = png.Writer(width=width, height=height, greyscale=True,
@@ -466,10 +466,10 @@ class Test(unittest.TestCase):
         out.seek(0)
         reader = png.Reader(file=out)
         w, h, _, meta = reader.read()
-        self.assert_('physical' in meta)
+        self.assertIn('physical', meta)
         self.assertEqual(2, reader.x_pixels_per_unit)
         self.assertEqual(1, reader.y_pixels_per_unit)
-        self.assert_(not reader.unit_is_meter)
+        self.assertFalse(reader.unit_is_meter)
         expected = (2, 1, False)
         self.assertEqual(expected, meta['physical'])
         res = meta['physical']
