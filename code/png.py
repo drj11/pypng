@@ -147,6 +147,7 @@ And now, my famous members
 __version__ = "0.0.18"
 
 import collections
+import io   # For io.BytesIO
 import itertools
 import math
 import re
@@ -1324,23 +1325,6 @@ class Image:
             close()
 
 
-class Readable:
-    """
-    A simple file-like interface for strings and arrays.
-    """
-
-    def __init__(self, buf):
-        self.buf = buf
-        self.offset = 0
-
-    def read(self, n):
-        r = self.buf[self.offset: self.offset + n]
-        if isarray(r):
-            r = bytearray(r)
-        self.offset += n
-        return r
-
-
 try:
     str(b'dummy', 'ascii')
 except TypeError:
@@ -1403,7 +1387,7 @@ class Reader:
         elif "file" in kw:
             self.file = kw["file"]
         elif "bytes" in kw:
-            self.file = Readable(kw["bytes"])
+            self.file = io.BytesIO(kw["bytes"])
         else:
             raise TypeError("expecting filename, file or bytes array")
 
