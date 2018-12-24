@@ -1622,32 +1622,33 @@ class Reader:
         the bytes of each row in turn.
         """
 
-        def asvalues(raw):
-            """Convert a row of bytes into a flat row.
-            Result will be a freshly allocated object, not shared with
-            argument.
-            """
+        for row in byte_rows:
+            yield self.bytes_to_values(row)
 
-            if self.bitdepth == 8:
-                return array('B', raw)
-            if self.bitdepth == 16:
-                # Conversion to bytes only required for Python 2.6
-                raw = bytes(raw)
-                return array('H',
-                             struct.unpack('!%dH' % (len(raw) // 2), raw))
-            assert self.bitdepth < 8
-            width = self.width
-            # Samples per byte
-            spb = 8 // self.bitdepth
-            out = array('B')
-            mask = 2**self.bitdepth - 1
-            shifts = [self.bitdepth * i
-                      for i in reversed(list(range(spb)))]
-            for o in raw:
-                out.extend([mask & (o >> i) for i in shifts])
-            return out[:width]
+    def bytes_to_values(self, bs):
+        """Convert a row of bytes into a flat row of values.
+        Result will be a freshly allocated object, not shared with
+        argument.
+        """
 
-        return map(asvalues, byte_rows)
+        if self.bitdepth == 8:
+            return bytearray(bs)
+        if self.bitdepth == 16:
+            # Conversion to bytes only required for Python 2.6
+            bs = bytes(bs)
+            return array('H',
+                         struct.unpack('!%dH' % (len(bs) // 2), bs))
+        assert self.bitdepth < 8
+        width = self.width
+        # Samples per byte
+        spb = 8 // self.bitdepth
+        out = array('B')
+        mask = 2**self.bitdepth - 1
+        shifts = [self.bitdepth * i
+                  for i in reversed(list(range(spb)))]
+        for o in bs:
+            out.extend([mask & (o >> i) for i in shifts])
+        return out[:width]
 
     def serialtoflat(self, bs, width=None):
         """Convert a single row of bytes (serial format) to
@@ -1669,13 +1670,9 @@ class Reader:
         out = array('B')
         mask = 2**self.bitdepth - 1
         shifts = list(map(self.bitdepth.__mul__, reversed(list(range(spb)))))
-        remaining = width
         for o in bs:
-            out.extend([(mask & (o >> s)) for s in shifts][:remaining])
-            remaining -= spb
-            if remaining <= 0:
-                remaining = width
-        return out
+            out.extend([(mask & (o >> s)) for s in shifts])
+        return out[:width]
 
     def iter_straight_byte_rows(self, byte_blocks):
         """Iterator that undoes the effect of filtering;
@@ -2214,8 +2211,12 @@ class Reader:
         maxval = 2**meta['bitdepth'] - 1
         maxbuffer = struct.pack('=' + typecode, maxval) * 4 * width
 
-        def newarray():
-            return array(typecode, maxbuffer)
+        if meta['bitdepth'] > 8:
+            def newarray():
+                return array('H', maxbuffer)
+        else:
+            def newarray():
+                return bytearray(maxbuffer)
 
         if meta['alpha'] and meta['greyscale']:
             # LA to RGBA
