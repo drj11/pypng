@@ -831,14 +831,14 @@ class Writer:
             spb = int(8 / self.bitdepth)
 
             def extend(sl):
-                a = array('B', sl)
+                a = bytearray(sl)
                 # Adding padding bytes so we can group into a whole
                 # number of spb-tuples.
                 n = float(len(a))
                 extra = math.ceil(n / spb) * spb - n
                 a.extend([0] * int(extra))
-                # Pack into bytes
-                # Each block is the samples for one byte
+                # Pack into bytes.
+                # Each block is the samples for one byte.
                 blocks = group(a, spb)
                 bytes = [reduce(lambda x, y: (x << self.bitdepth) + y, e)
                          for e in blocks]
@@ -1644,7 +1644,7 @@ class Reader:
             width = self.width
         # Samples per byte
         spb = 8 // self.bitdepth
-        out = array('B')
+        out = bytearray()
         mask = 2**self.bitdepth - 1
         shifts = [self.bitdepth * i
                   for i in reversed(list(range(spb)))]
@@ -2162,11 +2162,17 @@ class Reader:
         if not meta['greyscale']:
             return width, height, pixels, meta
         meta['greyscale'] = False
-        typecode = 'BH'[meta['bitdepth'] > 8]
+
+        if meta['bitdepth'] > 8:
+            def newarray():
+                return array('H', [0])
+        else:
+            def newarray():
+                return bytearray([0])
 
         def iterrgb():
             for row in pixels:
-                a = array(typecode, [0]) * 3 * width
+                a = newarray() * 3 * width
                 for i in range(3):
                     a[i::3] = row
                 yield a
