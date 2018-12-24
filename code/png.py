@@ -1616,15 +1616,15 @@ class Reader:
 
         return a
 
-    def iterboxed(self, rows):
-        """Iterator that yields each scanline in boxed row flat pixel
-        format.  `rows` should be an iterator that yields the bytes of
-        each row in turn.
+    def iter_bytes_to_values(self, byte_rows):
+        """Iterator that yields each scanline in boxed row flat pixel format.
+        `byte_rows` should be an iterator that yields
+        the bytes of each row in turn.
         """
 
         def asvalues(raw):
-            """Convert a row of raw bytes into a flat row.  Result will
-            be a freshly allocated object, not shared with
+            """Convert a row of bytes into a flat row.
+            Result will be a freshly allocated object, not shared with
             argument.
             """
 
@@ -1647,7 +1647,7 @@ class Reader:
                 out.extend([mask & (o >> i) for i in shifts])
             return out[:width]
 
-        return map(asvalues, rows)
+        return map(asvalues, byte_rows)
 
     def serialtoflat(self, bs, width=None):
         """Convert a single row of bytes (serial format) to
@@ -1677,9 +1677,9 @@ class Reader:
                 remaining = width
         return out
 
-    def iterstraight(self, byte_blocks):
-        """Iterator that undoes the effect of filtering, and yields
-        each row in serialised format (as a sequence of bytes).
+    def iter_straight_byte_rows(self, byte_blocks):
+        """Iterator that undoes the effect of filtering;
+        yields each row as a sequence of bytes (in serialised format).
         Assumes input is straightlaced.
         `byte_blocks` should be an iterable that yields the raw bytes
         in blocks of arbitrary size.
@@ -1935,7 +1935,7 @@ class Reader:
                          * [iter(self.deinterlace(raw))] *
                          (self.width * self.planes))
         else:
-            pixels = self.iterboxed(self.iterstraight(raw))
+            pixels = self.iter_bytes_to_values(self.iter_straight_byte_rows(raw))
         meta = dict()
         for attr in 'greyscale alpha planes bitdepth interlace'.split():
             meta[attr] = getattr(self, attr)
