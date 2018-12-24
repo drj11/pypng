@@ -1601,7 +1601,7 @@ class Reader:
                 source_offset += row_size
                 recon = self.undo_filter(filter_type, scanline, recon)
                 # Convert so that there is one element per pixel value
-                flat = self.serialtoflat(recon, ppr)
+                flat = self.bytes_to_values(recon, width=ppr)
                 if xstep == 1:
                     assert x == 0
                     offset = y * vpr
@@ -1625,7 +1625,7 @@ class Reader:
         for row in byte_rows:
             yield self.bytes_to_values(row)
 
-    def bytes_to_values(self, bs):
+    def bytes_to_values(self, bs, width=None):
         """Convert a row of bytes into a flat row of values.
         Result will be a freshly allocated object, not shared with
         argument.
@@ -1638,8 +1638,10 @@ class Reader:
             bs = bytes(bs)
             return array('H',
                          struct.unpack('!%dH' % (len(bs) // 2), bs))
+
         assert self.bitdepth < 8
-        width = self.width
+        if width is None:
+            width = self.width
         # Samples per byte
         spb = 8 // self.bitdepth
         out = array('B')
@@ -1648,30 +1650,6 @@ class Reader:
                   for i in reversed(list(range(spb)))]
         for o in bs:
             out.extend([mask & (o >> i) for i in shifts])
-        return out[:width]
-
-    def serialtoflat(self, bs, width=None):
-        """Convert a single row of bytes (serial format) to
-        conventional row format: a sequence of values.
-        Also known as flat row flat pixel.
-        """
-
-        if self.bitdepth == 8:
-            return bs
-        if self.bitdepth == 16:
-            bs = bytes(bs)
-            return array('H',
-                         struct.unpack('!%dH' % (len(bs) // 2), bs))
-        assert self.bitdepth < 8
-        if width is None:
-            width = self.width
-        # Samples per byte
-        spb = 8 // self.bitdepth
-        out = array('B')
-        mask = 2**self.bitdepth - 1
-        shifts = list(map(self.bitdepth.__mul__, reversed(list(range(spb)))))
-        for o in bs:
-            out.extend([(mask & (o >> s)) for s in shifts])
         return out[:width]
 
     def iter_straight_byte_rows(self, byte_blocks):
