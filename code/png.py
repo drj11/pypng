@@ -220,10 +220,6 @@ def isarray(x):
     return isinstance(x, array)
 
 
-def tostring(row):
-    return row.tostring()
-
-
 def interleave_planes(ipixels, apixels, ipsize, apsize):
     """
     Interleave planes.
@@ -670,15 +666,13 @@ class Writer:
         ``None`` if no ``tRNS`` chunk is necessary.
         """
 
-        p = array('B')
-        t = array('B')
+        p = bytearray()
+        t = bytearray()
 
         for x in self.palette:
             p.extend(x[0:3])
             if len(x) > 3:
                 t.append(x[3])
-        p = tostring(p)
-        t = tostring(t)
         if t:
             return p, t
         return p, None
@@ -822,14 +816,14 @@ class Writer:
         # Choose an extend function based on the bitdepth.  The extend
         # function packs/decomposes the pixel values into bytes and
         # stuffs them onto the data array.
-        data = array('B')
+        data = bytearray()
         if self.bitdepth == 8 or packed:
             extend = data.extend
         elif self.bitdepth == 16:
             # Decompose into bytes
             def extend(sl):
                 fmt = '!%dH' % len(sl)
-                data.extend(array('B', struct.pack(fmt, *sl)))
+                data.extend(struct.pack(fmt, *sl))
         else:
             # Pack into bytes
             assert self.bitdepth < 8
@@ -902,7 +896,8 @@ class Writer:
             data.append(0)
             extend(row)
             if len(data) > self.chunk_limit:
-                compressed = compressor.compress(tostring(data))
+                # :todo: bytes() only necessary in Python 2
+                compressed = compressor.compress(bytes(data))
                 if len(compressed):
                     write_chunk(outfile, b'IDAT', compressed)
                 # Because of our very witty definition of ``extend``,
@@ -911,7 +906,7 @@ class Writer:
                 # fresh one (which would be my natural FP instinct).
                 del data[:]
         if len(data):
-            compressed = compressor.compress(tostring(data))
+            compressed = compressor.compress(bytes(data))
         else:
             compressed = b''
         flushed = compressor.flush()
@@ -1019,6 +1014,7 @@ def write_chunk(outfile, tag, data=b''):
     checksum.
     """
 
+    data = bytes(data)
     # http://www.w3.org/TR/PNG/#5Chunk-layout
     outfile.write(struct.pack("!I", len(data)))
     outfile.write(tag)
@@ -1379,7 +1375,7 @@ class Readable:
     def read(self, n):
         r = self.buf[self.offset: self.offset + n]
         if isarray(r):
-            r = tostring(r)
+            r = bytearray(r)
         self.offset += n
         return r
 
@@ -1631,7 +1627,7 @@ class Reader:
             if self.bitdepth == 8:
                 return array('B', raw)
             if self.bitdepth == 16:
-                raw = tostring(raw)
+                raw = bytearray(raw)
                 return array('H',
                              struct.unpack('!%dH' % (len(raw) // 2), raw))
             assert self.bitdepth < 8
@@ -1656,7 +1652,7 @@ class Reader:
         if self.bitdepth == 8:
             return bytes
         if self.bitdepth == 16:
-            bytes = tostring(bytes)
+            bytes = bytearray(bytes)
             return array('H',
                          struct.unpack('!%dH' % (len(bytes) // 2), bytes))
         assert self.bitdepth < 8
