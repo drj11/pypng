@@ -1552,7 +1552,7 @@ class Reader:
         # first line 'up' is the same as 'null', 'paeth' is the same
         # as 'sub', with only 'average' requiring any special case.
         if not previous:
-            previous = array('B', [0] * len(scanline))
+            previous = bytearray([0] * len(scanline))
 
         # Call appropriate filter algorithm.  Note that 0 has already
         # been dealt with.
@@ -1573,11 +1573,15 @@ class Reader:
         # Values per row (of the target image)
         vpr = self.width * self.planes
 
-        # Make a result array, and make it big enough.  Interleaving
-        # writes to the output array randomly (well, not quite), so the
-        # entire output array must be in memory.
-        fmt = 'BH'[self.bitdepth > 8]
-        a = array(fmt, [0] * (vpr * self.height))
+        # Values per image
+        vpi = vpr * self.height
+        # Interleaving writes to the output array randomly
+        # (well, not quite), so the entire output array must be in memory.
+        # Make a result array, and make it big enough.
+        if self.bitdepth > 8:
+            a = array('H', [0] * vpi)
+        else:
+            a = bytearray([0] * vpi)
         source_offset = 0
 
         for lines in adam7_generate(self.width, self.height):
@@ -1627,7 +1631,8 @@ class Reader:
             if self.bitdepth == 8:
                 return array('B', raw)
             if self.bitdepth == 16:
-                raw = bytearray(raw)
+                # Conversion to bytes only required for Python 2.6
+                raw = bytes(raw)
                 return array('H',
                              struct.unpack('!%dH' % (len(raw) // 2), raw))
             assert self.bitdepth < 8
@@ -1644,17 +1649,18 @@ class Reader:
 
         return map(asvalues, rows)
 
-    def serialtoflat(self, bytes, width=None):
-        """Convert serial format (byte stream) pixel data to flat row
-        flat pixel.
+    def serialtoflat(self, bs, width=None):
+        """Convert a single row of bytes (serial format) to
+        conventional row format: a sequence of values.
+        Also known as flat row flat pixel.
         """
 
         if self.bitdepth == 8:
-            return bytes
+            return bs
         if self.bitdepth == 16:
-            bytes = bytearray(bytes)
+            bs = bytes(bs)
             return array('H',
-                         struct.unpack('!%dH' % (len(bytes) // 2), bytes))
+                         struct.unpack('!%dH' % (len(bs) // 2), bs))
         assert self.bitdepth < 8
         if width is None:
             width = self.width
@@ -1664,28 +1670,29 @@ class Reader:
         mask = 2**self.bitdepth - 1
         shifts = list(map(self.bitdepth.__mul__, reversed(list(range(spb)))))
         remaining = width
-        for o in bytes:
+        for o in bs:
             out.extend([(mask & (o >> s)) for s in shifts][:remaining])
             remaining -= spb
             if remaining <= 0:
                 remaining = width
         return out
 
-    def iterstraight(self, raw):
+    def iterstraight(self, byte_blocks):
         """Iterator that undoes the effect of filtering, and yields
         each row in serialised format (as a sequence of bytes).
-        Assumes input is straightlaced.  `raw` should be an iterable
-        that yields the raw bytes in chunks of arbitrary size.
+        Assumes input is straightlaced.
+        `byte_blocks` should be an iterable that yields the raw bytes
+        in blocks of arbitrary size.
         """
 
         # length of row, in bytes
         rb = self.row_bytes
-        a = array('B')
-        # The previous (reconstructed) scanline.  None indicates first
-        # line of image.
+        a = bytearray()
+        # The previous (reconstructed) scanline.
+        # None indicates first line of image.
         recon = None
-        for some in raw:
-            a.extend(some)
+        for some_bytes in byte_blocks:
+            a.extend(some_bytes)
             while len(a) >= rb + 1:
                 filter_type = a[0]
                 scanline = a[1: rb + 1]
@@ -1930,14 +1937,14 @@ class Reader:
             for data in idat:
                 # :todo: add a max_length argument here to limit output
                 # size.
-                yield array('B', d.decompress(data))
-            yield array('B', d.flush())
+                yield bytearray(d.decompress(data))
+            yield bytearray(d.flush())
 
         self.preamble(lenient=lenient)
         raw = iterdecomp(iteridat())
 
         if self.interlace:
-            raw = array('B', itertools.chain(*raw))
+            raw = bytearray(itertools.chain(*raw))
             arraycode = 'BH'[self.bitdepth > 8]
             # Like :meth:`group` but producing an array.array object for
             # each row.
