@@ -1923,25 +1923,8 @@ class Reader:
                     warnings.warn("PLTE chunk is required before IDAT chunk")
                 yield data
 
-        def iterdecomp(idat):
-            """Iterator that yields decompressed strings.  `idat` should
-            be an iterator that yields the ``IDAT`` chunk data.
-            """
-
-            # Currently, with no max_length parameter to decompress,
-            # this routine will do one yield per IDAT chunk: Not very
-            # incremental.
-            d = zlib.decompressobj()
-            # Each IDAT chunk is passed to the decompressor, then any
-            # remaining state is decompressed out.
-            for data in idat:
-                # :todo: add a max_length argument here to limit output
-                # size.
-                yield bytearray(d.decompress(data))
-            yield bytearray(d.flush())
-
         self.preamble(lenient=lenient)
-        raw = iterdecomp(iteridat())
+        raw = decompress(iteridat())
 
         if self.interlace:
             raw = bytearray(itertools.chain(*raw))
@@ -2263,6 +2246,24 @@ class Reader:
         meta['alpha'] = True
         meta['greyscale'] = False
         return width, height, convert(), meta
+
+
+def decompress(data_blocks):
+    """`data_blocks` should be an iterable that yields the
+    compressed data (from the ``IDAT`` chunks).
+    This yields decompressed byte strings.
+    """
+
+    # Currently, with no max_length parameter to decompress,
+    # this routine will do one yield per IDAT chunk: Not very
+    # incremental.
+    d = zlib.decompressobj()
+    # Each IDAT chunk is passed to the decompressor, then any
+    # remaining state is decompressed out.
+    for data in data_blocks:
+        # :todo: add a max_length argument here to limit output size.
+        yield bytearray(d.decompress(data))
+    yield bytearray(d.flush())
 
 
 def check_bitdepth_colortype(bitdepth, colortype):
