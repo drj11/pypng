@@ -46,7 +46,7 @@ def topngbytes(name, rows, x, y, **k):
     Convenience function for creating a PNG file "in memory" as
     a string.  Creates a :class:`Writer` instance using the keyword
     arguments, then passes `rows` to its :meth:`Writer.write` method.
-    The resulting PNG file is returned as a string.  `name` is used
+    The resulting PNG file is returned as bytes.  `name` is used
     to identify the file for debugging.
     """
 
