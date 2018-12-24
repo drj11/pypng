@@ -220,45 +220,6 @@ def isarray(x):
     return isinstance(x, array)
 
 
-def interleave_planes(ipixels, apixels, ipsize, apsize):
-    """
-    Interleave planes.
-    Typically used to interleave intensity planes (RGB) with
-    alpha planes (A): RGB + A = RGBA.
-
-    Return an array where each pixel of the output constists of
-    `ipsize` elements from `ipixels` immediately followed by
-    `apsize` elements from `apixels`.
-
-    Typically (when performing RGB + A on 8-bit inputs)
-    `ipsize` = 3, and `apsize` = 1.
-
-    Conventionally `ipixels` and `apixels` are byte arrays
-    so the sizes are bytes, but
-    it actually works with any arrays of the same type.
-
-    The returned array is the same type as the input arrays
-    which should be the same type as each other.
-    """
-
-    itotal = len(ipixels)
-    atotal = len(apixels)
-    newtotal = itotal + atotal
-    newpsize = ipsize + apsize
-    # Set up the output buffer
-    # See http://www.python.org/doc/2.4.4/lib/module-array.html#l2h-1356
-    out = array(ipixels.typecode)
-    # It's annoying that there is no cheap way to set the array size :-(
-    out.extend(ipixels)
-    out.extend(apixels)
-    # Interleave in the pixel data
-    for i in range(ipsize):
-        out[i: newtotal: newpsize] = ipixels[i: itotal: ipsize]
-    for i in range(apsize):
-        out[i + ipsize: newtotal: newpsize] = apixels[i: atotal: apsize]
-    return out
-
-
 def check_palette(palette):
     """Check a palette argument (to the :class:`Writer` class)
     for validity.  Returns the palette as a list if okay; raises an
