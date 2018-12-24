@@ -1364,9 +1364,9 @@ class Reader:
         """
         Create a PNG decoder object.
 
-        The constructor expects exactly one keyword argument. If you
-        supply a positional argument instead, it will guess the input
-        type.
+        The constructor expects exactly one keyword argument.
+        If you supply a positional argument instead,
+        it will guess the input type.
         Choose from the following keyword arguments:
 
         filename
@@ -1374,7 +1374,7 @@ class Reader:
         file
           A file-like object (object with a read() method).
         bytes
-          ``array`` or ``string`` with PNG data.
+          ``bytes`` or ``bytearray`` with PNG data.
 
         """
         if ((_guess is not None and len(kw) != 0) or
