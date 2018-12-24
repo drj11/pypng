@@ -424,13 +424,12 @@ class Test(unittest.TestCase):
         d = hashlib.md5(seqtobytes(pixel)).hexdigest()
         self.assertEqual(d, '255cd971ab8cd9e7275ff906e5041aa0')
 
-    def test_phys(self):
+    def test_no_phys_chunk(self):
         """
-        Check if pHYs chunk is written
+        Check that no pHYs chunk when not asked.
         """
-        pixels = [[0] * 3] * 3
-        width = len(pixels)
-        height = width
+        width = height = 3
+        pixels = [[0] * width] * height
         out = BytesIO()
         # = Check if pHYs chunk is omitted by default
         writer = png.Writer(width=width, height=height, greyscale=True)
@@ -442,26 +441,39 @@ class Test(unittest.TestCase):
         w, h, _, meta = reader.read()
         self.assertFalse('physical' in meta)
         self.assertTrue(not hasattr(reader, 'x_pixels_per_unit'))
-        # = Check if pHYs chunk is generated
+
+    def test_phys_chunk(self):
+        """
+        Check that pHYs chunk is generated.
+        """
+        width = height = 3
+        pixels = [[0] * width] * height
         out = BytesIO()
         writer = png.Writer(width=width, height=height, greyscale=True,
-                            x_pixels_per_unit=2, y_pixels_per_unit=1,
+                            x_pixels_per_unit=2000,
+                            y_pixels_per_unit=1000,
                             unit_is_meter=True)
         writer.write(out, pixels)
         out.seek(0)
         reader = png.Reader(file=out)
         w, h, _, meta = reader.read()
         self.assertTrue('physical' in meta)
-        self.assertEqual(2, reader.x_pixels_per_unit)
-        self.assertEqual(1, reader.y_pixels_per_unit)
+        self.assertEqual(2000, reader.x_pixels_per_unit)
+        self.assertEqual(1000, reader.y_pixels_per_unit)
         self.assertTrue(reader.unit_is_meter)
-        expected = (2, 1, True)
+        expected = (2000, 1000, True)
         self.assertEqual(expected, meta['physical'])
         res = meta['physical']
-        self.assertEqual(2, res.x)
-        self.assertEqual(1, res.y)
+        self.assertEqual(2000, res.x)
+        self.assertEqual(1000, res.y)
         self.assertTrue(res.unit_is_meter)
-        # = 2nd check
+
+    def test_phys_chunk_2(self):
+        """
+        Check pHYs chunk when unit_is_meter is False.
+        """
+        width = height = 3
+        pixels = [[0] * width] * height
         out = BytesIO()
         writer = png.Writer(width=width, height=height, greyscale=True,
                             x_pixels_per_unit=2, y_pixels_per_unit=1,
