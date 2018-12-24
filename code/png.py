@@ -1407,18 +1407,13 @@ class Reader:
         else:
             raise TypeError("expecting filename, file or bytes array")
 
-    def chunk(self, seek=None, lenient=False):
+    def chunk(self, lenient=False):
         """
-        Read the next PNG chunk from the input file; returns a
-        (*type*, *data*) tuple.  *type* is the chunk's type as a
-        byte string (all PNG chunk types are 4 bytes long).
+        Read the next PNG chunk from the input file;
+        returns a (*type*, *data*) tuple.
+        *type* is the chunk's type as a byte string
+        (all PNG chunk types are 4 bytes long).
         *data* is the chunk's data content, as a byte string.
-
-        If the optional `seek` argument is
-        specified then it will keep reading chunks until it either runs
-        out of file or finds the type specified by the argument.  Note
-        that in general the order of chunks in PNGs is unspecified, so
-        using `seek` can cause you to miss chunks.
 
         If the optional `lenient` argument evaluates to `True`,
         checksum failures will raise warnings rather than exceptions.
@@ -1426,41 +1421,38 @@ class Reader:
 
         self.validate_signature()
 
-        while True:
-            # http://www.w3.org/TR/PNG/#5Chunk-layout
-            if not self.atchunk:
-                self.atchunk = self.chunklentype()
-            length, type = self.atchunk
-            self.atchunk = None
-            data = self.file.read(length)
-            if len(data) != length:
-                raise ChunkError(
-                    'Chunk %s too short for required %i octets.'
-                    % (type, length))
-            checksum = self.file.read(4)
-            if len(checksum) != 4:
-                raise ChunkError('Chunk %s too short for checksum.' % type)
-            if seek and type != seek:
-                continue
-            verify = zlib.crc32(type)
-            verify = zlib.crc32(data, verify)
-            # Whether the output from zlib.crc32 is signed or not varies
-            # according to hideous implementation details, see
-            # http://bugs.python.org/issue1202 .
-            # We coerce it to be positive here (in a way which works on
-            # Python 2.3 and older).
-            verify &= 2**32 - 1
-            verify = struct.pack('!I', verify)
-            if checksum != verify:
-                (a, ) = struct.unpack('!I', checksum)
-                (b, ) = struct.unpack('!I', verify)
-                message = ("Checksum error in %s chunk: 0x%08X != 0x%08X."
-                           % (type, a, b))
-                if lenient:
-                    warnings.warn(message, RuntimeWarning)
-                else:
-                    raise ChunkError(message)
-            return type, data
+        # http://www.w3.org/TR/PNG/#5Chunk-layout
+        if not self.atchunk:
+            self.atchunk = self.chunklentype()
+        length, type = self.atchunk
+        self.atchunk = None
+        data = self.file.read(length)
+        if len(data) != length:
+            raise ChunkError(
+                'Chunk %s too short for required %i octets.'
+                % (type, length))
+        checksum = self.file.read(4)
+        if len(checksum) != 4:
+            raise ChunkError('Chunk %s too short for checksum.' % type)
+        verify = zlib.crc32(type)
+        verify = zlib.crc32(data, verify)
+        # Whether the output from zlib.crc32 is signed or not varies
+        # according to hideous implementation details, see
+        # http://bugs.python.org/issue1202 .
+        # We coerce it to be positive here (in a way which works on
+        # Python 2.3 and older).
+        verify &= 2**32 - 1
+        verify = struct.pack('!I', verify)
+        if checksum != verify:
+            (a, ) = struct.unpack('!I', checksum)
+            (b, ) = struct.unpack('!I', verify)
+            message = ("Checksum error in %s chunk: 0x%08X != 0x%08X."
+                       % (type, a, b))
+            if lenient:
+                warnings.warn(message, RuntimeWarning)
+            else:
+                raise ChunkError(message)
+        return type, data
 
     def chunks(self):
         """Return an iterator that will yield each chunk as a

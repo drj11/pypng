@@ -165,7 +165,11 @@ class Test(unittest.TestCase):
         """Create an LA image with bitdepth 4."""
         bytes = topngbytes('la4.png', [[5, 12]], 1, 1,
                            greyscale=True, alpha=True, bitdepth=4)
-        sbit = png.Reader(bytes=bytes).chunk(b'sBIT')[1]
+        sbit = None
+        for chunk_type, content in png.Reader(bytes=bytes).chunks():
+            if chunk_type == b'sBIT':
+                sbit = content
+                break
         self.assertEqual(sbit, b'\x04\x04')
 
     def test_P2(self):
