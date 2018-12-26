@@ -134,19 +134,19 @@ PATTERN = {
 }
 
 
-def generate_image(size, bitdepth, pattern):
+def yield_fun_rows(size, bitdepth, pattern):
     """
-    Create a single plane (monochrome) test pattern.
-    Returns a flat row flat pixel array.
+    Create a single channel (monochrome) test pattern.
+    Yield each row in turn.
     """
 
     width, height = size
 
     maxval = 2 ** bitdepth - 1
     if maxval > 255:
-        a = array("H")
+        typecode = "H"
     else:
-        a = array("B")
+        typecode = "B"
     pfun = PATTERN[pattern]
 
     # We add (0.5, 0.5) to each coordinate, effectively sampling
@@ -154,11 +154,12 @@ def generate_image(size, bitdepth, pattern):
     # This is morally better, and produces all 256 sample values
     # in a 256-pixel wide gradient.
     for y in range(height):
+        a = array(typecode)
         fy = Fraction(Fraction(y + 0.5), height)
         for x in range(width):
             fx = Fraction(Fraction(x + 0.5), width)
             a.append(int(round(maxval * pfun(fx, fy))))
-    return a
+        yield a
 
 
 def generate(args):
@@ -174,11 +175,11 @@ def generate(args):
     out = binary_stdout()
 
     for pattern in args.pattern:
-        pixels = generate_image(size, bitdepth, pattern)
+        rows = yield_fun_rows(size, bitdepth, pattern)
         writer = png.Writer(
             size[0], size[1], bitdepth=bitdepth, greyscale=True, alpha=False
         )
-        writer.write_array(out, pixels)
+        writer.write(out, rows)
 
 
 def binary_stdout():
