@@ -708,66 +708,7 @@ class Writer:
         sequence of bytes.
         """
 
-        # http://www.w3.org/TR/PNG/#5PNG-file-signature
-        outfile.write(signature)
-
-        # http://www.w3.org/TR/PNG/#11IHDR
-        write_chunk(outfile, b'IHDR',
-                    struct.pack("!2I5B", self.width, self.height,
-                                self.bitdepth, self.color_type,
-                                0, 0, self.interlace))
-
-        # See :chunk:order
-        # http://www.w3.org/TR/PNG/#11gAMA
-        if self.gamma is not None:
-            write_chunk(outfile, b'gAMA',
-                        struct.pack("!L", int(round(self.gamma * 1e5))))
-
-        # See :chunk:order
-        # http://www.w3.org/TR/PNG/#11sBIT
-        if self.rescale:
-            write_chunk(
-                outfile, b'sBIT',
-                struct.pack('%dB' % self.planes,
-                            * [s[0] for s in self.rescale]))
-
-        # :chunk:order: Without a palette (PLTE chunk), ordering is
-        # relatively relaxed.  With one, gAMA chunk must precede PLTE
-        # chunk which must precede tRNS and bKGD.
-        # See http://www.w3.org/TR/PNG/#5ChunkOrdering
-        if self.palette:
-            p, t = self.make_palette()
-            write_chunk(outfile, b'PLTE', p)
-            if t:
-                # tRNS chunk is optional. Only needed if palette entries
-                # have alpha.
-                write_chunk(outfile, b'tRNS', t)
-
-        # http://www.w3.org/TR/PNG/#11tRNS
-        if self.transparent is not None:
-            if self.greyscale:
-                write_chunk(outfile, b'tRNS',
-                            struct.pack("!1H", *self.transparent))
-            else:
-                write_chunk(outfile, b'tRNS',
-                            struct.pack("!3H", *self.transparent))
-
-        # http://www.w3.org/TR/PNG/#11bKGD
-        if self.background is not None:
-            if self.greyscale:
-                write_chunk(outfile, b'bKGD',
-                            struct.pack("!1H", *self.background))
-            else:
-                write_chunk(outfile, b'bKGD',
-                            struct.pack("!3H", *self.background))
-
-        # http://www.w3.org/TR/PNG/#11pHYs
-        if (self.x_pixels_per_unit is not None and
-                self.y_pixels_per_unit is not None):
-            tup = (self.x_pixels_per_unit,
-                   self.y_pixels_per_unit,
-                   int(self.unit_is_meter))
-            write_chunk(outfile, b'pHYs', struct.pack("!LLB", *tup))
+        self.write_preamble(outfile)
 
         # http://www.w3.org/TR/PNG/#11IDAT
         if self.compression is not None:
@@ -877,6 +818,68 @@ class Writer:
         # http://www.w3.org/TR/PNG/#11IEND
         write_chunk(outfile, b'IEND')
         return i + 1
+
+    def write_preamble(self, outfile):
+        # http://www.w3.org/TR/PNG/#5PNG-file-signature
+        outfile.write(signature)
+
+        # http://www.w3.org/TR/PNG/#11IHDR
+        write_chunk(outfile, b'IHDR',
+                    struct.pack("!2I5B", self.width, self.height,
+                                self.bitdepth, self.color_type,
+                                0, 0, self.interlace))
+
+        # See :chunk:order
+        # http://www.w3.org/TR/PNG/#11gAMA
+        if self.gamma is not None:
+            write_chunk(outfile, b'gAMA',
+                        struct.pack("!L", int(round(self.gamma * 1e5))))
+
+        # See :chunk:order
+        # http://www.w3.org/TR/PNG/#11sBIT
+        if self.rescale:
+            write_chunk(
+                outfile, b'sBIT',
+                struct.pack('%dB' % self.planes,
+                            * [s[0] for s in self.rescale]))
+
+        # :chunk:order: Without a palette (PLTE chunk), ordering is
+        # relatively relaxed.  With one, gAMA chunk must precede PLTE
+        # chunk which must precede tRNS and bKGD.
+        # See http://www.w3.org/TR/PNG/#5ChunkOrdering
+        if self.palette:
+            p, t = self.make_palette()
+            write_chunk(outfile, b'PLTE', p)
+            if t:
+                # tRNS chunk is optional. Only needed if palette entries
+                # have alpha.
+                write_chunk(outfile, b'tRNS', t)
+
+        # http://www.w3.org/TR/PNG/#11tRNS
+        if self.transparent is not None:
+            if self.greyscale:
+                write_chunk(outfile, b'tRNS',
+                            struct.pack("!1H", *self.transparent))
+            else:
+                write_chunk(outfile, b'tRNS',
+                            struct.pack("!3H", *self.transparent))
+
+        # http://www.w3.org/TR/PNG/#11bKGD
+        if self.background is not None:
+            if self.greyscale:
+                write_chunk(outfile, b'bKGD',
+                            struct.pack("!1H", *self.background))
+            else:
+                write_chunk(outfile, b'bKGD',
+                            struct.pack("!3H", *self.background))
+
+        # http://www.w3.org/TR/PNG/#11pHYs
+        if (self.x_pixels_per_unit is not None and
+                self.y_pixels_per_unit is not None):
+            tup = (self.x_pixels_per_unit,
+                   self.y_pixels_per_unit,
+                   int(self.unit_is_meter))
+            write_chunk(outfile, b'pHYs', struct.pack("!LLB", *tup))
 
     def write_array(self, outfile, pixels):
         """
