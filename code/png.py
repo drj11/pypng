@@ -746,21 +746,9 @@ class Writer:
                 bytes = [reduce(lambda x, y: (x << self.bitdepth) + y, e)
                          for e in blocks]
                 data.extend(bytes)
-        if self.rescale:
-            oldextend = extend
-            # One factor for each channel
-            fs = [float(2 ** s[1] - 1)/float(2 ** s[0] - 1)
-                  for s in self.rescale]
 
-            def extend(sl):
-                scaled_scanline = sl[:]
-                typecode = 'BH'[self.bitdepth > 8]
-                for i in range(self.planes):
-                    channel = array(
-                        typecode,
-                        (int(round(fs[i] * x)) for x in sl[i::self.planes]))
-                    scaled_scanline[i::self.planes] = channel
-                oldextend(scaled_scanline)
+        if self.rescale:
+            rows = rescale_rows(rows, self.rescale)
 
         # Build the first row, testing mostly to see if we need to
         # changed the extend function to cope with NumPy integer types
@@ -996,6 +984,39 @@ def write_chunks(out, chunks):
     out.write(signature)
     for chunk in chunks:
         write_chunk(out, *chunk)
+
+
+def rescale_rows(rows, rescale):
+    """
+    Take each row in rows (an iterator) and yield
+    a fresh row with the pixels scaled according to the
+    rescale parameters in the list `rescale`.
+    Each element of `rescale` is a tuple of
+    (source_bitdepth, target_bitdepth),
+    with one element per channel.
+    """
+
+    # One factor for each channel
+    fs = [float(2 ** s[1] - 1)/float(2 ** s[0] - 1)
+          for s in rescale]
+
+    # Assume all target_bitdepths are the same
+    target_bitdepths = set(s[1] for s in rescale)
+    assert len(target_bitdepths) == 1
+    (target_bitdepth, ) = target_bitdepths
+    typecode = 'BH'[target_bitdepth > 8]
+
+    # Number of channels
+    n_chans = len(rescale)
+
+    for row in rows:
+        rescaled_row = row[:]
+        for i in range(n_chans):
+            channel = array(
+                typecode,
+                (int(round(fs[i] * x)) for x in row[i::n_chans]))
+            rescaled_row[i::n_chans] = channel
+        yield rescaled_row
 
 
 def filter_scanline(type, line, fo, prev=None):
