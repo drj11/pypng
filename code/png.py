@@ -1370,8 +1370,8 @@ class Reader:
         self.transparent = None
         # A pair of (len,type) if a chunk has been read but its data and
         # checksum have not (in other words the file position is just
-        # past the 4 bytes that specify the chunk type).  See preamble
-        # method for how this is used.
+        # past the 4 bytes that specify the chunk type).
+        # See preamble method for how this is used.
         self.atchunk = None
 
         if _guess is not None:
@@ -1884,11 +1884,14 @@ class Reader:
 
     def palette(self, alpha='natural'):
         """Returns a palette that is a sequence of 3-tuples or 4-tuples,
-        synthesizing it from the ``PLTE`` and ``tRNS`` chunks.  These
-        chunks should have already been processed (for example, by
-        calling the :meth:`preamble` method).  All the tuples are the
-        same size: 3-tuples if there is no ``tRNS`` chunk, 4-tuples when
-        there is a ``tRNS`` chunk.  Assumes that the image is colour type
+        synthesizing it from the ``PLTE`` and ``tRNS`` chunks.
+        These chunks should have already been processed (for example,
+        by calling the :meth:`preamble` method).
+        All the tuples are the same size:
+        3-tuples if there is no ``tRNS`` chunk,
+        4-tuples when there is a ``tRNS`` chunk.
+
+        Assumes that the image is colour type
         3 and therefore a ``PLTE`` chunk is required.
 
         If the `alpha` argument is ``'force'`` then an alpha channel is
