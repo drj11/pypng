@@ -1843,11 +1843,11 @@ class Reader:
             arraycode = 'BH'[self.bitdepth > 8]
             # Like :meth:`group` but producing an array.array object for
             # each row.
-            pixels = map(lambda *row: array(arraycode, row),
-                         * [iter(self.deinterlace(raw))] *
-                         (self.width * self.planes))
+            rows = map(lambda *row: array(arraycode, row),
+                       * [iter(self.deinterlace(raw))] *
+                       (self.width * self.planes))
         else:
-            pixels = self.iter_bytes_to_values(self.iter_straight_byte_rows(raw))
+            rows = self.iter_bytes_to_values(self.iter_straight_byte_rows(raw))
         meta = dict()
         for attr in 'greyscale alpha planes bitdepth interlace'.split():
             meta[attr] = getattr(self, attr)
@@ -1862,7 +1862,7 @@ class Reader:
                                           self.unit_is_meter)
         if self.plte:
             meta['palette'] = self.palette()
-        return self.width, self.height, pixels, meta
+        return self.width, self.height, rows, meta
 
     def read_flat(self):
         """
