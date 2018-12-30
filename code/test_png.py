@@ -516,7 +516,7 @@ class Test(unittest.TestCase):
     def test_empty(self):
         """Test empty file."""
 
-        r = png.Reader(bytes='')
+        r = png.Reader(bytes=b'')
         self.assertRaises(png.FormatError, r.asDirect)
 
     def test_signature_only(self):
@@ -747,7 +747,7 @@ class Test(unittest.TestCase):
         ])
 
     def test_undo_filter(self):
-        reader = png.Reader(bytes='')
+        reader = png.Reader(bytes=b'')
         reader.psize = 3
         scanprev = array('B', [20, 21, 22, 210, 211, 212])
         scanline = array('B', [30, 32, 34, 230, 233, 236])
@@ -773,7 +773,7 @@ class Test(unittest.TestCase):
 
     def test_undo_filter_paeth(self):
         """Edge cases for undoing paeth filter."""
-        reader = png.Reader(bytes='')
+        reader = png.Reader(bytes=b'')
         reader.psize = 3
         scanprev = array('B', [2, 0, 0, 0, 9, 11])
         scanline = array('B', [6, 10, 9, 100, 101, 102])
