@@ -796,10 +796,8 @@ class Writer:
                 # we use ``del`` to empty this one, rather than create a
                 # fresh one (which would be my natural FP instinct).
                 del data[:]
-        if len(data):
-            compressed = compressor.compress(bytes(data))
-        else:
-            compressed = b''
+
+        compressed = compressor.compress(bytes(data))
         flushed = compressor.flush()
         if len(compressed) or len(flushed):
             write_chunk(outfile, b'IDAT', compressed + flushed)
