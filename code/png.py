@@ -707,14 +707,6 @@ class Writer:
         sequence of bytes.
         """
 
-        self.write_preamble(outfile)
-
-        # http://www.w3.org/TR/PNG/#11IDAT
-        if self.compression is not None:
-            compressor = zlib.compressobj(self.compression)
-        else:
-            compressor = zlib.compressobj()
-
         # Ensure rows are scaled (to 4-/8-/16-bit),
         # and packed into bytes.
 
@@ -725,6 +717,14 @@ class Writer:
             rows = pack_rows(rows, self.bitdepth)
         elif self.bitdepth == 16:
             rows = unpack_rows(rows)
+
+        self.write_preamble(outfile)
+
+        # http://www.w3.org/TR/PNG/#11IDAT
+        if self.compression is not None:
+            compressor = zlib.compressobj(self.compression)
+        else:
+            compressor = zlib.compressobj()
 
         # data accumulates bytes to be compressed for the IDAT chunk;
         # it's compressed when sufficiently large.
