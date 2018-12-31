@@ -391,12 +391,12 @@ class Writer:
 
         The image size (in pixels) can be specified either by using the
         `width` and `height` arguments, or with the single `size`
-        argument.  If `size` is used it should be a pair (*width*,
-        *height*).
+        argument.
+        If `size` is used it should be a pair (*width*, *height*).
 
-        `greyscale` and `alpha` are booleans that specify whether
-        an image is greyscale (or colour), and whether it has an
-        alpha channel (or not).
+        `greyscale` and `alpha` are booleans that specify
+        whether an image is greyscale (or colour), and
+        whether it has an alpha channel (or not).
 
         `bitdepth` specifies the bit depth of the source pixel values.
         Each channel may have a different bit depth.
@@ -414,64 +414,74 @@ class Writer:
         In this case the supplied pixel values will be rescaled to
         fit the range of the selected bit depth.
 
-        The details of which bit depth / colour model combinations the
-        PNG file format supports directly, are somewhat arcane
-        (refer to the PNG specification for full details).  Briefly:
-        "small" bit depths (1,2,4) are only allowed with greyscale and
-        colour mapped images; colour mapped images cannot have bit depth
-        16.
+        The PNG file format supports many bit depth / colour model
+        combinations, but not all.
+        The details are somewhat arcane
+        (refer to the PNG specification for full details).
+        Briefly:
+        Bit depths < 8 (1,2,4) are only allowed with greyscale and
+        colour mapped images;
+        colour mapped images cannot have bit depth 16.
 
-        For colour mapped images (in other words, when the `palette`
-        argument is specified) the `bitdepth` argument must match one of
-        the valid PNG bit depths: 1, 2, 4, or 8.  (It is valid to have a
-        PNG image with a palette and an ``sBIT`` chunk, but the meaning
-        is slightly different; it would be awkward to press the
-        `bitdepth` argument into service for this.)
+        For colour mapped images
+        (in other words, when the `palette` argument is specified)
+        the `bitdepth` argument must match one of
+        the valid PNG bit depths: 1, 2, 4, or 8.
+        (It is valid to have a PNG image with a palette and
+        an ``sBIT`` chunk, but the meaning is slightly different;
+        it would be awkward to use the `bitdepth` argument for this.)
 
-        The `palette` option, when specified, causes a colour
-        mapped image to be created: the PNG colour type is set to 3;
+        The `palette` option, when specified,
+        causes a colour mapped image to be created:
+        the PNG colour type is set to 3;
         `greyscale` must not be set; `alpha` must not be set;
-        `transparent` must not be set; the bit depth must be 1,2,4,
-        or 8.  When a colour mapped image is created, the pixel values
-        are palette indexes and the `bitdepth` argument specifies the
-        size of these indexes (not the size of the colour values in
-        the palette).
+        `transparent` must not be set.
+        The bit depth must be 1,2,4, or 8.
+        When a colour mapped image is created,
+        the pixel values are palette indexes and
+        the `bitdepth` argument specifies the size of these indexes
+        (not the size of the colour values in the palette).
 
         The palette argument value should be a sequence of 3- or
-        4-tuples.  3-tuples specify RGB palette entries; 4-tuples
-        specify RGBA palette entries.  If both 4-tuples and 3-tuples
-        appear in the sequence then all the 4-tuples must come
-        before all the 3-tuples.  A ``PLTE`` chunk is created; if there
-        are 4-tuples then a ``tRNS`` chunk is created as well.  The
-        ``PLTE`` chunk will contain all the RGB triples in the same
-        sequence; the ``tRNS`` chunk will contain the alpha channel for
-        all the 4-tuples, in the same sequence.  Palette entries
-        are always 8-bit.
+        4-tuples.
+        3-tuples specify RGB palette entries;
+        4-tuples specify RGBA palette entries.
+        All the 4-tuples (if present) must come before all the 3-tuples.
+        A ``PLTE`` chunk is created;
+        if there are 4-tuples then a ``tRNS`` chunk is created as well.
+        The ``PLTE`` chunk will contain all the RGB triples in the same
+        sequence;
+        the ``tRNS`` chunk will contain the alpha channel for
+        all the 4-tuples, in the same sequence.
+        Palette entries are always 8-bit.
 
-        If specified, the `transparent` and `background` parameters must
-        be a tuple with three integer values for red, green, blue, or
-        a simple integer (or singleton tuple) for a greyscale image.
+        If specified, the `transparent` and `background` parameters must be
+        a tuple with one element for each channel in the image.
+        Either a 3-tuple of integer (RGB) values for a colour image, or
+        a 1-tuple of a single integer for a greyscale image.
 
         If specified, the `gamma` parameter must be a positive number
-        (generally, a `float`).  A ``gAMA`` chunk will be created.
+        (generally, a `float`).
+        A ``gAMA`` chunk will be created.
         Note that this will not change the values of the pixels as
-        they appear in the PNG file, they are assumed to have already
+        they appear in the PNG file,
+        they are assumed to have already
         been converted appropriately for the gamma specified.
 
         The `compression` argument specifies the compression level to
-        be used by the ``zlib`` module.  Values from 1 to 9 specify
-        compression, with 9 being "more compressed" (usually smaller
-        and slower, but it doesn't always work out that way).  0 means
-        no compression.  -1 and ``None`` both mean that the default
-        level of compession will be picked by the ``zlib`` module
-        (which is generally acceptable).
+        be used by the ``zlib`` module.
+        Values from 1 to 9 (highest) specify compression.
+        0 means no compression.
+        -1 and ``None`` both mean that the ``zlib`` module uses
+        the default level of compession (which is generally acceptable).
 
         If `interlace` is true then an interlaced image is created
-        (using PNG's so far only interace method, *Adam7*).  This does
-        not affect how the pixels should be presented to the encoder,
+        (using PNG's so far only interace method, *Adam7*).
+        This does not affect how the pixels should be passed in,
         rather it changes how they are arranged into the PNG file.
-        On slow connexions interlaced images can be partially decoded
-        by the browser to give a rough view of the image that is
+        On slow connexions interlaced images can be
+        partially decoded by the browser to give
+        a rough view of the image that is
         successively refined as more image data appears.
 
         .. note ::
@@ -480,8 +490,9 @@ class Writer:
           to be processed in working memory.
 
         `chunk_limit` is used to limit the amount of memory used whilst
-        compressing the image.  In order to avoid using large amounts of
-        memory, multiple ``IDAT`` chunks may be created.
+        compressing the image.
+        In order to avoid using large amounts of memory,
+        multiple ``IDAT`` chunks may be created.
         """
 
         # At the moment the `planes` argument is ignored;
