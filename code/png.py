@@ -731,35 +731,7 @@ class Writer:
         data = bytearray()
         extend = data.extend
 
-        # Build the first row, testing mostly to see if we need to
-        # changed the extend function to cope with NumPy integer types
-        # (they cause our ordinary definition of extend to fail, so we
-        # wrap it).  See
-        # http://code.google.com/p/pypng/issues/detail?id=44
-        enumrows = enumerate(rows)
-        del rows
-
-        # First row's filter type.
-        data.append(0)
-        # :todo: Certain exceptions in the call to ``.next()`` or the
-        # following try would indicate no row data supplied.
-        # Should catch.
-        i, row = next(enumrows)
-        try:
-            # If this fails...
-            extend(row)
-        except Exception:
-            # ... try a version that converts the values to int first.
-            # Not only does this work for the (slightly broken) NumPy
-            # types, there are probably lots of other, unknown, "nearly"
-            # int types it works for.
-            def wrapmapint(f):
-                return lambda sl: f([int(x) for x in sl])
-            extend = wrapmapint(extend)
-            del wrapmapint
-            extend(row)
-
-        for i, row in enumrows:
+        for i, row in enumerate(rows):
             # Add "None" filter type.  Currently, it's essential that
             # this filter type be used for every scanline as we do not
             # mark the first row of a reduced pass image; that means we
