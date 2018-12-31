@@ -639,24 +639,6 @@ class Writer:
         # :todo: fix for bitdepth < 8
         self.psize = (self.bitdepth / 8) * self.planes
 
-    def make_palette(self):
-        """Create the byte sequences for a ``PLTE`` and
-        if necessary a ``tRNS`` chunk.
-        Returned as a pair (*p*, *t*).
-        *t* will be ``None`` if no ``tRNS`` chunk is necessary.
-        """
-
-        p = bytearray()
-        t = bytearray()
-
-        for x in self.palette:
-            p.extend(x[0:3])
-            if len(x) > 3:
-                t.append(x[3])
-        if t:
-            return p, t
-        return p, None
-
     def write(self, outfile, rows):
         """
         Write a PNG image to the output file.
@@ -824,7 +806,7 @@ class Writer:
         # which must precede tRNS and bKGD.
         # See http://www.w3.org/TR/PNG/#5ChunkOrdering
         if self.palette:
-            p, t = self.make_palette()
+            p, t = make_palette_chunks(self.palette)
             write_chunk(outfile, b'PLTE', p)
             if t:
                 # tRNS chunk is optional. Only needed if palette entries
@@ -1028,6 +1010,26 @@ def unpack_rows(rows):
     for row in rows:
         fmt = '!%dH' % len(row)
         yield bytearray(struct.pack(fmt, *row))
+
+
+def make_palette_chunks(palette):
+    """
+    Create the byte sequences for a ``PLTE`` and
+    if necessary a ``tRNS`` chunk.
+    Returned as a pair (*p*, *t*).
+    *t* will be ``None`` if no ``tRNS`` chunk is necessary.
+    """
+
+    p = bytearray()
+    t = bytearray()
+
+    for x in palette:
+        p.extend(x[0:3])
+        if len(x) > 3:
+            t.append(x[3])
+    if t:
+        return p, t
+    return p, None
 
 
 def filter_scanline(type, line, fo, prev=None):
