@@ -160,7 +160,6 @@ import warnings
 import zlib
 
 from array import array
-from functools import reduce
 
 try:
     # `cpngfilters` is a Cython module: it must be compiled by
