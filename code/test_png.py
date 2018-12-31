@@ -142,13 +142,21 @@ class Test(unittest.TestCase):
         """Test L7."""
         return self.helper_L(7)
 
+    def test_L9(self):
+        """Test L9."""
+        return self.helper_L(9)
+
+    def test_L12(self):
+        """Test L12."""
+        return self.helper_L(12)
+
     def helper_L(self, n):
         mask = (1 << n) - 1
         # Use small chunk_limit so that multiple chunk writing is
         # tested.  Making it a test for Issue 20 (googlecode).
         w = png.Writer(15, 17, greyscale=True, bitdepth=n, chunk_limit=99)
         f = BytesIO()
-        source_pixels = array('B', (mask & x for x in range(1, 256)))
+        source_pixels = bytearray(mask & x for x in range(1, 256))
         w.write_array(f, source_pixels)
         r = png.Reader(bytes=f.getvalue())
         x, y, pixels, meta = r.asDirect()

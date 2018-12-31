@@ -922,7 +922,7 @@ def rescale_rows(rows, rescale):
     n_chans = len(rescale)
 
     for row in rows:
-        rescaled_row = row[:]
+        rescaled_row = array(typecode, row)
         for i in range(n_chans):
             channel = array(
                 typecode,
