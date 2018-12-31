@@ -726,10 +726,9 @@ class Writer:
         elif self.bitdepth == 16:
             rows = unpack_rows(rows)
 
-        # The extend function deposits rows onto data array.
-        # data array is then compressed when it is sufficiently large.
+        # data accumulates bytes to be compressed for the IDAT chunk;
+        # it's compressed when sufficiently large.
         data = bytearray()
-        extend = data.extend
 
         for i, row in enumerate(rows):
             # Add "None" filter type.  Currently, it's essential that
@@ -738,17 +737,13 @@ class Writer:
             # could accidentally compute the wrong filtered scanline if
             # we used "up", "average", or "paeth" on such a line.
             data.append(0)
-            extend(row)
+            data.extend(row)
             if len(data) > self.chunk_limit:
                 # :todo: bytes() only necessary in Python 2
                 compressed = compressor.compress(bytes(data))
                 if len(compressed):
                     write_chunk(outfile, b'IDAT', compressed)
-                # Because of our very witty definition of ``extend``,
-                # above, we must re-use the same ``data`` object.  Hence
-                # we use ``del`` to empty this one, rather than create a
-                # fresh one (which would be my natural FP instinct).
-                del data[:]
+                data = bytearray()
 
         compressed = compressor.compress(bytes(data))
         flushed = compressor.flush()
