@@ -130,9 +130,17 @@ class Test(unittest.TestCase):
         """Test L8."""
         return self.helper_L(8)
 
+    def test_L3(self):
+        """Test L3."""
+        return self.helper_L(3)
+
     def test_L4(self):
         """Test L4."""
         return self.helper_L(4)
+
+    def test_L7(self):
+        """Test L7."""
+        return self.helper_L(7)
 
     def helper_L(self, n):
         mask = (1 << n) - 1
@@ -140,13 +148,14 @@ class Test(unittest.TestCase):
         # tested.  Making it a test for Issue 20 (googlecode).
         w = png.Writer(15, 17, greyscale=True, bitdepth=n, chunk_limit=99)
         f = BytesIO()
-        w.write_array(f, array('B', map(mask.__and__, range(1, 256))))
+        source_pixels = array('B', (mask & x for x in range(1, 256)))
+        w.write_array(f, source_pixels)
         r = png.Reader(bytes=f.getvalue())
-        x, y, pixels, meta = r.read()
+        x, y, pixels, meta = r.asDirect()
         self.assertEqual(x, 15)
         self.assertEqual(y, 17)
         self.assertEqual(list(itertools.chain(*pixels)),
-                         list(map(mask.__and__, range(1, 256))))
+                         list(source_pixels))
 
     def test_L2(self):
         """Test L2 (and asRGB8)."""

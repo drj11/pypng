@@ -555,48 +555,10 @@ class Writer:
         if len(bitdepth) == 1:
             bitdepth *= planes
 
-        self.rescale = None
-        if palette:
-            if len(bitdepth) != 1:
-                raise ValueError(
-                    "with palette, only a single bitdepth is used")
-            (bitdepth, ) = bitdepth
-            if bitdepth not in (1, 2, 4, 8):
-                raise ValueError(
-                    "with palette, bitdepth must be 1, 2, 4, or 8")
-            if transparent is not None:
-                raise ValueError("transparent and palette not compatible")
-            if alpha:
-                raise ValueError("alpha and palette not compatible")
-            if greyscale:
-                raise ValueError("greyscale and palette not compatible")
-        else:
-            # No palette, check for sBIT chunk generation.
-            if alpha or not greyscale:
-                depth_set = tuple(set(bitdepth))
-                if depth_set in [(8,), (16,)]:
-                    # No sBIT required.
-                    (bitdepth, ) = depth_set
-                else:
-                    targetbitdepth = (8, 16)[max(bitdepth) > 8]
-                    self.rescale = [(b, targetbitdepth) for b in bitdepth]
-                    bitdepth = targetbitdepth
-                    del targetbitdepth
-            else:
-                assert greyscale
-                assert not alpha
-                (bitdepth,) = bitdepth
-                if bitdepth not in (1, 2, 4, 8, 16):
-                    if b > 8:
-                        targetbitdepth = 16
-                    elif b == 3:
-                        targetbitdepth = 4
-                    else:
-                        assert b in (5, 6, 7)
-                        targetbitdepth = 8
-                    self.rescale = [(bitdepth, targetbitdepth)]
-                    bitdepth = targetbitdepth
-                    del targetbitdepth
+        bitdepth, self.rescale = check_bitdepth_rescale(
+                palette,
+                bitdepth,
+                transparent, alpha, greyscale)
 
         # These are assertions, because above logic should have
         # corrected or raised all problematic cases.
@@ -1030,6 +992,56 @@ def make_palette_chunks(palette):
     if t:
         return p, t
     return p, None
+
+
+def check_bitdepth_rescale(
+        palette, bitdepth, transparent, alpha, greyscale):
+    """
+    Returns (bitdepth, rescale) pair.
+    """
+
+    if palette:
+        if len(bitdepth) != 1:
+            raise ValueError(
+                "with palette, only a single bitdepth may be used")
+        (bitdepth, ) = bitdepth
+        if bitdepth not in (1, 2, 4, 8):
+            raise ValueError(
+                "with palette, bitdepth must be 1, 2, 4, or 8")
+        if transparent is not None:
+            raise ValueError("transparent and palette not compatible")
+        if alpha:
+            raise ValueError("alpha and palette not compatible")
+        if greyscale:
+            raise ValueError("greyscale and palette not compatible")
+        return bitdepth, None
+
+    # No palette, check for sBIT chunk generation.
+
+    if greyscale and not alpha:
+        # Single channel, L.
+        (bitdepth,) = bitdepth
+        if bitdepth in (1, 2, 4, 8, 16):
+            return bitdepth, None
+        if bitdepth > 8:
+            targetbitdepth = 16
+        elif bitdepth == 3:
+            targetbitdepth = 4
+        else:
+            assert bitdepth in (5, 6, 7)
+            targetbitdepth = 8
+        return targetbitdepth, [(bitdepth, targetbitdepth)]
+
+    assert alpha or not greyscale
+
+    depth_set = tuple(set(bitdepth))
+    if depth_set in [(8,), (16,)]:
+        # No sBIT required.
+        (bitdepth, ) = depth_set
+        return bitdepth, None
+
+    targetbitdepth = (8, 16)[max(bitdepth) > 8]
+    return targetbitdepth, [(b, targetbitdepth) for b in bitdepth]
 
 
 def filter_scanline(type, line, fo, prev=None):
