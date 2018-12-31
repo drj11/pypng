@@ -221,9 +221,10 @@ def isarray(x):
 
 
 def check_palette(palette):
-    """Check a palette argument (to the :class:`Writer` class)
-    for validity.  Returns the palette as a list if okay; raises an
-    exception otherwise.
+    """
+    Check a palette argument (to the :class:`Writer` class) for validity.
+    Returns the palette as a list if okay;
+    raises an exception otherwise.
     """
 
     # None is the default and is allowed.
@@ -254,7 +255,8 @@ def check_palette(palette):
 
 
 def check_sizes(size, width, height):
-    """Check that these arguments, if supplied, are consistent.
+    """
+    Check that these arguments, if supplied, are consistent.
     Return a (width, height) pair.
     """
 
@@ -276,9 +278,11 @@ def check_sizes(size, width, height):
 
 
 def check_color(c, greyscale, which):
-    """Checks that a colour argument for transparent or
-    background options is the right form.  Returns the colour
-    (which, if it's a bar integer, is "corrected" to a 1-tuple).
+    """
+    Checks that a colour argument for transparent or background options
+    is the right form.
+    Returns the colour
+    (which, if it's a bare integer, is "corrected" to a 1-tuple).
     """
 
     if c is None:
@@ -309,13 +313,16 @@ class Error(Exception):
 
 
 class FormatError(Error):
-    """Problem with input file format.  In other words, PNG file does
-    not conform to the specification in some way and is invalid.
+    """
+    Problem with input file format.
+    In other words, PNG file does not conform to
+    the specification in some way and is invalid.
     """
 
 
 class ProtocolError(Error):
-    """Problem with the way the programming interface has been used,
+    """
+    Problem with the way the programming interface has been used,
     or the data presented to it.
     """
 
@@ -633,9 +640,10 @@ class Writer:
         self.psize = (self.bitdepth / 8) * self.planes
 
     def make_palette(self):
-        """Create the byte sequences for a ``PLTE`` and if necessary a
-        ``tRNS`` chunk.  Returned as a pair (*p*, *t*).  *t* will be
-        ``None`` if no ``tRNS`` chunk is necessary.
+        """Create the byte sequences for a ``PLTE`` and
+        if necessary a ``tRNS`` chunk.
+        Returned as a pair (*p*, *t*).
+        *t* will be ``None`` if no ``tRNS`` chunk is necessary.
         """
 
         p = bytearray()
@@ -650,19 +658,21 @@ class Writer:
         return p, None
 
     def write(self, outfile, rows):
-        """Write a PNG image to the output file.  `rows` should be
-        an iterable that yields each row in boxed row flat pixel
-        format.  The rows should be the rows of the original image,
-        so there should be ``self.height`` rows of ``self.width *
-        self.planes`` values.  If `interlace` is specified (when
-        creating the instance), then an interlaced PNG file will
-        be written.  Supply the rows in the normal image order;
+        """
+        Write a PNG image to the output file.
+        `rows` should be an iterable that yields each row
+        in boxed row flat pixel format.
+        The rows should be the rows of the original image,
+        so there should be ``self.height`` rows of
+        ``self.width * self.planes`` values.
+        If `interlace` is specified (when creating the instance),
+        then an interlaced PNG file will be written.
+        Supply the rows in the normal image order;
         the interlacing is carried out internally.
 
         .. note ::
 
-          Interlacing will require the entire image to be in working
-          memory.
+          Interlacing requires the entire image to be in working memory.
         """
 
         # Values per row
@@ -707,9 +717,9 @@ class Writer:
         :meth:`write_array` method more convenient.
 
         The rows should be given to this method in the order that
-        they appear in the output file.  For straightlaced images,
-        this is the usual top to bottom ordering, but for interlaced
-        images the rows should have already been interlaced before
+        they appear in the output file.
+        For straightlaced images, this is the usual top to bottom ordering.
+        For interlaced images the rows should have been interlaced before
         passing them to this function.
 
         `rows` should be an iterable that yields each row.
@@ -731,19 +741,19 @@ class Writer:
 
     def write_packed(self, outfile, rows):
         """
-        Write PNG file to `outfile`.  The pixel data comes from `rows`
-        which should be in boxed row packed format.  Each row should be
-        a sequence of packed bytes.
+        Write PNG file to `outfile`.
+        `rows` should be in boxed row packed format.
+        Each row should be a sequence of packed bytes.
 
-        The rows have a filter byte prefixed and are then
-        compressed into one or more IDAT chunks.
+        The rows have a filter byte prefixed and
+        are then compressed into one or more IDAT chunks.
         They are not processed any further,
         so if bitdepth is other than 1, 2, 4, 8, 16,
         the pixel values should have been scaled
         before passing them to this method.
 
-        Technically, this method does work for interlaced images but it
-        is best avoided.  For interlaced images, the rows should be
+        This method does work for interlaced images but it is best avoided.
+        For interlaced images, the rows should be
         presented in the order that they appear in the file.
         """
 
@@ -760,11 +770,13 @@ class Writer:
         data = bytearray()
 
         for i, row in enumerate(rows):
-            # Add "None" filter type.  Currently, it's essential that
-            # this filter type be used for every scanline as we do not
-            # mark the first row of a reduced pass image; that means we
-            # could accidentally compute the wrong filtered scanline if
-            # we used "up", "average", or "paeth" on such a line.
+            # Add "None" filter type.
+            # Currently, it's essential that this filter type be used
+            # for every scanline as
+            # we do not mark the first row of a reduced pass image;
+            # that means we could accidentally compute
+            # the wrong filtered scanline if we used
+            # "up", "average", or "paeth" on such a line.
             data.append(0)
             data.extend(row)
             if len(data) > self.chunk_limit:
@@ -806,9 +818,10 @@ class Writer:
                 struct.pack('%dB' % self.planes,
                             * [s[0] for s in self.rescale]))
 
-        # :chunk:order: Without a palette (PLTE chunk), ordering is
-        # relatively relaxed.  With one, gAMA chunk must precede PLTE
-        # chunk which must precede tRNS and bKGD.
+        # :chunk:order: Without a palette (PLTE chunk),
+        # ordering is relatively relaxed.
+        # With one, gAMA chunk must precede PLTE chunk
+        # which must precede tRNS and bKGD.
         # See http://www.w3.org/TR/PNG/#5ChunkOrdering
         if self.palette:
             p, t = self.make_palette()
@@ -846,8 +859,9 @@ class Writer:
 
     def write_array(self, outfile, pixels):
         """
-        Write an array in flat row flat pixel format as a PNG file on
-        the output file.  See also :meth:`write` method.
+        Write an array in flat row flat pixel format as
+        a PNG file on the output file.
+        See also :meth:`write` method.
         """
 
         if self.interlace:
@@ -875,10 +889,10 @@ class Writer:
 
     def array_scanlines_interlace(self, pixels):
         """
-        Generator for interlaced scanlines from an array.  `pixels` is
-        the full source image in flat row flat pixel format.  The
-        generator yields each scanline of the reduced passes in turn, in
-        boxed row flat pixel format.
+        Generator for interlaced scanlines from an array.
+        `pixels` is the full source image in flat row flat pixel format.
+        The generator yields each scanline of the reduced passes in turn,
+        in boxed row flat pixel format.
         """
 
         # http://www.w3.org/TR/PNG/#8InterlaceMethods
@@ -943,8 +957,8 @@ def write_chunks(out, chunks):
 def rescale_rows(rows, rescale):
     """
     Take each row in rows (an iterator) and yield
-    a fresh row with the pixels scaled according to the
-    rescale parameters in the list `rescale`.
+    a fresh row with the pixels scaled according to
+    the rescale parameters in the list `rescale`.
     Each element of `rescale` is a tuple of
     (source_bitdepth, target_bitdepth),
     with one element per channel.
@@ -1017,13 +1031,14 @@ def unpack_rows(rows):
 
 
 def filter_scanline(type, line, fo, prev=None):
-    """Apply a scanline filter to a scanline.  `type` specifies the
-    filter type (0 to 4); `line` specifies the current (unfiltered)
-    scanline as a sequence of bytes; `prev` specifies the previous
-    (unfiltered) scanline as a sequence of bytes. `fo` specifies the
-    filter offset; normally this is size of a pixel in bytes (the number
-    of bytes per sample times the number of channels), but when this is
-    < 1 (for bit depths < 8) then the filter offset is 1.
+    """Apply a scanline filter to a scanline.
+    `type` is the filter type (0 to 4);
+    `line` is the current (unfiltered) scanline as a sequence of bytes;
+    `prev` is the previous (unfiltered) scanline as a sequence of bytes.
+    `fo` is the filter offset;
+    normally this is size of a pixel in bytes
+    (the number of bytes per sample times the number of channels),
+    but when this is < 1 (for bit depths < 8) then the filter offset is 1.
     """
 
     assert 0 <= type < 5
