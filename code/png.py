@@ -150,9 +150,9 @@ import collections
 import io   # For io.BytesIO
 import itertools
 import math
-import re
 # http://www.python.org/doc/2.4.4/lib/module-operator.html
 import operator
+import re
 import struct
 import sys
 # http://www.python.org/doc/2.4.4/lib/module-warnings.html
