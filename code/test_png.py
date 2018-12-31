@@ -651,7 +651,7 @@ class Test(unittest.TestCase):
     if sys.version_info > (2, 6):
         # :todo: Raises SystemError on Python 2.6,
         # and I don't care.
-        def testNumpyuint16(self):
+        def test_numpy_uint16(self):
             """numpy uint16."""
 
             numpy or self.skipTest("numpy is not available")
@@ -660,7 +660,7 @@ class Test(unittest.TestCase):
             topngbytes('numpyuint16.png', rows, 4, 1,
                        greyscale=True, alpha=False, bitdepth=16)
 
-    def testNumpyuint8(self):
+    def test_numpy_uint8(self):
         """numpy uint8."""
 
         numpy or self.skipTest("numpy is not available")
@@ -669,7 +669,7 @@ class Test(unittest.TestCase):
         topngbytes('numpyuint8.png', rows, 4, 1,
                    greyscale=True, alpha=False, bitdepth=8)
 
-    def testNumpybool(self):
+    def test_numpy_bool(self):
         """numpy bool."""
 
         numpy or self.skipTest("numpy is not available")
@@ -681,7 +681,7 @@ class Test(unittest.TestCase):
     if sys.version_info > (2, 6):
         # :todo: Raises SystemError on Python 2.6,
         # and I don't care.
-        def testNumpyarray(self):
+        def test_numpy_array(self):
             """numpy array."""
 
             numpy or self.skipTest("numpy is not available")
@@ -690,7 +690,7 @@ class Test(unittest.TestCase):
             img = png.from_array(pixels, 'L')
             img.save(BytesIO())
 
-    def testNumpyPalette(self):
+    def test_numpy_palette(self):
         """numpy palette."""
 
         numpy or self.skipTest("numpy is not available")
