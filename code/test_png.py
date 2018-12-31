@@ -648,7 +648,7 @@ class Test(unittest.TestCase):
 
 # numpy dependent tests.
 
-    if sys.version_info > (2, 6):
+    if sys.version_info >= (2, 7):
         # :todo: Raises SystemError on Python 2.6,
         # and I don't care.
         def test_numpy_uint16(self):
@@ -678,7 +678,7 @@ class Test(unittest.TestCase):
         topngbytes('numpybool.png', rows, 2, 1,
                    greyscale=True, alpha=False, bitdepth=1)
 
-    if sys.version_info > (2, 6):
+    if sys.version_info >= (2, 7):
         # :todo: Raises SystemError on Python 2.6,
         # and I don't care.
         def test_numpy_array(self):
