@@ -688,7 +688,7 @@ class Writer:
                 "rows supplied (%d) does not match height (%d)" %
                 (nrows, self.height))
 
-    def write_passes(self, outfile, rows, packed=False):
+    def write_passes(self, outfile, rows):
         """
         Write a PNG image to the output file.
 
@@ -701,10 +701,8 @@ class Writer:
         images the rows should have already been interlaced before
         passing them to this function.
 
-        `rows` should be an iterable that yields each row.  When
-        `packed` is ``False`` the rows should be in boxed row flat pixel
-        format; when `packed` is ``True`` each row should be a packed
-        sequence of bytes.
+        `rows` should be an iterable that yields each row.
+        The rows should be in boxed row flat pixel format.
         """
 
         # Ensure rows are scaled (to 4-/8-/16-bit),
@@ -713,10 +711,30 @@ class Writer:
         if self.rescale:
             rows = rescale_rows(rows, self.rescale)
 
-        if self.bitdepth < 8 and not packed:
+        if self.bitdepth < 8:
             rows = pack_rows(rows, self.bitdepth)
         elif self.bitdepth == 16:
             rows = unpack_rows(rows)
+
+        return self.write_packed(outfile, rows)
+
+    def write_packed(self, outfile, rows):
+        """
+        Write PNG file to `outfile`.  The pixel data comes from `rows`
+        which should be in boxed row packed format.  Each row should be
+        a sequence of packed bytes.
+
+        The rows have a filter byte prefixed and are then
+        compressed into one or more IDAT chunks.
+        They are not processed any further,
+        so if bitdepth is other than 1, 2, 4, 8, 16,
+        the pixel values should have been scaled
+        before passing them to this method.
+
+        Technically, this method does work for interlaced images but it
+        is best avoided.  For interlaced images, the rows should be
+        presented in the order that they appear in the file.
+        """
 
         self.write_preamble(outfile)
 
@@ -829,27 +847,6 @@ class Writer:
             self.write_passes(outfile, self.array_scanlines_interlace(pixels))
         else:
             self.write_passes(outfile, self.array_scanlines(pixels))
-
-    def write_packed(self, outfile, rows):
-        """
-        Write PNG file to `outfile`.  The pixel data comes from `rows`
-        which should be in boxed row packed format.  Each row should be
-        a sequence of packed bytes.
-
-        Technically, this method does work for interlaced images but it
-        is best avoided.  For interlaced images, the rows should be
-        presented in the order that they appear in the file.
-
-        This method should not be used when the source image bit depth
-        is not one naturally supported by PNG; the bit depth should be
-        1, 2, 4, 8, or 16.
-        """
-
-        if self.rescale:
-            raise Error(
-                "write_packed method not suitable for bit depth %r" %
-                tuple(s[0] for s in self.rescale))
-        return self.write_passes(outfile, rows, packed=True)
 
     def array_scanlines(self, pixels):
         """
