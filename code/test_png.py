@@ -653,7 +653,7 @@ class Test(unittest.TestCase):
 
         numpy or self.skipTest("numpy is not available")
 
-        rows = [map(numpy.uint16, range(0, 0x10000, 0x5555))]
+        rows = [[numpy.uint16(x) for x in range(0, 0x10000, 0x5555)]]
         topngbytes('numpyuint16.png', rows, 4, 1,
                    greyscale=True, alpha=False, bitdepth=16)
 
@@ -662,7 +662,7 @@ class Test(unittest.TestCase):
 
         numpy or self.skipTest("numpy is not available")
 
-        rows = [map(numpy.uint8, range(0, 0x100, 0x55))]
+        rows = [[numpy.uint8(x) for x in range(0, 0x100, 0x55)]]
         topngbytes('numpyuint8.png', rows, 4, 1,
                    greyscale=True, alpha=False, bitdepth=8)
 
