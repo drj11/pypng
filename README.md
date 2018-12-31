@@ -2,7 +2,7 @@
 
 drj@pobox.com
 
-[![Build Status](https://travis-ci.org/drj11/pypng.svg?branch=master)](https://travis-ci.org/drj11/pypng)
+[![Build Status](https://travis-ci.org/drj11/pypng.svg?branch=main)](https://travis-ci.org/drj11/pypng)
 
 
 # INTRODUCTION
@@ -52,7 +52,7 @@ your application and distribute it.
 The following `curl` command should copy the latest version into
 your current directory:
 
-    curl -LO https://raw.github.com/drj11/pypng/master/code/png.py
+    curl -LO https://raw.github.com/drj11/pypng/main/code/png.py
 
 
 ## RELEASE NOTES
