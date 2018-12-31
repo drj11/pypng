@@ -716,39 +716,21 @@ class Writer:
         else:
             compressor = zlib.compressobj()
 
-        # Choose an extend function based on the bitdepth.  The extend
-        # function packs/decomposes the pixel values into bytes and
-        # stuffs them onto the data array.
-        data = bytearray()
-        if self.bitdepth == 8 or packed:
-            extend = data.extend
-        elif self.bitdepth == 16:
-            # Decompose into bytes
-            def extend(sl):
-                fmt = '!%dH' % len(sl)
-                data.extend(struct.pack(fmt, *sl))
-        else:
-            # Pack into bytes
-            assert self.bitdepth < 8
-            # samples per byte
-            spb = int(8 / self.bitdepth)
-
-            def extend(sl):
-                a = bytearray(sl)
-                # Adding padding bytes so we can group into a whole
-                # number of spb-tuples.
-                n = float(len(a))
-                extra = math.ceil(n / spb) * spb - n
-                a.extend([0] * int(extra))
-                # Pack into bytes.
-                # Each block is the samples for one byte.
-                blocks = group(a, spb)
-                bytes = [reduce(lambda x, y: (x << self.bitdepth) + y, e)
-                         for e in blocks]
-                data.extend(bytes)
+        # Ensure rows are scaled (to 4-/8-/16-bit),
+        # and packed into bytes.
 
         if self.rescale:
             rows = rescale_rows(rows, self.rescale)
+
+        if self.bitdepth < 8 and not packed:
+            rows = pack_rows(rows, self.bitdepth)
+        elif self.bitdepth == 16:
+            rows = unpack_rows(rows)
+
+        # The extend function deposits rows onto data array.
+        # data array is then compressed when it is sufficiently large.
+        data = bytearray()
+        extend = data.extend
 
         # Build the first row, testing mostly to see if we need to
         # changed the extend function to cope with NumPy integer types
@@ -1015,6 +997,49 @@ def rescale_rows(rows, rescale):
                 (int(round(fs[i] * x)) for x in row[i::n_chans]))
             rescaled_row[i::n_chans] = channel
         yield rescaled_row
+
+
+def pack_rows(rows, bitdepth):
+    """Yield packed rows that are a byte array.
+    Each byte is packed with the values from several pixels.
+    """
+
+    assert bitdepth < 8
+    assert 8 % bitdepth == 0
+
+    # samples per byte
+    spb = int(8 / bitdepth)
+
+    def pack_bytes(block):
+        """Take a block of (2, 4, or 8) values,
+        and pack them into a single byte.
+        """
+
+        res = 0
+        for v in block:
+            res = (res << bitdepth) + v
+        return res
+
+    for row in rows:
+        a = bytearray(row)
+        # Adding padding bytes so we can group into a whole
+        # number of spb-tuples.
+        n = float(len(a))
+        extra = math.ceil(n / spb) * spb - n
+        a.extend([0] * int(extra))
+        # Pack into bytes.
+        # Each block is the samples for one byte.
+        blocks = group(a, spb)
+        yield bytearray(pack_bytes(block) for block in blocks)
+
+
+def unpack_rows(rows):
+    """Unpack each row from being 16-bits per value,
+    to being a sequence of bytes.
+    """
+    for row in rows:
+        fmt = '!%dH' % len(row)
+        yield bytearray(struct.pack(fmt, *row))
 
 
 def filter_scanline(type, line, fo, prev=None):
