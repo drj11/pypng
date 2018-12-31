@@ -294,14 +294,14 @@ def check_color(c, greyscale, which):
             c = (c,)
         if len(c) != 1:
             raise ValueError("%s for greyscale must be 1-tuple" % which)
-        if not isinteger(c[0]):
+        if not is_natural(c[0]):
             raise ValueError(
                 "%s colour for greyscale must be integer" % which)
     else:
         if not (len(c) == 3 and
-                isinteger(c[0]) and
-                isinteger(c[1]) and
-                isinteger(c[2])):
+                is_natural(c[0]) and
+                is_natural(c[1]) and
+                is_natural(c[2])):
             raise ValueError(
                 "%s colour must be a triple of integers" % which)
     return c
@@ -511,7 +511,7 @@ class Writer:
         width, height = check_sizes(size, width, height)
         del size
 
-        if not isinteger(width) or not isinteger(height):
+        if not is_natural(width) or not is_natural(height):
             raise ProtocolError("width and height must be integers")
         if width <= 0 or height <= 0:
             raise ProtocolError("width and height must be greater than zero")
@@ -538,7 +538,7 @@ class Writer:
         except TypeError:
             bitdepth = (bitdepth, )
         for b in bitdepth:
-            valid = isinteger(b) and 1 <= b <= 16
+            valid = is_natural(b) and 1 <= b <= 16
             if not valid:
                 raise ValueError(
                     "each bitdepth %r must be a positive integer <= 16" %
@@ -2256,11 +2256,13 @@ def check_bitdepth_colortype(bitdepth, colortype):
             % (bitdepth, colortype))
 
 
-def isinteger(x):
+def is_natural(x):
+    """A non-negative integer."""
     try:
-        return int(x) == x
+        is_integer = int(x) == x
     except (TypeError, ValueError):
         return False
+    return is_integer and x >= 0
 
 
 # === Support for users without Cython ===
