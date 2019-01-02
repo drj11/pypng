@@ -37,7 +37,7 @@ def gen_gbt_y(y):
 
 def gen_rtl_xy(x, y):
     """Radial gradient, centred at top-left."""
-    return max(1 - (x * x + y * y) ** 0.5, 0.0)
+    return max(1 - (float(x) ** 2 + float(y) ** 2) ** 0.5, 0.0)
 
 
 def gen_rctr_xy(x, y):
@@ -45,15 +45,15 @@ def gen_rctr_xy(x, y):
 
 
 def gen_rtr_xy(x, y):
-    return gen_rtl_xy(1 - x, y)
+    return gen_rtl_xy(1.0 - x, y)
 
 
 def gen_rbl_xy(x, y):
-    return gen_rtl_xy(x, 1 - y)
+    return gen_rtl_xy(x, 1.0 - y)
 
 
 def gen_rbr_xy(x, y):
-    return gen_rtl_xy(1 - x, 1 - y)
+    return gen_rtl_xy(1.0 - x, 1.0 - y)
 
 
 def stripe(x, n):
