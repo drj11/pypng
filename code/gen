@@ -26,13 +26,13 @@ def gen_grl_x(x):
     return 1 - x
 
 
-def gen_gtb_y(y):
+def gen_gtb_xy(x, y):
     """Gradient Top to Bottom."""
-    return y
+    return float(y)
 
 
-def gen_gbt_y(y):
-    return 1 - y
+def gen_gbt_xy(x, y):
+    return 1.0 - float(y)
 
 
 def gen_rtl_xy(x, y):
@@ -72,16 +72,16 @@ def gen_hs10_x(x):
     return stripe(x, 10)
 
 
-def gen_vs2_y(y):
-    return stripe(y, 2)
+def gen_vs2_xy(x, y):
+    return stripe(float(y), 2)
 
 
-def gen_vs4_y(y):
-    return stripe(y, 4)
+def gen_vs4_xy(x, y):
+    return stripe(float(y), 4)
 
 
-def gen_vs10_y(y):
-    return stripe(y, 10)
+def gen_vs10_xy(x, y):
+    return stripe(float(y), 10)
 
 
 def gen_slr_xy(x, y):
@@ -137,8 +137,8 @@ def yield_fun_rows(size, bitdepth, pattern):
     xs = [Fraction(x, 2*width) for x in range(1, 2*width, 2)]
 
     # The general case is a function in x and y,
-    # but if the function only takes one argument,
-    # it's handled in special cases that are a lot faster.
+    # but if the function only takes an x argument,
+    # it's handled in a special case that is a lot faster.
     if args == "xy":
         for y in range(height):
             a = array(typecode)
@@ -155,17 +155,6 @@ def yield_fun_rows(size, bitdepth, pattern):
         for fx in xs:
             a.append(int(round(maxval * pfun(x=fx))))
         for y in range(height):
-            yield a
-        return
-
-    if args == "y":
-        # For functions in y only, we generate a single sample;
-        # and repeat it for the whole row.
-        for y in range(height):
-            a = array(typecode)
-            fy = Fraction(Fraction(y + 0.5), height)
-            a.append(int(round(maxval * pfun(y=fy))))
-            a *= width
             yield a
         return
 
