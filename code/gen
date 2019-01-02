@@ -233,7 +233,7 @@ def dimensions(s):
 
     tupl = re.findall(r"\d+", s)
     if len(tupl) not in (1, 2):
-        raise ValueError("%r should be width or width,height")
+        raise ValueError("%r should be width or width,height" % s)
     if len(tupl) == 1:
         tupl *= 2
     assert len(tupl) == 2
