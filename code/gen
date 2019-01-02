@@ -138,8 +138,8 @@ def yield_fun_rows(size, bitdepth, pattern):
         for y in range(height):
             a = array(typecode)
             fy = Fraction(Fraction(y + 0.5), height)
-            for x in range(width):
-                fx = Fraction(Fraction(x + 0.5), width)
+            for x in range(1, 2*width, 2):
+                fx = Fraction(x, 2*width)
                 a.append(int(round(maxval * pfun(fx, fy))))
             yield a
         return
@@ -148,8 +148,8 @@ def yield_fun_rows(size, bitdepth, pattern):
         # For functions in x only, it's a _lot_ faster
         # to generate a single row and repeatedly yield it
         a = array(typecode)
-        for x in range(width):
-            fx = Fraction(Fraction(x + 0.5), width)
+        for x in range(1, 2*width, 2):
+            fx = Fraction(x, 2*width)
             a.append(int(round(maxval * pfun(x=fx))))
         for y in range(height):
             yield a
