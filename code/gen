@@ -41,19 +41,19 @@ def gen_rtl_xy(x, y):
 
 
 def gen_rctr_xy(x, y):
-    return gen_rtl_xy(x - 0.5, y - 0.5)
+    return gen_rtl_xy(float(x) - 0.5, float(y) - 0.5)
 
 
 def gen_rtr_xy(x, y):
-    return gen_rtl_xy(1.0 - x, y)
+    return gen_rtl_xy(1.0 - float(x), y)
 
 
 def gen_rbl_xy(x, y):
-    return gen_rtl_xy(x, 1.0 - y)
+    return gen_rtl_xy(x, 1.0 - float(y))
 
 
 def gen_rbr_xy(x, y):
-    return gen_rtl_xy(1.0 - x, 1.0 - y)
+    return gen_rtl_xy(1.0 - float(x), 1.0 - float(y))
 
 
 def stripe(x, n):
