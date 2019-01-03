@@ -50,16 +50,14 @@ For help, type ``import png; help(png)`` in your python interpreter.
 A good place to start is the :class:`Reader` and :class:`Writer`
 classes.
 
-Requires Python 2.3.  Limited support is available for Python 2.2, but
-not everything works.  Best with Python 2.4 and higher.  Installation is
-trivial, but see the ``README.txt`` file (with the source distribution)
-for details.
+Requires Python 3.4 or higher (or Python 2.6 or higher).
+Installation is trivial,
+but see the ``README.txt`` file (with the source distribution) for details.
 
-This file can also be used as a command-line utility to convert
-`Netpbm <http://netpbm.sourceforge.net/>`_ PNM files to PNG, and the
-reverse conversion from PNG to PNM. The interface is similar to that
-of the ``pnmtopng`` program from Netpbm.  Type ``python png.py --help``
-at the shell prompt for usage and a list of options.
+The package also comes with command line utilities that convert
+`Netpbm <http://netpbm.sourceforge.net/>`_ PNM files to PNG,
+and the reverse conversion from PNG to PNM,
+and some simple PNG manipulations.
 
 A note on spelling and terminology
 ----------------------------------
@@ -771,27 +769,27 @@ class Writer:
             p, t = make_palette_chunks(self.palette)
             write_chunk(outfile, b'PLTE', p)
             if t:
-                # tRNS chunk is optional. Only needed if palette entries
-                # have alpha.
+                # tRNS chunk is optional;
+                # Only needed if palette entries have alpha.
                 write_chunk(outfile, b'tRNS', t)
 
         # http://www.w3.org/TR/PNG/#11tRNS
         if self.transparent is not None:
             if self.greyscale:
-                write_chunk(outfile, b'tRNS',
-                            struct.pack("!1H", *self.transparent))
+                fmt = "!1H"
             else:
-                write_chunk(outfile, b'tRNS',
-                            struct.pack("!3H", *self.transparent))
+                fmt = "!3H"
+            write_chunk(outfile, b'tRNS',
+                        struct.pack(fmt, *self.transparent))
 
         # http://www.w3.org/TR/PNG/#11bKGD
         if self.background is not None:
             if self.greyscale:
-                write_chunk(outfile, b'bKGD',
-                            struct.pack("!1H", *self.background))
+                fmt = "!1H"
             else:
-                write_chunk(outfile, b'bKGD',
-                            struct.pack("!3H", *self.background))
+                fmt = "!3H"
+            write_chunk(outfile, b'bKGD',
+                        struct.pack(fmt, *self.background))
 
         # http://www.w3.org/TR/PNG/#11pHYs
         if (self.x_pixels_per_unit is not None and
@@ -942,7 +940,7 @@ def pack_rows(rows, bitdepth):
     # samples per byte
     spb = int(8 / bitdepth)
 
-    def pack_bytes(block):
+    def make_byte(block):
         """Take a block of (2, 4, or 8) values,
         and pack them into a single byte.
         """
@@ -962,7 +960,7 @@ def pack_rows(rows, bitdepth):
         # Pack into bytes.
         # Each block is the samples for one byte.
         blocks = group(a, spb)
-        yield bytearray(pack_bytes(block) for block in blocks)
+        yield bytearray(make_byte(block) for block in blocks)
 
 
 def unpack_rows(rows):
@@ -1781,7 +1779,7 @@ class Reader:
         # Stores tRNS chunk if present, and is used to check chunk
         # ordering constraints.
         self.trns = None
-        # Stores sbit chunk if present.
+        # Stores sBIT chunk if present.
         self.sbit = None
 
     def _process_PLTE(self, data):
