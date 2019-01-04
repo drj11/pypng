@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-# gen
+# priforgepng
 
 from __future__ import print_function
 
-# Generate a PNG test image on stdout.
+"""Forge PNG image from raw computation."""
 
 from array import array
 from fractions import Fraction
@@ -13,8 +13,6 @@ import re
 import sys
 
 import png
-
-# Below is a big stack of test image generators.
 
 
 def gen_glr_x(x):
@@ -235,7 +233,7 @@ def dimensions(s):
 def main(argv=None):
     if argv is None:
         argv = sys.argv
-    parser = argparse.ArgumentParser(description="Generate greyscale PNG patterns")
+    parser = argparse.ArgumentParser(description="Forge greyscale PNG patterns")
 
     parser.add_argument(
         "-l", "--list", action="store_true", help="print list of patterns and exit"
