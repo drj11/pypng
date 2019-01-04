@@ -5,7 +5,7 @@ You'll need Docker. And twine.
 
 At top-level...
 
-Edit ``png.py`` for new version number.  Then ``git commit`` this.
+Edit ``code/png.py`` for new version number.  Then ``git commit`` this.
 
 Get release notes into ``README.md`` somehow.
 
@@ -25,7 +25,7 @@ right URL).
 
 and push:
 
-    git push --tags
+    git push --tags origin HEAD
 
 Run the shell script that drives Docker:
 
