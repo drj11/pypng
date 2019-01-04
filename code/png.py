@@ -50,7 +50,7 @@ For help, type ``import png; help(png)`` in your python interpreter.
 A good place to start is the :class:`Reader` and :class:`Writer`
 classes.
 
-Requires Python 3.4 or higher (or Python 2.6 or higher).
+Requires Python 3.4 or higher (or Python 2.7).
 Installation is trivial,
 but see the ``README.txt`` file (with the source distribution) for details.
 
@@ -210,7 +210,6 @@ Resolution = collections.namedtuple('_Resolution', 'x y unit_is_meter')
 
 
 def group(s, n):
-    # See http://www.python.org/doc/2.6/library/functions.html#zip
     return list(zip(* [iter(s)] * n))
 
 
@@ -1619,8 +1618,6 @@ class Reader:
         if self.bitdepth == 8:
             return bytearray(bs)
         if self.bitdepth == 16:
-            # Conversion to bytes only required for Python 2.6
-            bs = bytes(bs)
             return array('H',
                          struct.unpack('!%dH' % (len(bs) // 2), bs))
 

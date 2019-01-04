@@ -665,17 +665,14 @@ class Test(unittest.TestCase):
 
 # numpy dependent tests.
 
-    if sys.version_info >= (2, 7):
-        # :todo: Raises SystemError on Python 2.6,
-        # and I don't care.
-        def test_numpy_uint16(self):
-            """numpy uint16."""
+    def test_numpy_uint16(self):
+        """numpy uint16."""
 
-            numpy or self.skipTest("numpy is not available")
+        numpy or self.skipTest("numpy is not available")
 
-            rows = [[numpy.uint16(x) for x in range(0, 0x10000, 0x5555)]]
-            topngbytes('numpyuint16.png', rows, 4, 1,
-                       greyscale=True, alpha=False, bitdepth=16)
+        rows = [[numpy.uint16(x) for x in range(0, 0x10000, 0x5555)]]
+        topngbytes('numpyuint16.png', rows, 4, 1,
+                   greyscale=True, alpha=False, bitdepth=16)
 
     def test_numpy_uint8(self):
         """numpy uint8."""
@@ -695,17 +692,14 @@ class Test(unittest.TestCase):
         topngbytes('numpybool.png', rows, 2, 1,
                    greyscale=True, alpha=False, bitdepth=1)
 
-    if sys.version_info >= (2, 7):
-        # :todo: Raises SystemError on Python 2.6,
-        # and I don't care.
-        def test_numpy_array(self):
-            """numpy array."""
+    def test_numpy_array(self):
+        """numpy array."""
 
-            numpy or self.skipTest("numpy is not available")
+        numpy or self.skipTest("numpy is not available")
 
-            pixels = numpy.array([[0, 0x5555], [0x5555, 0xaaaa]], numpy.uint16)
-            img = png.from_array(pixels, 'L')
-            img.save(BytesIO())
+        pixels = numpy.array([[0, 0x5555], [0x5555, 0xaaaa]], numpy.uint16)
+        img = png.from_array(pixels, 'L')
+        img.save(BytesIO())
 
     def test_numpy_palette(self):
         """numpy palette."""
@@ -901,7 +895,6 @@ def read_modify_chunks(modify_chunk):
 
 
 def group(s, n):
-    # See http://www.python.org/doc/2.6/library/functions.html#zip
     return list(zip(* [iter(s)] * n))
 
 

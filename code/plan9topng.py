@@ -24,7 +24,6 @@ class Error(Exception):
 
 
 def block(s, n):
-    # See http://www.python.org/doc/2.6.2/library/functions.html#zip
     return zip(* [iter(s)] * n)
 
 
