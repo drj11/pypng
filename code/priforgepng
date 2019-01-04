@@ -15,78 +15,78 @@ import sys
 import png
 
 
-def gen_glr_x(x):
+def gen_glr(x):
     """Gradient Left to Right."""
     return x
 
 
-def gen_grl_x(x):
+def gen_grl(x):
     return 1 - x
 
 
-def gen_gtb_xy(x, y):
+def gen_gtb(x, y):
     """Gradient Top to Bottom."""
     return float(y)
 
 
-def gen_gbt_xy(x, y):
+def gen_gbt(x, y):
     return 1.0 - float(y)
 
 
-def gen_rtl_xy(x, y):
+def gen_rtl(x, y):
     """Radial gradient, centred at top-left."""
     return max(1 - (float(x) ** 2 + float(y) ** 2) ** 0.5, 0.0)
 
 
-def gen_rctr_xy(x, y):
-    return gen_rtl_xy(float(x) - 0.5, float(y) - 0.5)
+def gen_rctr(x, y):
+    return gen_rtl(float(x) - 0.5, float(y) - 0.5)
 
 
-def gen_rtr_xy(x, y):
-    return gen_rtl_xy(1.0 - float(x), y)
+def gen_rtr(x, y):
+    return gen_rtl(1.0 - float(x), y)
 
 
-def gen_rbl_xy(x, y):
-    return gen_rtl_xy(x, 1.0 - float(y))
+def gen_rbl(x, y):
+    return gen_rtl(x, 1.0 - float(y))
 
 
-def gen_rbr_xy(x, y):
-    return gen_rtl_xy(1.0 - float(x), 1.0 - float(y))
+def gen_rbr(x, y):
+    return gen_rtl(1.0 - float(x), 1.0 - float(y))
 
 
 def stripe(x, n):
     return int(x * n) & 1
 
 
-def gen_hs2_x(x):
+def gen_hs2(x):
     return stripe(x, 2)
 
 
-def gen_hs4_x(x):
+def gen_hs4(x):
     return stripe(x, 4)
 
 
-def gen_hs10_x(x):
+def gen_hs10(x):
     return stripe(x, 10)
 
 
-def gen_vs2_xy(x, y):
+def gen_vs2(x, y):
     return stripe(float(y), 2)
 
 
-def gen_vs4_xy(x, y):
+def gen_vs4(x, y):
     return stripe(float(y), 4)
 
 
-def gen_vs10_xy(x, y):
+def gen_vs10(x, y):
     return stripe(float(y), 10)
 
 
-def gen_slr_xy(x, y):
+def gen_slr(x, y):
     return stripe(x + y, 10)
 
 
-def gen_srl_xy(x, y):
+def gen_srl(x, y):
     return stripe(1 + x - y, 10)
 
 
@@ -94,19 +94,19 @@ def checker(x, y, n):
     return stripe(x, n) ^ stripe(y, n)
 
 
-def gen_ck8_xy(x, y):
+def gen_ck8(x, y):
     return checker(x, y, 8)
 
 
-def gen_ck15_xy(x, y):
+def gen_ck15(x, y):
     return checker(x, y, 15)
 
 
-def gen_zero_x(x):
+def gen_zero(x):
     return 0
 
 
-def gen_one_x(x):
+def gen_one(x):
     return 1
 
 
@@ -123,7 +123,7 @@ def yield_fun_rows(size, bitdepth, pattern):
         typecode = "H"
     else:
         typecode = "B"
-    pfun, args = pattern_function(pattern)
+    pfun = pattern_function(pattern)
 
     # The coordinates are an integer + 0.5,
     # effectively sampling each pixel at its centre.
@@ -137,7 +137,7 @@ def yield_fun_rows(size, bitdepth, pattern):
     # The general case is a function in x and y,
     # but if the function only takes an x argument,
     # it's handled in a special case that is a lot faster.
-    if args == "xy":
+    if n_args(pfun) == 2:
         for y in range(height):
             a = array(typecode)
             fy = Fraction(Fraction(y + 0.5), height)
@@ -146,15 +146,14 @@ def yield_fun_rows(size, bitdepth, pattern):
             yield a
         return
 
-    if args == "x":
-        # For functions in x only, it's a _lot_ faster
-        # to generate a single row and repeatedly yield it
-        a = array(typecode)
-        for fx in xs:
-            a.append(int(round(maxval * pfun(x=fx))))
-        for y in range(height):
-            yield a
-        return
+    # For functions in x only, it's a _lot_ faster
+    # to generate a single row and repeatedly yield it
+    a = array(typecode)
+    for fx in xs:
+        a.append(int(round(maxval * pfun(x=fx))))
+    for y in range(height):
+        yield a
+    return
 
 
 def generate(args):
@@ -177,12 +176,14 @@ def generate(args):
         writer.write(out, rows)
 
 
+def n_args(fun):
+    """Number of arguments in fun's argument list."""
+    return fun.__code__.co_argcount
+
+
 def pattern_function(pattern):
     """From `pattern`, a string,
-    return the function for that pattern,
-    and the arguments to the function.
-    The arguments to the function is a string and
-    is either 'x', 'y', or 'xy'.
+    return the function for that pattern.
     """
 
     lpat = pattern.lower()
@@ -191,7 +192,7 @@ def pattern_function(pattern):
         if parts[0] != "gen":
             continue
         if parts[1] == lpat:
-            return fun, parts[2]
+            return fun
 
 
 def patterns():
