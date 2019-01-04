@@ -109,7 +109,7 @@ The `--interlace` option available on many previous tools is
 now only available on `priweavepng`,
 making it the preferred tool for generating interlaced PNGs.
 
-`pripngchunk` command line tool adds and deletes chunks and
+`prichunkpng` command line tool adds and deletes chunks and
 "intelligently" knows about transparent, gamma, background chunks.
 It is the preferred tool for adding those chunks,
 which was previously possible using various options of other tools.
