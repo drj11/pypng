@@ -58,6 +58,11 @@ your current directory:
 
 (For issues see https://github.com/drj11/pypng/issues?state=open )
 
+### Release (not released yet)
+
+Support for earlier versions of Python is dropped.
+Python 3.4 and onwards are supported (Python 2.7 also works).
+
 ### Release 0.0.19
 
 Support for earlier versions of Python is dropped in order to
