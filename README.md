@@ -59,12 +59,12 @@ your current directory:
 
 (For issues see https://github.com/drj11/pypng/issues?state=open )
 
-### Release (Not yet released)
+### Release 0.0.19
 
 Support for earlier versions of Python is dropped in order to
 simplify the code.
-From the 2.x series only Python 2.6 and 2.7 are supported.
 From the Python 3.x series all versions from 3.2 onward are supported.
+From the 2.x series only Python 2.6 and 2.7 are supported.
 
 Code cleaned.
 Tests renamed and more organised.
