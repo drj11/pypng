@@ -27,6 +27,12 @@ and push:
 
     git push --tags origin HEAD
 
+Make a clean clone:
+
+    cd ${PWD%pypng*}
+    git clone pypng pypng-$PYPNG_VERSION
+    cd pypng-$PYPNG_VERSION
+
 Run the shell script that drives Docker:
 
     sh dock
@@ -34,18 +40,20 @@ Run the shell script that drives Docker:
 It's possible at this point that you might want to smoke-test the actual
 release binary.  Let's assume that the release binary is good to go.
 
-Move the dist binary that ``sdist`` just created, back into your main
-development directory::
+Check that the `sh dock` command populated the `dist/`
+directory.
 
-    mv dist/pypng-$PYPNG_VERSION.tar.gz ../pypng/dist
+    ls dist
 
-Create a zip for the documentation:
+Put the `dist/` artefacts into your main `dist/`:
 
-    cd html
-    zip -r ../pypng-$PYPNG_VERSION-doc.zip .
+    mv dist/pypng-$PYPNG_VERSION* ../pypng/dist
 
-Login to PyPI and go to "pypng" on the "Your packages" display.  Upload
-documentation zip file. (Often doesn't work, because of buggy server.)
+Where does documentation go? (pythonhosted no longer host)
+
+cd back into your main development directory::
+
+    cd ../pypng
 
 Upload to PyPI:
 
@@ -53,9 +61,5 @@ Upload to PyPI:
 
 (If it complains about "you must be identified" then use
 "python setup.py register" first)
-
-cd back into your main development directory::
-
-    cd ../pypng
 
 Make a record in ``release/index.txt``
