@@ -327,7 +327,7 @@ class Test(unittest.TestCase):
         x, y, pixels, info = r.read()
         self.assertEqual(x, 32)
         self.assertEqual(y, 32)
-        self.assertTrue('palette' in info)
+        self.assertIn('palette', info)
 
     def test_read_palette_write(self):
         """Test metadata for paletted PNG can be passed from one PNG
@@ -452,12 +452,12 @@ class Test(unittest.TestCase):
         writer = png.Writer(width=width, height=height, greyscale=True)
         writer.write(out, pixels)
         out.seek(0)
-        self.assertFalse(b'pHYs' in out.getvalue())
+        self.assertNotIn(b'pHYs', out.getvalue())
         out.seek(0)
         reader = png.Reader(file=out)
         w, h, _, meta = reader.read()
-        self.assertFalse('physical' in meta)
-        self.assertTrue(not hasattr(reader, 'x_pixels_per_unit'))
+        self.assertNotIn('physical', meta)
+        self.assertFalse(hasattr(reader, 'x_pixels_per_unit'))
 
     def test_phys_chunk(self):
         """
@@ -474,7 +474,7 @@ class Test(unittest.TestCase):
         out.seek(0)
         reader = png.Reader(file=out)
         w, h, _, meta = reader.read()
-        self.assertTrue('physical' in meta)
+        self.assertIn('physical', meta)
         self.assertEqual(2000, reader.x_pixels_per_unit)
         self.assertEqual(1000, reader.y_pixels_per_unit)
         self.assertTrue(reader.unit_is_meter)
@@ -499,7 +499,7 @@ class Test(unittest.TestCase):
         out.seek(0)
         reader = png.Reader(file=out)
         w, h, _, meta = reader.read()
-        self.assertTrue('physical' in meta)
+        self.assertIn('physical', meta)
         self.assertEqual(2, reader.x_pixels_per_unit)
         self.assertEqual(1, reader.y_pixels_per_unit)
         self.assertFalse(reader.unit_is_meter)
@@ -550,8 +550,8 @@ class Test(unittest.TestCase):
         try:
             r.asDirect()
         except Exception as e:
-            self.assertTrue(isinstance(e, png.FormatError))
-            self.assertTrue('chunk length' in str(e))
+            self.assertIsInstance(e, png.FormatError)
+            self.assertIn('chunk length', str(e))
 
     def test_chunk_short(self):
         """
@@ -561,8 +561,8 @@ class Test(unittest.TestCase):
         try:
             r.asDirect()
         except Exception as e:
-            self.assertTrue(isinstance(e, png.FormatError))
-            self.assertTrue('too short' in str(e))
+            self.assertIsInstance(e, png.FormatError)
+            self.assertIn('too short', str(e))
 
     def test_no_checksum(self):
         """
@@ -572,8 +572,8 @@ class Test(unittest.TestCase):
         try:
             r.asDirect()
         except Exception as e:
-            self.assertTrue(isinstance(e, png.FormatError))
-            self.assertTrue('checksum' in str(e))
+            self.assertIsInstance(e, png.FormatError)
+            self.assertIn('checksum', str(e))
 
     def test_extra_pixels(self):
         """Test file that contains too many pixels."""
