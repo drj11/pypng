@@ -2,6 +2,6 @@
 
 PATH=${PWD%code*}code:$PATH
 
-python -m pngsuite basn0g04 | pripngchunk --transparent '#5' - |
+python -m pngsuite basn0g04 | prichunkpng --transparent '#5' - |
   pipcolours | pnglsch | grep IHDR |
   grep -i -q 0000000f000000010804000000

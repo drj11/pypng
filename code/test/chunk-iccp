@@ -4,5 +4,5 @@ Code=${PWD%code*}code
 PATH=$Code:$PATH
 
 python -m pngsuite basi6a08 |
-  pripngchunk --iccprofile "$Code/../asset/snibgoGBR.icc" - |
+  prichunkpng --iccprofile "$Code/../asset/snibgoGBR.icc" - |
   pnglsch | grep -q iCCP

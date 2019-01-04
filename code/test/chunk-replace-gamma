@@ -2,5 +2,5 @@
 
 PATH=${PWD%code*}code:$PATH
 
-python -m pngsuite basn0g08 | pripngchunk --gamma 0.45 - |
+python -m pngsuite basn0g08 | prichunkpng --gamma 0.45 - |
   pnglsch | grep -c gAMA | grep -q '^1$'

@@ -1,0 +1,5 @@
+#!/bin/sh
+
+PATH=${PWD%code*}code:$PATH
+
+python -m pngsuite basn0g08 | prichunkpng - | file - | grep -q PNG
