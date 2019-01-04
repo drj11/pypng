@@ -35,24 +35,28 @@ from __future__ import print_function
 """
 Pure Python PNG Reader/Writer
 
-This Python module implements support for PNG images (see PNG
-specification at http://www.w3.org/TR/2003/REC-PNG-20031110/ ). It reads
-and writes PNG files with all allowable bit depths
-(1/2/4/8/16/24/32/48/64 bits per pixel) and colour combinations:
-greyscale (1/2/4/8/16 bit); RGB, RGBA, LA (greyscale with alpha) with
-8/16 bits per channel; colour mapped images (1/2/4/8 bit).
-Adam7 interlacing is supported for reading and
-writing.  A number of optional chunks can be specified (when writing)
+Reads and write PNG files.
+All allowable bit depths (1/2/4/8/16/24/32/48/64 bits per pixel) and
+colour combinations are supported:
+greyscale (1/2/4/8/16 bit);
+RGB, RGBA, LA (greyscale with alpha) with 8/16 bits per channel;
+colour mapped images (1/2/4/8 bit).
+Interlaced images,
+which support a progressive display when downloading,
+are supported for both reading and writing.
+A number of optional chunks can be specified (when writing)
 and understood (when reading): ``tRNS``, ``bKGD``, ``gAMA``.
 
 For help, type ``import png; help(png)`` in your python interpreter.
 
-A good place to start is the :class:`Reader` and :class:`Writer`
-classes.
+A good place to start is the :class:`Reader` and :class:`Writer` classes.
 
 Requires Python 3.4 or higher (or Python 2.7).
 Installation is trivial,
 but see the ``README.txt`` file (with the source distribution) for details.
+
+Full use of all features will need some reading of the PNG specification
+http://www.w3.org/TR/2003/REC-PNG-20031110/.
 
 The package also comes with command line utilities that convert
 `Netpbm <http://netpbm.sourceforge.net/>`_ PNM files to PNG,
@@ -62,29 +66,32 @@ and some simple PNG manipulations.
 A note on spelling and terminology
 ----------------------------------
 
-Generally British English spelling is used in the documentation.  So
-that's "greyscale" and "colour".  This not only matches the author's
-native language, it's also used by the PNG specification.
+Generally British English spelling is used in the documentation.
+So that's "greyscale" and "colour".
+This not only matches the author's native language,
+it's also used by the PNG specification.
 
 The major colour models supported by PNG (and hence by PyPNG) are:
-greyscale, RGB, greyscale--alpha, RGB--alpha.  These are sometimes
-referred to using the abbreviations: L, RGB, LA, RGBA.  In this case
-each letter abbreviates a single channel: *L* is for Luminance or Luma
-or Lightness which is the channel used in greyscale images; *R*, *G*,
-*B* stand for Red, Green, Blue, the components of a colour image; *A*
-stands for Alpha, the opacity channel (used for transparency effects,
-but higher values are more opaque, so it makes sense to call it
-opacity).
+greyscale, RGB, greyscale--alpha, RGB--alpha.
+Also referred to using the abbreviations: L, RGB, LA, RGBA.
+Each letter codes a single channel:
+*L* is for Luminance or Luma or Lightness (greyscale images);
+*R*, *G*, *B* stand for Red, Green, Blue (colour image);
+*A* stands for Alpha, the opacity channel
+(used for transparency effects, but higher values are more opaque,
+so it makes sense to call it opacity).
 
 A note on formats
 -----------------
 
-When getting pixel data out of this module (reading) and presenting
-data to this module (writing) there are a number of ways the data could
-be represented as a Python value.  Generally this module uses one of
-three formats called "flat row flat pixel", "boxed row flat pixel", and
-"boxed row boxed pixel".  Basically the concern is whether each pixel
-and each row comes in its own little tuple (box), or not.
+When getting pixel data out of this module (reading) and
+presenting data to this module (writing) there are
+a number of ways the data could be represented as a Python value.
+Generally this module uses one of three formats called
+"flat row flat pixel", "boxed row flat pixel", and
+"boxed row boxed pixel".
+Basically the concern is whether each pixel and
+each row comes in its own little tuple (box), or not.
 
 Consider an image that is 3 pixels wide by 2 pixels high, and each pixel
 has RGB components:
@@ -94,14 +101,17 @@ Boxed row flat pixel::
   list([R,G,B, R,G,B, R,G,B],
        [R,G,B, R,G,B, R,G,B])
 
-Each row appears as its own list, but the pixels are flattened so
-that three values for one pixel simply follow the three values for
-the previous pixel.  This is the most common format used, because it
-provides a good compromise between space and convenience.  PyPNG regards
-itself as at liberty to replace any sequence type with any sufficiently
-compatible other sequence type; in practice each row is an array (from
-the array module), and the outer list is sometimes an iterator rather
-than an explicit list (so that streaming is possible).
+Each row appears as its own list,
+but the pixels are flattened so that three values for one pixel
+simply follow the three values for the previous pixel.
+This is the most common format used,
+because it provides a good compromise between space and convenience.
+PyPNG regards itself as at liberty to replace any sequence type with
+any sufficiently compatible other sequence type;
+in practice each row is an array (bytearray or array.array).
+
+To allow streaming the outer list is sometimes
+an iterator rather than an explicit list.
 
 Flat row flat pixel::
 
@@ -116,27 +126,30 @@ Boxed row boxed pixel::
   list([ (R,G,B), (R,G,B), (R,G,B) ],
        [ (R,G,B), (R,G,B), (R,G,B) ])
 
-Each row appears in its own list, but each pixel also appears in its own
-tuple.  A serious memory burn in Python.
+Each row is a list of tuples, one tuple per pixel.
+A serious memory burn in Python.
 
-In all cases the top row comes first, and for each row the pixels are
-ordered from left-to-right.  Within a pixel the values appear in the
-order, R-G-B-A (or L-A for greyscale--alpha).
+The top row comes first,
+and within each row the pixels are ordered from left-to-right.
+Within a pixel the values appear in the order R-G-B-A
+(or L-A for greyscale--alpha).
 
 There is a fourth format, mentioned because it is used internally,
-is close to what lies inside a PNG file itself, and has some support
-from the public API.  This format is called packed.  When packed,
-each row is a sequence of bytes (integers from 0 to 255), just as
-it is before PNG scanline filtering is applied.  When the bit depth
-is 8 this is essentially the same as boxed row flat pixel; when the
-bit depth is less than 8, several pixels are packed into each byte;
-when the bit depth is 16 (the only value more than 8 that is supported
-by the PNG image format) each pixel value is decomposed into 2 bytes
-(and `packed` is a misnomer).  This format is used by the
-:meth:`Writer.write_packed` method.  It isn't usually a convenient
-format, but may be just right if the source data for the PNG image
-comes from something that uses a similar format (for example, 1-bit
-BMPs, or another PNG file).
+is close to what lies inside a PNG file itself,
+and has some support from the public API.
+This format is called packed.
+When packed, each row is a sequence of bytes (integers from 0 to 255),
+just as it is before PNG scanline filtering is applied.
+When the bit depth is 8 this is the same as boxed row flat pixel;
+when the bit depth is less than 8 (1, 2 and 4),
+several pixels are packed into each byte;
+when the bit depth is 16 each pixel value is decomposed into 2 bytes
+(and `packed` is a misnomer).
+This format is used by the :meth:`Writer.write_packed` method.
+It isn't usually a convenient format,
+but may be just right if the source data for
+the PNG image comes from something that uses a similar format
+(for example, 1-bit BMPs, or another PNG file).
 
 And now, my famous members
 --------------------------
