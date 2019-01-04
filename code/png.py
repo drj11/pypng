@@ -344,7 +344,6 @@ class Writer:
                  gamma=None,
                  compression=None,
                  interlace=False,
-                 bytes_per_sample=None,     # deprecated
                  planes=None,
                  colormap=None,
                  maxval=None,
@@ -520,14 +519,6 @@ class Writer:
             raise ValueError(
                 "transparent colour not allowed with alpha channel")
 
-        if bytes_per_sample is not None:
-            warnings.warn('please use bitdepth instead of bytes_per_sample',
-                          DeprecationWarning)
-            if bytes_per_sample not in (0.125, 0.25, 0.5, 1, 2):
-                raise ValueError(
-                    "bytes per sample must be .125, .25, .5, 1, or 2")
-            bitdepth = int(8 * bytes_per_sample)
-        del bytes_per_sample
         # bitdepth is either single integer, or tuple of integers.
         # Convert to tuple.
         try:
