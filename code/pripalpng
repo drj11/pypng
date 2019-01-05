@@ -35,6 +35,35 @@ def read_palette(inp):
     return palette
 
 
+def palette_convert(inp, out, palette_map):
+    """
+    `palette_map` is a dict that maps from tuple to palette index;
+    it's inverted from the usual idea of palette.
+    """
+    reader = png.Reader(file=inp)
+    w, h, rows, info = reader.asRGB8()
+    n_channels = info['planes']
+    # Default for colours not in palette is to use last entry.
+    last = len(palette_map) - 1
+
+    def map_pixel(p):
+        return palette_map.get(p, last)
+
+    def convert_rows():
+        for row in rows:
+            yield [map_pixel(p) for p in group(row, n_channels)]
+
+    # Make a palette by sorting the items and extracting pixels.
+    palette_items = sorted(palette_map.items(), key=lambda item: item[1])
+    palette = [item[0] for item in palette_items]
+    pal_info = dict(
+            size=info['size'],
+    palette = palette)
+
+    w = png.Writer(**pal_info)
+    w.write(out, convert_rows())
+
+
 def group(s, n):
     return list(zip(* [iter(s)] * n))
 
@@ -69,7 +98,7 @@ def main(argv=None):
         pass
 
     palette = read_palette(args.palette)
-    print(palette)
+    palette_convert(args.input, binary_stdout(), palette)
 
 
 if __name__ == "__main__":
