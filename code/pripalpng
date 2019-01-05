@@ -22,7 +22,7 @@ import png
 def read_palette(inp):
     reader = png.Reader(file=inp)
     w, h, rows, info = reader.asDirect()
-    n_channels = info['planes']
+    n_channels = info["planes"]
 
     # Map from pixel value to palette index
     palette = {}
@@ -42,7 +42,7 @@ def palette_convert(inp, out, palette_map):
     """
     reader = png.Reader(file=inp)
     w, h, rows, info = reader.asRGB8()
-    n_channels = info['planes']
+    n_channels = info["planes"]
     # Default for colours not in palette is to use last entry.
     last = len(palette_map) - 1
 
@@ -56,16 +56,14 @@ def palette_convert(inp, out, palette_map):
     # Make a palette by sorting the items and extracting pixels.
     palette_items = sorted(palette_map.items(), key=lambda item: item[1])
     palette = [item[0] for item in palette_items]
-    pal_info = dict(
-            size=info['size'],
-    palette = palette)
+    pal_info = dict(size=info["size"], palette=palette)
 
     w = png.Writer(**pal_info)
     w.write(out, convert_rows())
 
 
 def group(s, n):
-    return list(zip(* [iter(s)] * n))
+    return list(zip(*[iter(s)] * n))
 
 
 def binary_stdout():
