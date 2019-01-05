@@ -331,6 +331,10 @@ class ChunkError(FormatError):
     pass
 
 
+class Default:
+    """The default for the greyscale paramter."""
+
+
 class Writer:
     """
     PNG encoder in pure Python.
@@ -338,7 +342,7 @@ class Writer:
 
     def __init__(self, width=None, height=None,
                  size=None,
-                 greyscale=False,
+                 greyscale=Default,
                  alpha=False,
                  bitdepth=8,
                  palette=None,
@@ -364,7 +368,7 @@ class Writer:
         size
           Image size (w,h) in pixels, as single argument.
         greyscale
-          Input data is greyscale, not RGB.
+          Pixels are greyscale, not RGB.
         alpha
           Input data has alpha channel (RGBA or LA).
         bitdepth
@@ -400,9 +404,12 @@ class Writer:
         argument.
         If `size` is used it should be a pair (*width*, *height*).
 
-        `greyscale` and `alpha` are booleans that specify
-        whether an image is greyscale (or colour), and
-        whether it has an alpha channel (or not).
+        The `greyscale` argument indicates whether input pixels
+        are greyscale (when true), or colour (when False).
+        The default is true unless palette= is used.
+
+        The `alpha` argument (a boolean) specifies
+        whether input pixels have an alpha channel (or not).
 
         `bitdepth` specifies the bit depth of the source pixel values.
         Each channel may have a different bit depth.
@@ -440,7 +447,7 @@ class Writer:
         The `palette` option, when specified,
         causes a colour mapped image to be created:
         the PNG colour type is set to 3;
-        `greyscale` must not be set; `alpha` must not be set;
+        `greyscale` must not be true; `alpha` must not be true;
         `transparent` must not be set.
         The bit depth must be 1,2,4, or 8.
         When a colour mapped image is created,
@@ -540,6 +547,8 @@ class Writer:
         palette = check_palette(palette)
         alpha = bool(alpha)
         colormap = bool(palette)
+        if greyscale is Default and palette:
+            greyscale = False
         greyscale = bool(greyscale)
         color_planes = (3, 1)[greyscale or colormap]
         planes = color_planes + alpha
