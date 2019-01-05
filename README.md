@@ -63,6 +63,8 @@ your current directory:
 Support for earlier versions of Python is dropped.
 Python 3.4 and onwards are supported (Python 2.7 also works).
 
+Cython code is removed, which simplifies the implementation.
+
 ### Release 0.0.19
 
 Support for earlier versions of Python is dropped in order to

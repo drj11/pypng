@@ -1506,9 +1506,6 @@ class Reader:
         """
 
         # :todo: Would it be better to update scanline in place?
-        # Yes, with the Cython extension making the undo_filter fast,
-        # updating scanline inplace makes the code 3 times faster
-        # (reading 50 images of 800x800 went from 40s to 16s)
         result = scanline
 
         if filter_type == 0:
