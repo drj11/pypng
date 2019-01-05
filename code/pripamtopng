@@ -93,40 +93,73 @@ def read_pnm_header(infile):
     # Of course all PNM files in the wild use a newline at this point,
     # but we are strong and so we avoid
     # the temptation to use readline.
-    def getc():
-        c = infile.read(1)
-        if not c:
-            raise png.Error('premature EOF reading PNM header')
+    bs = bytearray()
+    backs = bytearray()
+    def next():
+        if backs:
+            c = bytes(backs[0:1])
+            del backs[0]
+        else:
+            c = infile.read(1)
+            if not c:
+                raise png.Error('premature EOF reading PNM header')
+        bs.append(c)
         return c
 
+    def backup():
+        """Push last byte of token onto front of backs."""
+        backs.insert(0, bs[-1])
+        del bs[-1]
 
-    c = getc()
-    while True:
-        # skip comments
-        while b'#' <= c <= b'#':
+    def ignore():
+        del bs[:]
+
+    def tokens():
+        ls = lexInit
+        while True:
+            token, ls = ls()
+            if token:
+                yield token
+
+    def lexInit():
+        c = next()
+        # Skip comments
+        if b'#' <= c <= b'#':
             while c not in b'\n\r':
-                c = getc()
-            c = getc()
-        # Skip whitespace that precedes a token.
-        while c.isspace():
-            c = getc()
+                c = next()
+            ignore()
+            return None, lexInit
+        # Skip whitespace (that precedes a token)
+        if c.isspace():
+            ignore()
+            return None, lexInit
         if not c.isdigit():
             raise png.Error('unexpected byte %r found in header' % c)
+        return None, lexNumber
+
+    def lexNumber():
         # According to the specification it is legal to have comments
         # that appear in the middle of a token.
         # I've never seen it; and,
         # it's a bit awkward to code good lexers in Python (no goto).
         # So we break on such cases.
-        token = b''
+        c = next()
         while c.isdigit():
-            token += c
-            c = getc()
+            c = next()
+        backup()
+        token = bs[:]
+        ignore()
+        return token, lexInit
+
+    for token in tokens():
         # All "tokens" are decimal integers, so convert them here.
         header.append(int(token))
         if len(header) == expected:
             break
-    if not c.isspace():
-        raise png.Error('expected header to end with whitespace, not %s' % c)
+
+    final = next()
+    if not final.isspace():
+        raise png.Error('expected header to end with whitespace, not %r' % final)
 
     if type in pbm:
         # synthesize a MAXVAL
