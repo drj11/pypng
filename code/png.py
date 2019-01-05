@@ -172,16 +172,6 @@ import zlib
 
 from array import array
 
-try:
-    # `cpngfilters` is a Cython module: it must be compiled by
-    # Cython for this import to work.
-    # If this import does work, then it overrides pure-python
-    # filtering functions defined later in this file (see `class
-    # pngfilters`).
-    import cpngfilters as pngfilters
-except ImportError:
-    pass
-
 
 __all__ = ['Image', 'Reader', 'Writer', 'write_chunks', 'from_array']
 
@@ -1545,10 +1535,10 @@ class Reader:
         # Call appropriate filter algorithm.  Note that 0 has already
         # been dealt with.
         fn = (None,
-              pngfilters.undo_filter_sub,
-              pngfilters.undo_filter_up,
-              pngfilters.undo_filter_average,
-              pngfilters.undo_filter_paeth)[filter_type]
+              undo_filter_sub,
+              undo_filter_up,
+              undo_filter_average,
+              undo_filter_paeth)[filter_type]
         fn(fu, scanline, previous, result)
         return result
 
@@ -2199,14 +2189,14 @@ class Reader:
                     # into first three target channels, and A channel
                     # into fourth channel.
                     a = newarray()
-                    pngfilters.convert_la_to_rgba(row, a)
+                    convert_la_to_rgba(row, a)
                     yield a
         elif meta['greyscale']:
             # L to RGBA
             def convert():
                 for row in pixels:
                     a = newarray()
-                    pngfilters.convert_l_to_rgba(row, a)
+                    convert_l_to_rgba(row, a)
                     yield a
         else:
             assert not meta['alpha'] and not meta['greyscale']
@@ -2215,7 +2205,7 @@ class Reader:
             def convert():
                 for row in pixels:
                     a = newarray()
-                    pngfilters.convert_rgb_to_rgba(row, a)
+                    convert_rgb_to_rgba(row, a)
                     yield a
         meta['alpha'] = True
         meta['greyscale'] = False
@@ -2276,99 +2266,92 @@ def is_natural(x):
     return is_integer and x >= 0
 
 
-# === Support for users without Cython ===
+def undo_filter_sub(filter_unit, scanline, previous, result):
+    """Undo sub filter."""
 
-try:
-    pngfilters
-except NameError:
-    class pngfilters(object):
-        def undo_filter_sub(filter_unit, scanline, previous, result):
-            """Undo sub filter."""
+    ai = 0
+    # Loops starts at index fu.  Observe that the initial part
+    # of the result is already filled in correctly with
+    # scanline.
+    for i in range(filter_unit, len(result)):
+        x = scanline[i]
+        a = result[ai]
+        result[i] = (x + a) & 0xff
+        ai += 1
 
-            ai = 0
-            # Loops starts at index fu.  Observe that the initial part
-            # of the result is already filled in correctly with
-            # scanline.
-            for i in range(filter_unit, len(result)):
-                x = scanline[i]
-                a = result[ai]
-                result[i] = (x + a) & 0xff
-                ai += 1
-        undo_filter_sub = staticmethod(undo_filter_sub)
 
-        def undo_filter_up(filter_unit, scanline, previous, result):
-            """Undo up filter."""
+def undo_filter_up(filter_unit, scanline, previous, result):
+    """Undo up filter."""
 
-            for i in range(len(result)):
-                x = scanline[i]
-                b = previous[i]
-                result[i] = (x + b) & 0xff
-        undo_filter_up = staticmethod(undo_filter_up)
+    for i in range(len(result)):
+        x = scanline[i]
+        b = previous[i]
+        result[i] = (x + b) & 0xff
 
-        def undo_filter_average(filter_unit, scanline, previous, result):
-            """Undo up filter."""
 
-            ai = -filter_unit
-            for i in range(len(result)):
-                x = scanline[i]
-                if ai < 0:
-                    a = 0
-                else:
-                    a = result[ai]
-                b = previous[i]
-                result[i] = (x + ((a + b) >> 1)) & 0xff
-                ai += 1
-        undo_filter_average = staticmethod(undo_filter_average)
+def undo_filter_average(filter_unit, scanline, previous, result):
+    """Undo up filter."""
 
-        def undo_filter_paeth(filter_unit, scanline, previous, result):
-            """Undo Paeth filter."""
+    ai = -filter_unit
+    for i in range(len(result)):
+        x = scanline[i]
+        if ai < 0:
+            a = 0
+        else:
+            a = result[ai]
+        b = previous[i]
+        result[i] = (x + ((a + b) >> 1)) & 0xff
+        ai += 1
 
-            # Also used for ci.
-            ai = -filter_unit
-            for i in range(len(result)):
-                x = scanline[i]
-                if ai < 0:
-                    a = c = 0
-                else:
-                    a = result[ai]
-                    c = previous[ai]
-                b = previous[i]
-                p = a + b - c
-                pa = abs(p - a)
-                pb = abs(p - b)
-                pc = abs(p - c)
-                if pa <= pb and pa <= pc:
-                    pr = a
-                elif pb <= pc:
-                    pr = b
-                else:
-                    pr = c
-                result[i] = (x + pr) & 0xff
-                ai += 1
-        undo_filter_paeth = staticmethod(undo_filter_paeth)
 
-        def convert_la_to_rgba(row, result):
-            for i in range(3):
-                result[i::4] = row[0::2]
-            result[3::4] = row[1::2]
-        convert_la_to_rgba = staticmethod(convert_la_to_rgba)
+def undo_filter_paeth(filter_unit, scanline, previous, result):
+    """Undo Paeth filter."""
 
-        def convert_l_to_rgba(row, result):
-            """Convert a grayscale image to RGBA. This method assumes
-            the alpha channel in result is already correctly
-            initialized.
-            """
-            for i in range(3):
-                result[i::4] = row
-        convert_l_to_rgba = staticmethod(convert_l_to_rgba)
+    # Also used for ci.
+    ai = -filter_unit
+    for i in range(len(result)):
+        x = scanline[i]
+        if ai < 0:
+            a = c = 0
+        else:
+            a = result[ai]
+            c = previous[ai]
+        b = previous[i]
+        p = a + b - c
+        pa = abs(p - a)
+        pb = abs(p - b)
+        pc = abs(p - c)
+        if pa <= pb and pa <= pc:
+            pr = a
+        elif pb <= pc:
+            pr = b
+        else:
+            pr = c
+        result[i] = (x + pr) & 0xff
+        ai += 1
 
-        def convert_rgb_to_rgba(row, result):
-            """Convert an RGB image to RGBA. This method assumes the
-            alpha channel in result is already correctly initialized.
-            """
-            for i in range(3):
-                result[i::4] = row[i::3]
-        convert_rgb_to_rgba = staticmethod(convert_rgb_to_rgba)
+
+def convert_la_to_rgba(row, result):
+    for i in range(3):
+        result[i::4] = row[0::2]
+    result[3::4] = row[1::2]
+
+
+def convert_l_to_rgba(row, result):
+    """Convert a grayscale image to RGBA. This method assumes
+    the alpha channel in result is already correctly
+    initialized.
+    """
+    for i in range(3):
+        result[i::4] = row
+
+
+def convert_rgb_to_rgba(row, result):
+    """Convert an RGB image to RGBA. This method assumes the
+    alpha channel in result is already correctly initialized.
+    """
+    for i in range(3):
+        result[i::4] = row[i::3]
 
 
 def main(argv):
