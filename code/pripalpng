@@ -1,0 +1,76 @@
+#!/usr/bin/env python
+# pripalpng
+# Convert to Palette PNG
+
+from __future__ import print_function
+
+import argparse
+import collections
+
+# https://docs.python.org/2.7/library/io.html
+import io
+import string
+import struct
+import sys
+import warnings
+import zlib
+
+# Local module.
+import png
+
+
+def read_palette(inp):
+    reader = png.Reader(file=inp)
+    w, h, rows, info = reader.asDirect()
+    n_channels = info['planes']
+
+    # Map from pixel value to palette index
+    palette = {}
+
+    for row in rows:
+        for pixel in group(row, n_channels):
+            if pixel in palette:
+                continue
+            palette[pixel] = len(palette)
+    return palette
+
+
+def group(s, n):
+    return list(zip(* [iter(s)] * n))
+
+
+def binary_stdout():
+    try:
+        # Probably Python 3
+        return sys.stdout.buffer
+    except AttributeError:
+        pass
+    return sys.stdout
+
+
+def main(argv=None):
+    import re
+
+    if argv is None:
+        argv = sys.argv
+
+    argv = argv[1:]
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--palette", type=argparse.FileType("rb"))
+    parser.add_argument("input", type=argparse.FileType("rb"))
+
+    args = parser.parse_args(argv)
+
+    # Fix for binary stdin on Python 3
+    try:
+        args.input = args.input.buffer
+    except AttributeError:
+        pass
+
+    palette = read_palette(args.palette)
+    print(palette)
+
+
+if __name__ == "__main__":
+    main()
