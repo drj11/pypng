@@ -103,7 +103,7 @@ def read_pnm_header(infile):
             c = infile.read(1)
             if not c:
                 raise png.Error('premature EOF reading PNM header')
-        bs.append(c)
+        bs.extend(c)
         return c
 
     def backup():
