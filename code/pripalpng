@@ -19,30 +19,64 @@ import zlib
 import png
 
 
-def read_palette(inp):
+def read_palette(inp, keep=False):
+    """Read the PNG file and convert the colours into a palette.
+    If keep is true, keep the rows in a list and return them.
+    """
+
     reader = png.Reader(file=inp)
     w, h, rows, info = reader.asDirect()
-    n_channels = info["planes"]
+    channels = info["planes"]
+    if keep:
+        rows = list(rows)
+    pal = make_inverse_palette(rows, channels)
+    if keep:
+        return pal, rows
+    else:
+        return pal, None
 
-    # Map from pixel value to palette index
+
+def make_inverse_palette(rows, channels):
+    """
+    The inverse palette maps from tuple to palette index.
+    """
+
     palette = {}
 
     for row in rows:
-        for pixel in group(row, n_channels):
+        for pixel in group(row, channels):
             if pixel in palette:
                 continue
             palette[pixel] = len(palette)
     return palette
 
 
-def palette_convert(inp, out, palette_map):
+def palette_convert(inp, out, palette_file):
     """
-    `palette_map` is a dict that maps from tuple to palette index;
-    it's inverted from the usual idea of palette.
+    Convert PNG image in `inp` to use a palette, colour type 3,
+    and write converted image to `out`.
+
+    `palette_file` is a file descriptor for the palette to use.
+
+    If `palette_file` is None, then `inp` is used as the palette.
     """
-    reader = png.Reader(file=inp)
-    w, h, rows, info = reader.asRGB8()
-    n_channels = info["planes"]
+
+    if palette_file is None:
+        inp, palette_file = palette_file, inp
+
+    reader = png.Reader(file=palette_file)
+    w, h, rows, info = reader.asDirect()
+    channels = info["planes"]
+    if not inp:
+        rows = list(rows)
+
+    palette_map = make_inverse_palette(rows, channels)
+
+    if inp:
+        reader = png.Reader(file=inp)
+        w, h, rows, info = reader.asRGB8()
+        channels = info["planes"]
+
     # Default for colours not in palette is to use last entry.
     last = len(palette_map) - 1
 
@@ -51,7 +85,7 @@ def palette_convert(inp, out, palette_map):
 
     def convert_rows():
         for row in rows:
-            yield [map_pixel(p) for p in group(row, n_channels)]
+            yield [map_pixel(p) for p in group(row, channels)]
 
     # Make a palette by sorting the items and extracting pixels.
     palette_items = sorted(palette_map.items(), key=lambda item: item[1])
@@ -95,8 +129,7 @@ def main(argv=None):
     except AttributeError:
         pass
 
-    palette = read_palette(args.palette)
-    palette_convert(args.input, binary_stdout(), palette)
+    palette_convert(args.input, binary_stdout(), args.palette)
 
 
 if __name__ == "__main__":
