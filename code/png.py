@@ -2147,6 +2147,7 @@ class Reader:
         if not meta['greyscale']:
             return width, height, pixels, meta
         meta['greyscale'] = False
+        meta['planes'] = 3
 
         if meta['bitdepth'] > 8:
             def newarray():
@@ -2215,6 +2216,7 @@ class Reader:
                     yield a
         meta['alpha'] = True
         meta['greyscale'] = False
+        meta['planes'] = 4
         return width, height, convert(), meta
 
 
