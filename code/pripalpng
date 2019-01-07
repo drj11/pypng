@@ -1,0 +1,119 @@
+#!/usr/bin/env python
+# pripalpng
+# Convert to Palette PNG
+
+from __future__ import print_function
+
+import argparse
+import collections
+
+# https://docs.python.org/2.7/library/io.html
+import io
+import string
+import struct
+import sys
+import warnings
+import zlib
+
+# Local module.
+import png
+
+
+def make_inverse_palette(rows, channels):
+    """
+    The inverse palette maps from tuple to palette index.
+    """
+
+    palette = {}
+
+    for row in rows:
+        for pixel in group(row, channels):
+            if pixel in palette:
+                continue
+            palette[pixel] = len(palette)
+    return palette
+
+
+def palette_convert(inp, out, palette_file):
+    """
+    Convert PNG image in `inp` to use a palette, colour type 3,
+    and write converted image to `out`.
+
+    `palette_file` is a file descriptor for the palette to use.
+
+    If `palette_file` is None, then `inp` is used as the palette.
+    """
+
+    if palette_file is None:
+        inp, palette_file = palette_file, inp
+
+    reader = png.Reader(file=palette_file)
+    w, h, rows, info = reader.asRGB8()
+    channels = info["planes"]
+    if not inp:
+        rows = list(rows)
+
+    palette_map = make_inverse_palette(rows, channels)
+
+    if inp:
+        reader = png.Reader(file=inp)
+        w, h, rows, info = reader.asRGB8()
+        channels = info["planes"]
+
+    # Default for colours not in palette is to use last entry.
+    last = len(palette_map) - 1
+
+    def map_pixel(p):
+        return palette_map.get(p, last)
+
+    def convert_rows():
+        for row in rows:
+            yield [map_pixel(p) for p in group(row, channels)]
+
+    # Make a palette by sorting the items and extracting pixels.
+    palette_items = sorted(palette_map.items(), key=lambda item: item[1])
+    palette = [item[0] for item in palette_items]
+    pal_info = dict(size=info["size"], palette=palette)
+
+    w = png.Writer(**pal_info)
+    w.write(out, convert_rows())
+
+
+def group(s, n):
+    return list(zip(*[iter(s)] * n))
+
+
+def binary_stdout():
+    try:
+        # Probably Python 3
+        return sys.stdout.buffer
+    except AttributeError:
+        pass
+    return sys.stdout
+
+
+def main(argv=None):
+    import re
+
+    if argv is None:
+        argv = sys.argv
+
+    argv = argv[1:]
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--palette", type=argparse.FileType("rb"))
+    parser.add_argument("input", type=argparse.FileType("rb"))
+
+    args = parser.parse_args(argv)
+
+    # Fix for binary stdin on Python 3
+    try:
+        args.input = args.input.buffer
+    except AttributeError:
+        pass
+
+    palette_convert(args.input, binary_stdout(), args.palette)
+
+
+if __name__ == "__main__":
+    main()

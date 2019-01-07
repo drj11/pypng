@@ -237,11 +237,21 @@ class Test(unittest.TestCase):
         self.assertEqual(list(row9[0:8]),
                          [0xff, 0xdf, 0xff, 0xff, 0xff, 0xde, 0xff, 0xff])
 
+    def test_L_to_RGB(self):
+        """asRGB() on grey source."""
+        r = png.Reader(bytes=pngsuite.basi0g08)
+        x, y, rows, meta = r.asRGB()
+        self.assertEqual(meta['planes'], 3)
+        row9 = list(list(rows)[9])
+        self.assertEqual(row9[0:6],
+                         [222, 222, 222, 221, 221, 221])
+
     def test_L_to_RGBA(self):
         """asRGBA() on grey source."""
         # Test for Issue 60 (googlecode)
         r = png.Reader(bytes=pngsuite.basi0g08)
         x, y, pixels, meta = r.asRGBA()
+        self.assertEqual(meta['planes'], 4)
         row9 = list(list(pixels)[9])
         self.assertEqual(row9[0:8],
                          [222, 222, 222, 255, 221, 221, 221, 255])
