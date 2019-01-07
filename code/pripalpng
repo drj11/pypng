@@ -19,23 +19,6 @@ import zlib
 import png
 
 
-def read_palette(inp, keep=False):
-    """Read the PNG file and convert the colours into a palette.
-    If keep is true, keep the rows in a list and return them.
-    """
-
-    reader = png.Reader(file=inp)
-    w, h, rows, info = reader.asDirect()
-    channels = info["planes"]
-    if keep:
-        rows = list(rows)
-    pal = make_inverse_palette(rows, channels)
-    if keep:
-        return pal, rows
-    else:
-        return pal, None
-
-
 def make_inverse_palette(rows, channels):
     """
     The inverse palette maps from tuple to palette index.
