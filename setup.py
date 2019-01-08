@@ -10,6 +10,9 @@
 # in the man directory, so that this file forms a single source for
 # metadata.
 
+# http://docs.python.org/release/2.4.4/dist/setup-script.html
+from distutils.core import setup
+
 
 def get_version():
     from os.path import dirname, join
@@ -58,11 +61,4 @@ conf['download_url'] = \
   'https://github.com/drj11/pypng/archive/%(name)s-%(version)s.tar.gz' % conf
 
 if __name__ == '__main__':
-    try:
-        # http://peak.telecommunity.com/DevCenter/setuptools#basic-use
-        from setuptools import setup
-        conf['test_suite'] = "test_png"
-    except ImportError:
-        # http://docs.python.org/release/2.4.4/dist/setup-script.html
-        from distutils.core import setup
     setup(**conf)
