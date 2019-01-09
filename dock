@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Builds pypng distruction and documentation files.
+# Builds pypng distribution and documentation files.
 # Using docker.
 
 set -e
