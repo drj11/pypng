@@ -1,5 +1,0 @@
-#!/bin/sh
-
-cd ../..
-rm -fr code3
-python3 setup.py build
