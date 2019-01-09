@@ -1,4 +1,0 @@
-#!/bin/sh
-
-cd ../..
-docker build -t pypng-numpy-test -f setup-numpy.Dockerfile .

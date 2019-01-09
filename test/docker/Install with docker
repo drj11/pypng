@@ -1,4 +1,0 @@
-#!/bin/sh
-
-cd ../..
-docker build -t pypng-test -f setup.Dockerfile .
