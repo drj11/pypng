@@ -5,4 +5,4 @@ PATH=$Code:$PATH
 
 python -m pngsuite basi6a08 |
   prichunkpng --iccprofile "$Code/../asset/snibgoGBR.icc" - |
-  pnglsch | grep -q iCCP
+  pripnglsch | grep -q iCCP

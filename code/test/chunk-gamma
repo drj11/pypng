@@ -3,6 +3,6 @@
 PATH=${PWD%code*}code:$PATH
 
 # It so happens that image f02n0g08 does not have a gamma chunk
-python -m pngsuite f02n0g08 | pnglsch | grep -q gAMA && exit 9
+python -m pngsuite f02n0g08 | pripnglsch | grep -q gAMA && exit 9
 python -m pngsuite f02n0g08 | prichunkpng --gamma 0.45 - |
-  pnglsch | grep -q gAMA
+  pripnglsch | grep -q gAMA

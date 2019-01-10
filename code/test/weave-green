@@ -5,5 +5,5 @@ PATH=${PWD%code*}code:$PATH
 # Extract Green channel as greyscale image
 
 python -m pngsuite basi2c08 |
-  priweavepng -c 2 - | pnglsch | grep IHDR |
+  priweavepng -c 2 - | pripnglsch | grep IHDR |
   grep -q 00000020000000200800000000

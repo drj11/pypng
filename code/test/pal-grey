@@ -5,5 +5,5 @@ PATH=${PWD%code*}code:$PATH
 # Encode a grey PNG using a palette
 
 python -m pngsuite basi0g04 |
-  pripalpng - | pnglsch | grep IHDR |
+  pripalpng - | pripnglsch | grep IHDR |
   grep -q 00000020000000200[48]03000000

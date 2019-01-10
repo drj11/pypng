@@ -3,4 +3,4 @@
 PATH=${PWD%code*}code:$PATH
 
 python -m pngsuite basn0g08 | prichunkpng --sigbit 2 - |
-  pnglsch | grep -q sBIT || exit 1
+  pripnglsch | grep -q sBIT || exit 1

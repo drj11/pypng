@@ -7,6 +7,6 @@ python -m pngsuite basn0g0$1
 }
 
 { g 4; g 8; g 2; } | priweavepng - - - |
-  pnglsch |
+  pripnglsch |
   grep sBIT |
   grep -q 040802

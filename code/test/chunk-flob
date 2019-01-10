@@ -6,4 +6,4 @@ PATH=$Code:$PATH
 # Add an entirely fictitious flOB chunk.
 python -m pngsuite basi6a08 |
   prichunkpng --chunk flOB "$Code/test/chunk-flob" - |
-  pnglsch | grep -q flOB
+  pripnglsch | grep -q flOB

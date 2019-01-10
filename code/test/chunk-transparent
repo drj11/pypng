@@ -4,5 +4,5 @@ PATH=${PWD%code*}code:$PATH
 
 python -m pngsuite basi2c08 | prichunkpng --transparent '#FFFFFF' - |
   pipcolours |
-  pnglsch | grep IHDR |
+  pripnglsch | grep IHDR |
   grep -i -q 000003fd000000010806000000

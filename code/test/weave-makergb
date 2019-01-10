@@ -6,5 +6,5 @@ g () {
 python -m pngsuite basn0g04
 }
 
-{ g; g; g; } | priweavepng - - - | pnglsch | grep IHDR |
+{ g; g; g; } | priweavepng - - - | pripnglsch | grep IHDR |
   grep -q 00000020000000200802000000

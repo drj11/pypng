@@ -5,5 +5,5 @@ PATH=${PWD%code*}code:$PATH
 # Encode a forged PNG using a palette
 
 priforgepng -s 32 -d 3 grl glr rtl | priweavepng - - - |
-  pripalpng - | pnglsch | grep IHDR |
+  pripalpng - | pripnglsch | grep IHDR |
   grep -q 00000020000000200803000000
