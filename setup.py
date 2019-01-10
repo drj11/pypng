@@ -38,6 +38,14 @@ https://github.com/drj11/pypng
     url='https://github.com/drj11/pypng',
     package_dir={'': 'code'},
     py_modules=['png', 'test_png', 'pngsuite'],
+    scripts=[
+        "code/prichunkpng",
+        "code/priforgepng",
+        "code/pripalpng",
+        "code/pripamtopng",
+        "code/pripngtopam",
+        "code/priweavepng"
+    ],
     classifiers=[
       'Topic :: Multimedia :: Graphics',
       'Topic :: Software Development :: Libraries :: Python Modules',
