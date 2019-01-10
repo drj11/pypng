@@ -1,0 +1,5 @@
+#!/bin/sh
+
+PATH=${PWD%code*}code:$PATH
+
+python -m pngsuite f02n0g08 | pripnglsch | grep -q '^IHDR'

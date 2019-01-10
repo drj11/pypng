@@ -23,6 +23,7 @@ def list(out, inp):
         add = ''
         if len(v) <= 28:
             add = ' ' + binascii.hexlify(v).decode('ascii')
+        t = t.decode('ascii')
         print("%s %10d%s" % (t, len(v), add), file=out)
 
 def main(argv=None):
