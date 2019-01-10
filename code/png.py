@@ -1375,20 +1375,6 @@ class Image:
             close()
 
 
-try:
-    str(b'dummy', 'ascii')
-except TypeError:
-    # Typically we get here in Python 2.
-    as_str = str
-else:
-    def as_str(x):
-        """
-        Convert ASCII bytes to string.
-        Only expected to be used in Python 3.
-        """
-        return str(x, 'ascii')
-
-
 class Reader:
     """
     PNG decoder in pure Python.
@@ -1724,7 +1710,7 @@ class Reader:
         """
 
         type, data = self.chunk(lenient=lenient)
-        method = '_process_' + as_str(type)
+        method = '_process_' + type.decode('ascii')
         m = getattr(self, method, None)
         if m:
             m(data)
