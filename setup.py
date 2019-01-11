@@ -43,6 +43,7 @@ https://github.com/drj11/pypng
         "code/priforgepng",
         "code/pripalpng",
         "code/pripamtopng",
+        "code/pripnglsch",
         "code/pripngtopam",
         "code/priweavepng"
     ],
