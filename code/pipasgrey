@@ -5,32 +5,39 @@
 # Convert image to grey (L, or LA), but only if that involves no colour
 # change.
 
-def asgrey(out, inp, quiet=False):
-    """Convert image to greyscale, but only when no colour change.  This
-    works by using the input G channel (green) as the output L channel
-    (luminance) and checking that every pixel is grey as we go.  A non-grey
-    pixel will raise an error, but if `quiet` is true then the grey pixel
-    check is suppressed.
+import sys
+
+from array import array
+
+import png
+
+
+def as_grey(out, inp):
+    """
+    Convert image to greyscale, but only when no colour change.
+    This works by using the input G channel (green) as
+    the output L channel (luminance) and
+    checking that every pixel is grey as we go.
+    A non-grey pixel will raise an error.
     """
 
-    from array import array
-
-    import png
-
     r = png.Reader(file=inp)
-    _,_,pixels,info = r.asDirect()
+    _,_,rows,info = r.asDirect()
     if info['greyscale']:
         w = png.Writer(**info)
-        return w.write(out, pixels)
+        return w.write(out, rows)
+
     planes = info['planes']
     targetplanes = planes - 2
     alpha = info['alpha']
-    width = info['size'][0]
+    width, height = info['size']
     typecode = 'BH'[info['bitdepth'] > 8]
+
     # Values per target row
-    vpr = width * (targetplanes)
+    vpr = width * targetplanes
+
     def iterasgrey():
-        for i,row in enumerate(pixels):
+        for i,row in enumerate(rows):
             row = array(typecode, row)
             targetrow = array(typecode, [0]*vpr)
             # Copy G (and possibly A) channel.
@@ -41,31 +48,25 @@ def asgrey(out, inp, quiet=False):
             else:
                 targetrow = green
             # Check R and B channel match.
-            if not quiet and (
-              green != row[0::planes] or green != row[2::planes]):
+            if green != row[0::planes] or green != row[2::planes]:
                 raise ValueError('Row %i contains non-grey pixel.' % i)
             yield targetrow
+
     info['greyscale'] = True
     del info['planes']
     w = png.Writer(**info)
-    w.write(out, iterasgrey())
+    return w.write(out, iterasgrey())
+
 
 def main(argv=None):
-    from getopt import getopt
-    import sys
     if argv is None:
         argv = sys.argv
     argv = argv[1:]
-    opt,argv = getopt(argv, 'q')
-    quiet = False
-    for o,v in opt:
-        if o == '-q':
-            quiet = True
     if len(argv) > 0:
         f = open(argv[0], 'rb')
     else:
         f = sys.stdin
-    return asgrey(sys.stdout, f, quiet)
+    return as_grey(sys.stdout, f)
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
