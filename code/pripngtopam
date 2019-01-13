@@ -14,15 +14,15 @@ def write_pnm(file, rows, meta):
     """
 
     meta = dict(meta)
-    meta['maxval'] = 2**meta['bitdepth'] - 1
-    meta['width'], meta['height'] = meta['size']
+    meta["maxval"] = 2 ** meta["bitdepth"] - 1
+    meta["width"], meta["height"] = meta["size"]
 
     # Number of planes determines both image formats:
     # 1 : L to PGM
     # 2 : LA to PAM
     # 3 : RGB to PPM
     # 4 : RGBA to PAM
-    planes = meta['planes']
+    planes = meta["planes"]
 
     # Assume inputs are from a PNG file.
     assert planes in (1, 2, 3, 4)
@@ -31,32 +31,32 @@ def write_pnm(file, rows, meta):
             # PGM
             # Even if maxval is 1 we use PGM instead of PBM,
             # to avoid conerting data.
-            magic = 'P5'
+            magic = "P5"
         else:
             # PPM
-            magic = 'P6'
-        header = "{magic} {width:d} {height:d} {maxval:d}\n".format(
-            magic=magic, **meta)
+            magic = "P6"
+        header = "{magic} {width:d} {height:d} {maxval:d}\n".format(magic=magic, **meta)
     if planes in (2, 4):
         # PAM
         # See http://netpbm.sourceforge.net/doc/pam.html
         if 2 == planes:
-            tupltype = 'GRAYSCALE_ALPHA'
+            tupltype = "GRAYSCALE_ALPHA"
         else:
-            tupltype = 'RGB_ALPHA'
-        header = ('P7\nWIDTH {width:d}\nHEIGHT {height:d}\n'
-                  'DEPTH {planes:d}\nMAXVAL {maxval:d}\n'
-                  'TUPLTYPE {tupltype}\nENDHDR\n'.format(
-                  tupltype=tupltype, **meta))
-    file.write(header.encode('ascii'))
+            tupltype = "RGB_ALPHA"
+        header = (
+            "P7\nWIDTH {width:d}\nHEIGHT {height:d}\n"
+            "DEPTH {planes:d}\nMAXVAL {maxval:d}\n"
+            "TUPLTYPE {tupltype}\nENDHDR\n".format(tupltype=tupltype, **meta)
+        )
+    file.write(header.encode("ascii"))
     # Values per row
-    vpr = planes * meta['width']
+    vpr = planes * meta["width"]
     # format for struct.pack
-    fmt = '>%d' % vpr
-    if meta['maxval'] > 0xFF:
-        fmt = fmt + 'H'
+    fmt = ">%d" % vpr
+    if meta["maxval"] > 0xFF:
+        fmt = fmt + "H"
     else:
-        fmt = fmt + 'B'
+        fmt = fmt + "B"
     for row in rows:
         file.write(struct.pack(fmt, *row))
     file.flush()
@@ -65,12 +65,12 @@ def write_pnm(file, rows, meta):
 def cli_open(path):
     if path == "-":
         return png.binary_stdin()
-    return open(path, 'rb')
+    return open(path, "rb")
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description='Convert PNG to PAM')
-    parser.add_argument('png', nargs='?', default='-')
+    parser = argparse.ArgumentParser(description="Convert PNG to PAM")
+    parser.add_argument("png", nargs="?", default="-")
 
     args = parser.parse_args()
 
@@ -82,5 +82,5 @@ def main(argv=None):
     write_pnm(png.binary_stdout(), rows, info)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())
