@@ -122,12 +122,12 @@ def stack(out, args):
         # PNG files with heterogenous bitdepths.
         # For now, assumes bitdepth of all channels in image
         # is the same.
-        channel_bitdepth = (image.info['bitdepth'],) * image.info['planes']
-        for i in range(image.info['planes']):
-            channel_map[channel+i] = Channel(image_index, i, channel_bitdepth[i])
-        channel += image.info['planes']
+        channel_bitdepth = (image.info["bitdepth"],) * image.info["planes"]
+        for i in range(image.info["planes"]):
+            channel_map[channel + i] = Channel(image_index, i, channel_bitdepth[i])
+        channel += image.info["planes"]
 
-    assert channel - 1 == sum(image.info['planes'] for image in images)
+    assert channel - 1 == sum(image.info["planes"] for image in images)
 
     # If no channels, select up to first 4 as default.
     if not args.channel:
@@ -139,10 +139,10 @@ def stack(out, args):
     alpha = out_channels in (2, 4)
     greyscale = out_channels in (1, 2)
 
-    bitdepth = tuple(image.info['bitdepth'] for image in images)
-    arraytype = 'BH'[max(bitdepth) > 8]
+    bitdepth = tuple(image.info["bitdepth"] for image in images)
+    arraytype = "BH"[max(bitdepth) > 8]
 
-    size = [image.info['size'] for image in images]
+    size = [image.info["size"] for image in images]
     # Currently, fail unless all images same size.
     if len(set(size)) > 1:
         raise NotImplementedError("Cannot cope when sizes differ - sorry!")
@@ -160,26 +160,31 @@ def stack(out, args):
         # for each of the input images.
         for row_tuple in zip(*(image.rows for image in images)):
             # output row
-            row = array(arraytype, [0]*vpr)
+            row = array(arraytype, [0] * vpr)
             # for each output channel select correct input channel
             for out_channel_i, selection in enumerate(args.channel):
                 channel = channel_map[selection]
                 # incoming row (make it an array)
                 irow = array(arraytype, row_tuple[channel.image])
-                n = images[channel.image].info['planes']
-                row[out_channel_i::out_channels] = irow[channel.i::n]
+                n = images[channel.image].info["planes"]
+                row[out_channel_i::out_channels] = irow[channel.i :: n]
             yield row
+
     w = png.Writer(
-        size[0], size[1],
-        greyscale=greyscale, alpha=alpha, bitdepth=bitdepth,
-        interlace=args.interlace)
+        size[0],
+        size[1],
+        greyscale=greyscale,
+        alpha=alpha,
+        bitdepth=bitdepth,
+        interlace=args.interlace,
+    )
     w.write(out, weave_row_iter())
 
 
 def cli_open(path):
     if path == "-":
         return png.binary_stdin()
-    return open(path, 'rb')
+    return open(path, "rb")
 
 
 def comma_list(s):
@@ -187,7 +192,7 @@ def comma_list(s):
     Type and return a list of integers.
     """
 
-    return [int(c) for c in re.findall(r'\d+', s)]
+    return [int(c) for c in re.findall(r"\d+", s)]
 
 
 def main(argv=None):
@@ -196,11 +201,14 @@ def main(argv=None):
     argv = argv[1:]
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("-c", "--channel", action="append",
-                        type=comma_list,
-                        help="list of channels to extract")
-    parser.add_argument("--interlace", action="store_true",
-                        help="write interlaced PNG")
+    parser.add_argument(
+        "-c",
+        "--channel",
+        action="append",
+        type=comma_list,
+        help="list of channels to extract",
+    )
+    parser.add_argument("--interlace", action="store_true", help="write interlaced PNG")
     parser.add_argument("input", nargs="+")
     args = parser.parse_args(argv)
 
@@ -210,5 +218,5 @@ def main(argv=None):
     return stack(png.binary_stdout(), args)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
