@@ -65,8 +65,8 @@ def main(argv=None):
     if len(argv) > 0:
         f = open(argv[0], 'rb')
     else:
-        f = sys.stdin
-    return as_grey(sys.stdout, f)
+        f = png.binary_stdin()
+    return as_grey(png.binary_stdout(), f)
 
 if __name__ == '__main__':
     sys.exit(main())

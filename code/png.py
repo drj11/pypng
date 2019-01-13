@@ -2348,6 +2348,42 @@ def convert_rgb_to_rgba(row, result):
         result[i::4] = row[i::3]
 
 
+# Only reason to include this in this module is that
+# several utilities need it, and it is small.
+def binary_stdin():
+    """
+    A sys.stdin that returns bytes.
+    """
+
+    try:
+        sys.stdin = sys.stdin.buffer
+    except AttributeError:
+        # Probably Python 2, where bytes are strings.
+        pass
+    return sys.stdin
+
+
+def binary_stdout():
+    """
+    A sys.stdout that accepts bytes.
+    """
+
+    # First there is a Python3 issue.
+    try:
+        stdout = sys.stdout.buffer
+    except AttributeError:
+        # Probably Python 2, where bytes are strings.
+        stdout = sys.stdout
+
+    # On Windows the C runtime file orientation needs changing.
+    if sys.platform == "win32":
+        import msvcrt
+        import os
+        msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
+
+    return stdout
+
+
 def main(argv):
     """
     Run the PNG encoder with options from the command line.
