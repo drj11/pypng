@@ -178,40 +178,8 @@ def stack(out, args):
 
 def cli_open(path):
     if path == "-":
-        return binary_stdin()
+        return png.binary_stdin()
     return open(path, 'rb')
-
-
-def binary_stdin():
-    """
-    A sys.stdin that returns bytes.
-    """
-
-    try:
-        return sys.stdin.buffer
-    except AttributeError:
-        # Probably Python 2, where bytes are strings.
-        pass
-    return sys.stdin
-
-
-def ensure_binary_stdout():
-    """
-    Ensure sys.stdout accepts bytes.
-    """
-
-    # First there is a Python3 issue.
-    try:
-        sys.stdout = sys.stdout.buffer
-    except AttributeError:
-        # Probably Python 2, where bytes are strings.
-        pass
-
-    # On Windows the C runtime file orientation needs changing.
-    if sys.platform == "win32":
-        import msvcrt
-        import os
-        msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
 
 
 def comma_list(s):
@@ -239,8 +207,7 @@ def main(argv=None):
     if args.channel:
         args.channel = list(itertools.chain(*args.channel))
 
-    ensure_binary_stdout()
-    return stack(sys.stdout, args)
+    return stack(png.binary_stdout(), args)
 
 
 if __name__ == '__main__':
