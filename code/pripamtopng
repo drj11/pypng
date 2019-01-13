@@ -236,7 +236,7 @@ def main(argv=None):
     infile = cli_open(args.file)
 
     # Call after parsing, so that --version and --help work.
-    outfile = binary_stdout()
+    outfile = png.binary_stdout()
 
     # Encode PNM to PNG
     format, width, height, depth, maxval = read_pnm_header(infile)
@@ -270,21 +270,8 @@ def main(argv=None):
 
 def cli_open(path):
     if path == "-":
-        return binary_stdin()
+        return png.binary_stdin()
     return open(path, 'rb')
-
-
-def binary_stdin():
-    """
-    A sys.stdin that returns bytes.
-    """
-
-    try:
-        sys.stdin = sys.stdin.buffer
-    except AttributeError:
-        # Probably Python 2, where bytes are strings.
-        pass
-    return sys.stdin
 
 
 def binary_stdout():
