@@ -132,7 +132,7 @@ def yield_fun_rows(size, bitdepth, pattern):
 
     # We make a list of x coordinates here and re-use it,
     # because Fraction instances are slow to allocate.
-    xs = [Fraction(x, 2*width) for x in range(1, 2*width, 2)]
+    xs = [Fraction(x, 2 * width) for x in range(1, 2 * width, 2)]
 
     # The general case is a function in x and y,
     # but if the function only takes an x argument,
