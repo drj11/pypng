@@ -8,6 +8,7 @@ import sys
 
 import png
 
+
 def write_pnm(file, rows, meta):
     """Write a Netpbm PNM/PAM file.
     """
@@ -63,42 +64,8 @@ def write_pnm(file, rows, meta):
 
 def cli_open(path):
     if path == "-":
-        return binary_stdin()
+        return png.binary_stdin()
     return open(path, 'rb')
-
-
-def binary_stdin():
-    """
-    A sys.stdin that returns bytes.
-    """
-
-    try:
-        return sys.stdin.buffer
-    except AttributeError:
-        # Probably Python 2, where bytes are strings.
-        pass
-    return sys.stdin
-
-
-def binary_stdout():
-    """
-    A sys.stdout that accepts bytes.
-    """
-
-    # First there is a Python3 issue.
-    try:
-        stdout = sys.stdout.buffer
-    except AttributeError:
-        # Probably Python 2, where bytes are strings.
-        stdout = sys.stdout
-
-    # On Windows the C runtime file orientation needs changing.
-    if sys.platform == "win32":
-        import msvcrt
-        import os
-        msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
-
-    return stdout
 
 
 def main(argv=None):
@@ -112,7 +79,7 @@ def main(argv=None):
     # Encode PNG to PPM
     image = png.Reader(file=inp)
     _, _, rows, info = image.asDirect()
-    write_pnm(binary_stdout(), rows, info)
+    write_pnm(png.binary_stdout(), rows, info)
 
 
 if __name__ == '__main__':
