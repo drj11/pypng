@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# pipasgrey
+# prigreypng
 
 # Convert image to grey (L, or LA), but only if that involves no colour
 # change.
