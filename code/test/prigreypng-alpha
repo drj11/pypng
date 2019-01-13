@@ -1,0 +1,7 @@
+#!/bin/sh
+
+PATH=${PWD%code*}code:$PATH
+
+priforgepng grl grl grl gbt | priweavepng - - - - |
+  prigreypng | pripnglsch |
+  grep IHDR | grep -q 00000100000001000804000000
