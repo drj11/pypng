@@ -9,13 +9,6 @@ import sys
 
 import png
 
-try:
-    # Ensure sys.stdin returns bytes
-    sys.stdin = sys.stdin.buffer
-except AttributeError:
-    # Probably Python 2, where bytes are strings.
-    pass
-
 
 def list(out, inp):
     r = png.Reader(file=inp)
@@ -35,7 +28,7 @@ def main(argv=None):
     if len(arg) > 0:
         f = open(arg[0], "rb")
     else:
-        f = sys.stdin
+        f = png.binary_stdin()
     return list(sys.stdout, f)
 
 
