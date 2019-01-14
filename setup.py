@@ -41,6 +41,7 @@ https://github.com/drj11/pypng
     scripts=[
         "code/prichunkpng",
         "code/priforgepng",
+        "code/prigreypng",
         "code/pripalpng",
         "code/pripamtopng",
         "code/pripnglsch",
