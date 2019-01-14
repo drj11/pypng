@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# pnglsch
+# pripnglsch
 # PNG List Chunks
 
 from __future__ import print_function
@@ -10,7 +10,7 @@ import sys
 import png
 
 
-def list(out, inp):
+def list_chunks(out, inp):
     r = png.Reader(file=inp)
     for t, v in r.chunks():
         add = ""
@@ -29,7 +29,7 @@ def main(argv=None):
         f = open(arg[0], "rb")
     else:
         f = png.binary_stdin()
-    return list(sys.stdout, f)
+    return list_chunks(sys.stdout, f)
 
 
 if __name__ == "__main__":
