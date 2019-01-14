@@ -1,0 +1,10 @@
+#!/bin/sh
+
+PATH=${PWD%code*}code:$PATH
+
+# Test that an RGB image with heterogenous channel bitdepths
+# can still be converted to grey.
+
+{ priforgepng -d 2 hs2 ; priforgepng -d 3 hs2 ; priforgepng -d 1 hs2 ; } |
+  priweavepng - - - | prigreypng | pripnglsch |
+  grep IHDR | grep -q 00000100000001000.00000000
