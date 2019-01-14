@@ -82,8 +82,7 @@ def main(argv=None):
     if len(argv) > 0:
         f = open(argv[0], 'rb')
     else:
-        png.binary_stdin()
-        f = sys.stdin
+        f = png.binary_stdin()
     return colours(png.binary_stdout(), f)
 
 

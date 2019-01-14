@@ -2356,11 +2356,10 @@ def binary_stdin():
     """
 
     try:
-        sys.stdin = sys.stdin.buffer
+        return sys.stdin.buffer
     except AttributeError:
         # Probably Python 2, where bytes are strings.
-        pass
-    return sys.stdin
+        return sys.stdin
 
 
 def binary_stdout():
