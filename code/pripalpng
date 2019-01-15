@@ -48,7 +48,7 @@ def palette_convert(inp, out, palette_file):
         inp, palette_file = palette_file, inp
 
     reader = png.Reader(file=palette_file)
-    w, h, rows, info = reader.asRGB8()
+    w, h, rows, info = asRGBorA8(reader)
     channels = info["planes"]
     if not inp:
         rows = list(rows)
@@ -57,7 +57,7 @@ def palette_convert(inp, out, palette_file):
 
     if inp:
         reader = png.Reader(file=inp)
-        w, h, rows, info = reader.asRGB8()
+        w, h, rows, info = asRGBorA8(reader)
         channels = info["planes"]
 
     # Default for colours not in palette is to use last entry.
@@ -77,6 +77,17 @@ def palette_convert(inp, out, palette_file):
 
     w = png.Writer(**pal_info)
     w.write(out, convert_rows())
+
+def asRGBorA8(reader):
+    """
+    Return (width, height, rows, info) converting to RGB,
+    or RGBA if original has an alpha channel.
+    """
+    _, _, _, info = reader.read()
+    if info['alpha']:
+        return reader.asRGBA8()
+    else:
+        return reader.asRGB8()
 
 
 def group(s, n):
