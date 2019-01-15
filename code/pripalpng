@@ -48,7 +48,11 @@ def palette_convert(inp, out, palette_file):
         inp, palette_file = palette_file, inp
 
     reader = png.Reader(file=palette_file)
-    w, h, rows, info = reader.asRGB8()
+    w, h, rows, info = reader.read()
+    if info['alpha']:
+        w, h, rows, info = reader.asRGBA8()
+    else:
+        w, h, rows, info = reader.asRGB8()
     channels = info["planes"]
     if not inp:
         rows = list(rows)
