@@ -1870,13 +1870,20 @@ class Reader:
         raw = decompress(iteridat())
 
         if self.interlace:
-            raw = bytearray(itertools.chain(*raw))
-            arraycode = 'BH'[self.bitdepth > 8]
-            # Like :meth:`group` but producing an array.array object for
-            # each row.
-            rows = map(lambda *row: array(arraycode, row),
-                       * [iter(self.deinterlace(raw))] *
-                       (self.width * self.planes))
+            def rows_from_interlace():
+                """Yield each row from an interlaced PNG."""
+                # It's important that this iterator doesn't read
+                # IDAT chunks until it yields the first row.
+                bs = bytearray(itertools.chain(*raw))
+                arraycode = 'BH'[self.bitdepth > 8]
+                # Like :meth:`group` but
+                # producing an array.array object for each row.
+                values = self.deinterlace(bs)
+                vpr = self.width * self.planes
+                for i in range(0, len(values), vpr):
+                    row = array(arraycode, values[i:i+vpr])
+                    yield row
+            rows = rows_from_interlace()
         else:
             rows = self.iter_bytes_to_values(self.iter_straight_byte_rows(raw))
         meta = dict()

@@ -6,5 +6,5 @@ PATH=${PWD%code*}code:$PATH
 
 priforgepng -s 32 -d 3 grl glr rtl gbt | priweavepng - - - - |
   pripalpng - |
-  pripnglsch | grep IHDR |
-  grep -q 00000020000000200803000000
+  pripnglsch |
+  grep IHDR | grep -q 00000020000000200803000000
