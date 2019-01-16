@@ -62,19 +62,13 @@ def write_pnm(file, rows, meta):
     file.flush()
 
 
-def cli_open(path):
-    if path == "-":
-        return png.binary_stdin()
-    return open(path, "rb")
-
-
 def main(argv=None):
     parser = argparse.ArgumentParser(description="Convert PNG to PAM")
     parser.add_argument("png", nargs="?", default="-")
 
     args = parser.parse_args()
 
-    inp = cli_open(args.png)
+    inp = png.cli_open(args.png)
 
     # Encode PNG to PPM
     image = png.Reader(file=inp)

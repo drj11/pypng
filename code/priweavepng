@@ -113,7 +113,7 @@ def stack(out, args):
     channel = 1
 
     for image_index, path in enumerate(paths):
-        inp = cli_open(path)
+        inp = png.cli_open(path)
         rows, info = png.Reader(file=inp).asDirect()[2:]
         rows = list(rows)
         image = Image(rows, info)
@@ -179,12 +179,6 @@ def stack(out, args):
         interlace=args.interlace,
     )
     w.write(out, weave_row_iter())
-
-
-def cli_open(path):
-    if path == "-":
-        return png.binary_stdin()
-    return open(path, "rb")
 
 
 def comma_list(s):

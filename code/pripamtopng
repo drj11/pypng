@@ -241,7 +241,7 @@ def main(argv=None):
     args = parser.parse_args(args=argv[1:])
 
     # Prepare input and output files
-    infile = cli_open(args.file)
+    infile = png.cli_open(args.file)
 
     # Call after parsing, so that --version and --help work.
     outfile = png.binary_stdout()
@@ -276,34 +276,6 @@ def main(argv=None):
         compression=args.compression,
     )
     convert_pnm(writer, infile, outfile)
-
-
-def cli_open(path):
-    if path == "-":
-        return png.binary_stdin()
-    return open(path, "rb")
-
-
-def binary_stdout():
-    """
-    A sys.stdout that accepts bytes.
-    """
-
-    # First there is a Python3 issue.
-    try:
-        stdout = sys.stdout.buffer
-    except AttributeError:
-        # Probably Python 2, where bytes are strings.
-        stdout = sys.stdout
-
-    # On Windows the C runtime file orientation needs changing.
-    if sys.platform == "win32":
-        import msvcrt
-        import os
-
-        msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
-
-    return stdout
 
 
 if __name__ == "__main__":
