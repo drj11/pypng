@@ -632,23 +632,25 @@ acf0c6211c036f14a239703741740adc7da227edd7e56b833d0ae92549b4d357
 sys.modules[__name__].__dict__.update(png)
 
 
-def ensure_binary_stdout():
+def binary_stdout():
     """
-    Ensure sys.stdout accepts bytes.
+    A sys.stdout that accepts bytes.
     """
 
     # First there is a Python3 issue.
     try:
-        sys.stdout = sys.stdout.buffer
+        stdout = sys.stdout.buffer
     except AttributeError:
         # Probably Python 2, where bytes are strings.
-        pass
+        stdout = sys.stdout
 
     # On Windows the C runtime file orientation needs changing.
     if sys.platform == "win32":
         import msvcrt
         import os
         msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
+
+    return stdout
 
 
 def main(argv=None):
@@ -668,8 +670,7 @@ def main(argv=None):
     if args.image not in png:
         raise ValueError("cannot find PNG suite image " + args.image)
 
-    ensure_binary_stdout()
-    sys.stdout.write(png[args.image])
+    binary_stdout().write(png[args.image])
 
 
 if __name__ == '__main__':
