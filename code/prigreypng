@@ -5,6 +5,7 @@
 # Convert image to grey (L, or LA), but only if that involves no colour
 # change.
 
+import argparse
 import sys
 
 from array import array
@@ -59,14 +60,11 @@ def as_grey(out, inp):
 
 
 def main(argv=None):
-    if argv is None:
-        argv = sys.argv
-    argv = argv[1:]
-    if len(argv) > 0:
-        f = open(argv[0], "rb")
-    else:
-        f = png.binary_stdin()
-    return as_grey(png.binary_stdout(), f)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("png", nargs="?", default="-")
+    args = parser.parse_args()
+    inp = png.cli_open(args.png)
+    return as_grey(png.binary_stdout(), inp)
 
 
 if __name__ == "__main__":

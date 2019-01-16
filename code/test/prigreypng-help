@@ -1,0 +1,7 @@
+#!/bin/sh
+
+PATH=${PWD%code*}code:$PATH
+
+# Test that it has a --help option
+
+prigreypng --help > /dev/null

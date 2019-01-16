@@ -2390,6 +2390,12 @@ def binary_stdout():
     return stdout
 
 
+def cli_open(path):
+    if path == "-":
+        return binary_stdin()
+    return open(path, "rb")
+
+
 def main(argv):
     """
     Run the PNG encoder with options from the command line.
