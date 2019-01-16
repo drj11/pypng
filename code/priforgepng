@@ -166,7 +166,7 @@ def generate(args):
     size = args.size
     bitdepth = args.depth
 
-    out = binary_stdout()
+    out = png.binary_stdout()
 
     for pattern in args.pattern:
         rows = yield_fun_rows(size, bitdepth, pattern)
@@ -204,15 +204,6 @@ def patterns():
         parts = name.split("_")
         if parts[0] == "gen":
             yield parts[1]
-
-
-def binary_stdout():
-    try:
-        # Probably Python3
-        return sys.stdout.buffer
-    except AttributeError:
-        pass
-    return sys.stdout
 
 
 def dimensions(s):

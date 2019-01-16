@@ -163,15 +163,6 @@ def hex_color(s):
         return tuple(int(s[i : i + w], 16) for i in range(0, len(s), w))
 
 
-def binary_stdout():
-    try:
-        # Probably Python 3
-        return sys.stdout.buffer
-    except AttributeError:
-        pass
-    return sys.stdout
-
-
 def main(argv=None):
     import re
 
@@ -221,7 +212,7 @@ def main(argv=None):
         Chunk(chunk_name(type), open(path, "rb")) for type, path in args.chunk
     ]
 
-    return process(binary_stdout(), args)
+    return process(png.binary_stdout(), args)
 
 
 if __name__ == "__main__":

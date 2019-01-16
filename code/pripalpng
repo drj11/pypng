@@ -94,15 +94,6 @@ def group(s, n):
     return list(zip(*[iter(s)] * n))
 
 
-def binary_stdout():
-    try:
-        # Probably Python 3
-        return sys.stdout.buffer
-    except AttributeError:
-        pass
-    return sys.stdout
-
-
 def main(argv=None):
     import re
 
@@ -123,7 +114,7 @@ def main(argv=None):
     except AttributeError:
         pass
 
-    palette_convert(args.input, binary_stdout(), args.palette)
+    palette_convert(args.input, png.binary_stdout(), args.palette)
 
 
 if __name__ == "__main__":
