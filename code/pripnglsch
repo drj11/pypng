@@ -16,9 +16,15 @@ def list_chunks(out, inp):
     for t, v in r.chunks():
         add = ""
         if len(v) <= 28:
-            add = " " + binascii.hexlify(v).decode("ascii")
+            add = " " + hex(v)
+        else:
+            add = " " + hex(v[:26]) + "..."
         t = t.decode("ascii")
         print("%s %10d%s" % (t, len(v), add), file=out)
+
+def hex(bs):
+    """Convert the bytes `bs` to a hex string."""
+    return binascii.hexlify(bs).decode("ascii")
 
 
 def main(argv=None):
