@@ -10,7 +10,7 @@ import png
 
 
 def write_pnm(file, rows, meta):
-    """Write a Netpbm PNM/PAM file.
+    """Write a Netpbm PNM (or PAM) file.
     """
 
     meta = dict(meta)
@@ -70,7 +70,7 @@ def main(argv=None):
 
     inp = png.cli_open(args.png)
 
-    # Encode PNG to PPM
+    # Encode PNG to PNM (or PAM)
     image = png.Reader(file=inp)
     _, _, rows, info = image.asDirect()
     write_pnm(png.binary_stdout(), rows, info)
