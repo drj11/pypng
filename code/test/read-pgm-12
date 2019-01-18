@@ -1,0 +1,7 @@
+#!/bin/sh
+
+PATH=${PWD%code*}code:$PATH
+
+printf 'P5 2 2 4095\n\0\0\5\125\12\252\17\377' |
+  pripamtopng - |
+  pripnglsch - | grep -q sBIT
