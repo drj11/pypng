@@ -213,10 +213,15 @@ def scan_rows_from_file(infile, width, height, planes, bitdepth):
         yield line()
 
 
-def add_options(parser):
+def parse_args(args):
     """
-    Call *parser.add_argument* for each of the options.
+    Create a parser and parse the command line arguments.
     """
+    from argparse import ArgumentParser
+
+    parser = ArgumentParser()
+    version = "%(prog)s " + png.__version__
+    parser.add_argument("--version", action="version", version=version)
     parser.add_argument(
         "-c",
         "--compression",
@@ -225,22 +230,15 @@ def add_options(parser):
         help="zlib compression level (0-9)",
     )
     parser.add_argument("file", help="input PAM/PNM file to convert")
-    return parser
+    args = parser.parse_args(args)
+    return args
 
 
 def main(argv=None):
     if argv is None:
         argv = sys.argv
 
-    # Parse command line arguments
-    from argparse import ArgumentParser
-
-    parser = ArgumentParser()
-    version = "%(prog)s " + png.__version__
-    parser.add_argument("--version", action="version", version=version)
-    add_options(parser)
-
-    args = parser.parse_args(args=argv[1:])
+    args = parse_args(argv[1:])
 
     # Prepare input and output files
     infile = png.cli_open(args.file)
