@@ -72,9 +72,9 @@ def read_pnm_header(infile):
 
     supported = (b"P5", b"P6", b"P7")
 
-    # Technically 'P7' must be followed by a newline, so by using
-    # rstrip() we are being liberal in what we accept.  I think this
-    # is acceptable.
+    # Technically 'P7' must be followed by a newline,
+    # so by using rstrip() we are being liberal in what we accept.
+    # I think this is acceptable.
     type = infile.read(3).rstrip()
     if type not in supported:
         raise NotImplementedError("file format %s not supported" % type)
@@ -194,19 +194,20 @@ def scan_rows_from_file(infile, width, height, planes, bitdepth):
 
     # Values per row
     vpr = width * planes
-    row_bytes = vpr
+    # Bytes per row
+    bpr = vpr
     if bitdepth > 8:
         assert bitdepth == 16
-        row_bytes *= 2
+        bpr *= 2
         fmt = ">%dH" % vpr
 
         def line():
-            return array("H", struct.unpack(fmt, infile.read(row_bytes)))
+            return array("H", struct.unpack(fmt, infile.read(bpr)))
 
     else:
 
         def line():
-            return array("B", infile.read(row_bytes))
+            return array("B", infile.read(bpr))
 
     for y in range(height):
         yield line()
