@@ -3,4 +3,6 @@
 PATH=${PWD%code*}code:$PATH
 
 printf 'P5 2 2 3\n\0\1\2\3' |
-pripamtopng --compression 9 - | file - | grep -q PNG
+pripamtopng --compression 9 - |
+pripnglsch - |
+grep -q 'IHDR.*00000002000000020200000000'
