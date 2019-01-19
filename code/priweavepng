@@ -55,29 +55,29 @@ The `priweavepng` tool can be used for a variety of
 channel building, swopping, and extraction effects:
 
 Combine 3 grayscale images into RGB colour:
-    priweavepng grey1.img grey2.img grey3.img
+    priweavepng grey1.png grey2.png grey3.png
 
 Swop Red and Blue channels in colour image:
-    priweavepng -c 3 -c 2 -c 1 rgb.img
+    priweavepng -c 3 -c 2 -c 1 rgb.png
 
 Extract Green channel as a greyscale image:
-    priweavepng -c 2 rgb.img
+    priweavepng -c 2 rgb.png
 
 Convert a greyscale image to a colour image (all grey):
-    priweavepng -c 1 -c 1 -c 1 grey.img
+    priweavepng -c 1 -c 1 -c 1 grey.png
 
 Add alpha mask from a separate (greyscale) image:
-    priweavepng rgb.img grey.img
+    priweavepng rgb.png grey.png
 
 Extract alpha mask into a separate (greyscale) image:
-    priweavepng -c 4 rgba.img
+    priweavepng -c 4 rgba.png
 
 Steal alpha mask from second file and add to first.
 Note that the intermediate image in this example has 7 channels:
-    priweavepng -c 1 -c 2 -c 3 -c 7 rgb.img rgba.img
+    priweavepng -c 1 -c 2 -c 3 -c 7 rgb.png rgba.png
 
 Take Green channel from 3 successive colour images to make a new RGB image:
-    priweavepng -c 2 -c 5 -c 8 rgb1.img rgb2.img rgb3.img
+    priweavepng -c 2 -c 5 -c 8 rgb1.png rgb2.png rgb3.png
 
 """
 
@@ -95,7 +95,7 @@ class Error(Exception):
     pass
 
 
-def stack(out, args):
+def weave(out, args):
     """Stack the input PNG files and extract channels
     into a single output PNG.
     """
@@ -209,7 +209,7 @@ def main(argv=None):
     if args.channel:
         args.channel = list(itertools.chain(*args.channel))
 
-    return stack(png.binary_stdout(), args)
+    return weave(png.binary_stdout(), args)
 
 
 if __name__ == "__main__":
