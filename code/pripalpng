@@ -78,13 +78,14 @@ def palette_convert(inp, out, palette_file):
     w = png.Writer(**pal_info)
     w.write(out, convert_rows())
 
+
 def asRGBorA8(reader):
     """
     Return (width, height, rows, info) converting to RGB,
     or RGBA if original has an alpha channel.
     """
     _, _, _, info = reader.read()
-    if info['alpha']:
+    if info["alpha"]:
         return reader.asRGBA8()
     else:
         return reader.asRGB8()
