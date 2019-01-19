@@ -53,9 +53,9 @@ def reduce_grey(col, planes):
     if planes >= 3:
         def isgrey(c):
             return c[0] == c[1] == c[2]
-        if min(map(isgrey, col)) == True:
-            # Every colour is grey.
-            col = set(map(lambda x: x[0::3], col))
+        if all(isgrey(c) for c in col):
+            # Every colour is grey, convert to 1- or 2-tuples.
+            col = set(x[0::3] for x in col)
             planes -= 2
     return col, planes
 
@@ -68,9 +68,9 @@ def reduce_alpha(col, planes, bitdepth):
     if planes in (2, 4):
         def isopaque(c):
             return c[-1] == maxval
-        if min(map(isopaque, col)) == True:
-            # Every pixel is opaque
-            col = set(map(lambda x: x[:-1], col))
+        if all(isopaque(c) for c in col):
+            # Every pixel is opaque, remove alpha channel.
+            col = set(x[:-1] for x in col)
             planes -= 1
     return col, planes
 
