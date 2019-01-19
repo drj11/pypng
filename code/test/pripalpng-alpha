@@ -2,9 +2,17 @@
 
 PATH=${PWD%code*}code:$PATH
 
-# Encode a forged PNG using a palette
+# Encode a (forged) PNG that has alpha channel using a palette
 
 priforgepng -s 32 -d 3 grl glr rtl gbt | priweavepng - - - - |
   pripalpng - |
   pripnglsch |
-  grep IHDR | grep -q 00000020000000200803000000
+  # Awkward way of checking if output contains both strings
+  while read -r a
+  do
+    case $a in
+      (IHDR*00000020000000200803000000) printf i;;
+      (tRNS*) echo t;;
+    esac
+  done |
+  grep -q '^it$'
