@@ -2,4 +2,8 @@
 
 PATH=${PWD%code*}code:$PATH
 
-python -m pngsuite basn0g08 | prichunkpng - | file - | grep -q PNG
+# Null case for prichunkpng
+
+python -m pngsuite basn0g08 | prichunkpng - |
+  pripnglsch - |
+  grep -q IHDR
