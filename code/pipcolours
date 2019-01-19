@@ -16,9 +16,17 @@ import sys
 import png
 
 
-def colours(out, inp):
+def png_colours(out, inp):
     r = png.Reader(file=inp)
     _, _, rows, info = r.asDirect()
+
+    rows, info = unique_colours(rows, info)
+
+    writer = png.Writer(**info)
+    writer.write(out, rows)
+
+
+def unique_colours(rows, info):
     planes = info["planes"]
     bitdepth = info["bitdepth"]
 
@@ -31,11 +39,15 @@ def colours(out, inp):
     col = sorted(col)
 
     width = len(col)
-    col = list(itertools.chain(*col))
-    greyscale = planes in (1, 2)
-    alpha = planes in (2, 4)
-    w = png.Writer(width, 1, bitdepth=bitdepth, greyscale=greyscale, alpha=alpha)
-    w.write(out, [col])
+    info = dict(
+        width=width,
+        height=1,
+        bitdepth=bitdepth,
+        greyscale=planes in (1, 2),
+        alpha=planes in (2, 4),
+    )
+    row = list(itertools.chain(*col))
+    return [row], info
 
 
 def channel_reduce(col, planes, bitdepth):
@@ -92,7 +104,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
     input = png.cli_open(args.input)
 
-    return colours(png.binary_stdout(), input)
+    return png_colours(png.binary_stdout(), input)
 
 
 if __name__ == "__main__":
