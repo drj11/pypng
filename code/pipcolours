@@ -9,20 +9,21 @@ if all colour pixels are grey, output PNG is grey;
 if all pixels are opaque, output PNG has no alpha channel.
 """
 
-import sys
+import argparse
 import itertools
+import sys
 
 import png
 
 
 def colours(out, inp):
     r = png.Reader(file=inp)
-    _,_,pixels,info = r.asDirect()
+    _,_,rows,info = r.asDirect()
     planes = info['planes']
     bitdepth = info['bitdepth']
 
     col = set()
-    for row in pixels:
+    for row in rows:
         col = col.union(png.group(row, planes))
 
     col, planes = channel_reduce(col, planes, bitdepth)
@@ -79,11 +80,15 @@ def main(argv=None):
         argv = sys.argv
 
     argv = argv[1:]
-    if len(argv) > 0:
-        f = open(argv[0], 'rb')
-    else:
-        f = png.binary_stdin()
-    return colours(png.binary_stdout(), f)
+    parser = argparse.ArgumentParser()
+    version = "%(prog)s " + png.__version__
+    parser.add_argument("--version", action="version", version=version)
+    parser.add_argument("input", default="-", metavar="PNG")
+
+    args = parser.parse_args(argv)
+    input = png.cli_open(args.input)
+
+    return colours(png.binary_stdout(), input)
 
 
 if __name__ == '__main__':
