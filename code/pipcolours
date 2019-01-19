@@ -18,9 +18,9 @@ import png
 
 def colours(out, inp):
     r = png.Reader(file=inp)
-    _,_,rows,info = r.asDirect()
-    planes = info['planes']
-    bitdepth = info['bitdepth']
+    _, _, rows, info = r.asDirect()
+    planes = info["planes"]
+    bitdepth = info["bitdepth"]
 
     col = set()
     for row in rows:
@@ -32,10 +32,9 @@ def colours(out, inp):
 
     width = len(col)
     col = list(itertools.chain(*col))
-    greyscale = planes in (1,2)
-    alpha = planes in (2,4)
-    w = png.Writer(width, 1,
-        bitdepth=bitdepth, greyscale=greyscale, alpha=alpha)
+    greyscale = planes in (1, 2)
+    alpha = planes in (2, 4)
+    w = png.Writer(width, 1, bitdepth=bitdepth, greyscale=greyscale, alpha=alpha)
     w.write(out, [col])
 
 
@@ -52,8 +51,10 @@ def reduce_grey(col, planes):
     all intensities match in all pixels.
     """
     if planes >= 3:
+
         def isgrey(c):
             return c[0] == c[1] == c[2]
+
         if all(isgrey(c) for c in col):
             # Every colour is grey, convert to 1- or 2-tuples.
             col = set(x[0::3] for x in col)
@@ -67,8 +68,10 @@ def reduce_alpha(col, planes, bitdepth):
     """
     maxval = 2 ** bitdepth - 1
     if planes in (2, 4):
+
         def isopaque(c):
             return c[-1] == maxval
+
         if all(isopaque(c) for c in col):
             # Every pixel is opaque, remove alpha channel.
             col = set(x[:-1] for x in col)
@@ -92,5 +95,5 @@ def main(argv=None):
     return colours(png.binary_stdout(), input)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
