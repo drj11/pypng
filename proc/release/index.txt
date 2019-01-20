@@ -35,12 +35,12 @@ Make a clean clone:
 
 Run the shell script that drives Docker:
 
-    sh dock
+    sh dock.sh
 
 It's possible at this point that you might want to smoke-test the actual
 release binary.  Let's assume that the release binary is good to go.
 
-Check that the `sh dock` command populated the `dist/`
+Check that the `sh dock.sh` command populated the `dist/`
 directory.
 
     ls dist
