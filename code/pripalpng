@@ -27,7 +27,7 @@ def make_inverse_palette(rows, channels):
     palette = {}
 
     for row in rows:
-        for pixel in group(row, channels):
+        for pixel in png.group(row, channels):
             if pixel in palette:
                 continue
             palette[pixel] = len(palette)
@@ -68,7 +68,7 @@ def palette_convert(inp, out, palette_file):
 
     def convert_rows():
         for row in rows:
-            yield [map_pixel(p) for p in group(row, channels)]
+            yield [map_pixel(p) for p in png.group(row, channels)]
 
     # Make a palette by sorting the items and extracting pixels.
     palette_items = sorted(palette_map.items(), key=lambda item: item[1])
@@ -89,10 +89,6 @@ def asRGBorA8(reader):
         return reader.asRGBA8()
     else:
         return reader.asRGB8()
-
-
-def group(s, n):
-    return list(zip(*[iter(s)] * n))
 
 
 def main(argv=None):
