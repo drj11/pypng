@@ -1947,39 +1947,45 @@ class Reader:
         return plte
 
     def asDirect(self):
-        """Returns the image data as a direct representation of an
-        ``x * y * planes`` array.  This method is intended to remove the
-        need for callers to deal with palettes and transparency
-        themselves.  Images with a palette (colour type 3)
-        are converted to RGB or RGBA; images with transparency (a
-        ``tRNS`` chunk) are converted to LA or RGBA as appropriate.
-        When returned in this format the pixel values represent the
-        colour value directly without needing to refer to palettes or
-        transparency information.
+        """
+        Returns the image data as a direct representation of
+        an ``x * y * planes`` array.
+        This removes the need for callers to deal with
+        palettes and transparency themselves.
+        Images with a palette (colour type 3) are converted to RGB or RGBA;
+        images with transparency (a ``tRNS`` chunk) are converted to
+        LA or RGBA as appropriate.
+        When returned in this format the pixel values represent
+        the colour value directly without needing to refer
+        to palettes or transparency information.
 
         Like the :meth:`read` method this method returns a 4-tuple:
 
-        (*width*, *height*, *pixels*, *meta*)
+        (*width*, *height*, *rows*, *meta*)
 
-        This method normally returns pixel values with the bit depth
-        they have in the source image, but when the source PNG has an
-        ``sBIT`` chunk it is inspected and can reduce the bit depth of
-        the result pixels; pixel values will be reduced according to
-        the bit depth specified in the ``sBIT`` chunk (PNG nerds should
-        note a single result bit depth is used for all channels; the
-        maximum of the ones specified in the ``sBIT`` chunk.  An RGB565
-        image will be rescaled to 6-bit RGB666).
+        This method normally returns pixel values with
+        the bit depth they have in the source image, but
+        when the source PNG has an ``sBIT`` chunk it is inspected and
+        can reduce the bit depth of the result pixels;
+        pixel values will be reduced according to the bit depth
+        specified in the ``sBIT`` chunk.
+        PNG nerds should note a single result bit depth is
+        used for all channels:
+        the maximum of the ones specified in the ``sBIT`` chunk.
+        An RGB565 image will be rescaled to 6-bit RGB666.
 
-        The *meta* dictionary that is returned reflects the `direct`
-        format and not the original source image.  For example, an RGB
-        source image with a ``tRNS`` chunk to represent a transparent
-        colour, will have ``planes=3`` and ``alpha=False`` for the
-        source image, but the *meta* dictionary returned by this method
-        will have ``planes=4`` and ``alpha=True`` because an alpha
-        channel is synthesized and added.
+        The *meta* dictionary that is returned reflects
+        the `direct` format and not the original source image.
+        For example, an RGB source image with a ``tRNS`` chunk
+        to represent a transparent colour,
+        will start with ``planes=3`` and ``alpha=False`` for the
+        source image,
+        but the *meta* dictionary returned by this method
+        will have ``planes=4`` and ``alpha=True`` because
+        an alpha channel is synthesized and added.
 
-        *pixels* is the pixel data in boxed row flat pixel format (just
-        like the :meth:`read` method).
+        *rows* is the pixel data in boxed row flat pixel format,
+        like the :meth:`read` method.
 
         All the other aspects of the image data are not changed.
         """
