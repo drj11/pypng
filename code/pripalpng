@@ -70,9 +70,8 @@ def palette_convert(inp, out, palette_file):
         for row in rows:
             yield [map_pixel(p) for p in png.group(row, channels)]
 
-    # Make a palette by sorting the items and extracting pixels.
-    palette_items = sorted(palette_map.items(), key=lambda item: item[1])
-    palette = [item[0] for item in palette_items]
+    # Make a palette by sorting the pixels according to their index.
+    palette = sorted(palette_map.keys(), key=palette_map.get)
     pal_info = dict(size=info["size"], palette=palette)
 
     w = png.Writer(**pal_info)
