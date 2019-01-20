@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 """
 pipcolours - extract all colours present in source image.
 Produces a PNG that has each colour exactly once.
@@ -26,6 +28,28 @@ def png_colours(out, inp):
     writer.write(out, rows)
 
 
+def jasc_colours(out, inp):
+    r = png.Reader(file=inp)
+    _, _, rows, info = r.read()
+
+    print("JASC-PAL", file=out)
+    # A version field? (the internet is unclear)
+    print("0100", file=out)
+
+    if "palette" in info:
+        for pixel in info['palette']:
+            print(*pixel, file=out)
+        return
+
+    rows, info = unique_colours(rows, info)
+    planes = info['planes']
+    bitdepth = info['bitdepth']
+
+    for row in rows:
+        for pixel in png.group(row, planes):
+            print(*pixel, file=out)
+
+
 def unique_colours(rows, info):
     planes = info["planes"]
     bitdepth = info["bitdepth"]
@@ -45,6 +69,7 @@ def unique_colours(rows, info):
         bitdepth=bitdepth,
         greyscale=planes in (1, 2),
         alpha=planes in (2, 4),
+        planes=planes,
     )
     row = list(itertools.chain(*col))
     return [row], info
@@ -99,12 +124,17 @@ def main(argv=None):
     parser = argparse.ArgumentParser()
     version = "%(prog)s " + png.__version__
     parser.add_argument("--version", action="version", version=version)
+    parser.add_argument("--jasc", action="store_true")
     parser.add_argument("input", default="-", metavar="PNG")
 
     args = parser.parse_args(argv)
     input = png.cli_open(args.input)
 
-    return png_colours(png.binary_stdout(), input)
+    if args.jasc:
+        return jasc_colours(sys.stdout, input)
+
+    out = png.binary_stdout()
+    return png_colours(out, input)
 
 
 if __name__ == "__main__":
