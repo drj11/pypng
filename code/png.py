@@ -1443,7 +1443,7 @@ class Reader:
 
         # http://www.w3.org/TR/PNG/#5Chunk-layout
         if not self.atchunk:
-            self.atchunk = self.chunklentype()
+            self.atchunk = self._chunk_len_type()
         length, type = self.atchunk
         self.atchunk = None
         data = self.file.read(length)
@@ -1486,18 +1486,22 @@ class Reader:
                 break
 
     def undo_filter(self, filter_type, scanline, previous):
-        """Undo the filter for a scanline.  `scanline` is a sequence of
-        bytes that does not include the initial filter type byte.
-        `previous` is decoded previous scanline (for straightlaced
-        images this is the previous pixel row, but for interlaced
-        images, it is the previous scanline in the reduced image, which
-        in general is not the previous pixel row in the final image).
-        When there is no previous scanline (the first row of a
-        straightlaced image, or the first row in one of the passes in an
-        interlaced image), then this argument should be ``None``.
+        """
+        Undo the filter for a scanline.
+        `scanline` is a sequence of bytes that
+        does not include the initial filter type byte.
+        `previous` is decoded previous scanline
+        (for straightlaced images this is the previous pixel row,
+        but for interlaced images, it is
+        the previous scanline in the reduced image,
+        which in general is not the previous pixel row in the final image).
+        When there is no previous scanline
+        (the first row of a straightlaced image,
+        or the first row in one of the passes in an interlaced image),
+        then this argument should be ``None``.
 
-        The scanline will have the effects of filtering removed, and the
-        result will be returned as a fresh sequence of bytes.
+        The scanline will have the effects of filtering removed;
+        the result will be returned as a fresh sequence of bytes.
         """
 
         # :todo: Would it be better to update scanline in place?
@@ -1534,7 +1538,7 @@ class Reader:
         fn(fu, scanline, previous, result)
         return result
 
-    def deinterlace(self, raw):
+    def _deinterlace(self, raw):
         """
         Read raw pixel data, undo filters, deinterlace, and flatten.
         Return in flat row flat pixel format.
@@ -1571,7 +1575,7 @@ class Reader:
                 source_offset += row_size
                 recon = self.undo_filter(filter_type, scanline, recon)
                 # Convert so that there is one element per pixel value
-                flat = self.bytes_to_values(recon, width=ppr)
+                flat = self._bytes_to_values(recon, width=ppr)
                 if xstep == 1:
                     assert x == 0
                     offset = y * vpr
@@ -1586,16 +1590,17 @@ class Reader:
 
         return a
 
-    def iter_bytes_to_values(self, byte_rows):
-        """Iterator that yields each scanline in boxed row flat pixel format.
+    def _iter_bytes_to_values(self, byte_rows):
+        """
+        Iterator that yields each scanline in boxed row flat pixel format.
         `byte_rows` should be an iterator that yields
         the bytes of each row in turn.
         """
 
         for row in byte_rows:
-            yield self.bytes_to_values(row)
+            yield self._bytes_to_values(row)
 
-    def bytes_to_values(self, bs, width=None):
+    def _bytes_to_values(self, bs, width=None):
         """Convert a row of bytes into a flat row of values.
         Result will be a freshly allocated object, not shared with
         argument.
@@ -1620,7 +1625,7 @@ class Reader:
             out.extend([mask & (o >> i) for i in shifts])
         return out[:width]
 
-    def iter_straight_byte_rows(self, byte_blocks):
+    def _iter_straight_byte_rows(self, byte_blocks):
         """Iterator that undoes the effect of filtering;
         yields each row as a sequence of bytes (in serialised format).
         Assumes input is straightlaced.
@@ -1675,18 +1680,19 @@ class Reader:
 
         while True:
             if not self.atchunk:
-                self.atchunk = self.chunklentype()
+                self.atchunk = self._chunk_len_type()
                 if self.atchunk is None:
                     raise FormatError('This PNG file has no IDAT chunks.')
             if self.atchunk[1] == b'IDAT':
                 return
             self.process_chunk(lenient=lenient)
 
-    def chunklentype(self):
-        """Reads just enough of the input to determine the next
-        chunk's length and type, returned as a (*length*, *type*) pair
-        where *type* is a string.  If there are no more chunks, ``None``
-        is returned.
+    def _chunk_len_type(self):
+        """
+        Reads just enough of the input to
+        determine the next chunk's length and type;
+        return a (*length*, *type*) pair where *type* is a byte sequence.
+        If there are no more chunks, ``None`` is returned.
         """
 
         x = self.file.read(8)
@@ -1878,14 +1884,14 @@ class Reader:
                 arraycode = 'BH'[self.bitdepth > 8]
                 # Like :meth:`group` but
                 # producing an array.array object for each row.
-                values = self.deinterlace(bs)
+                values = self._deinterlace(bs)
                 vpr = self.width * self.planes
                 for i in range(0, len(values), vpr):
                     row = array(arraycode, values[i:i+vpr])
                     yield row
             rows = rows_from_interlace()
         else:
-            rows = self.iter_bytes_to_values(self.iter_straight_byte_rows(raw))
+            rows = self._iter_bytes_to_values(self._iter_straight_byte_rows(raw))
         meta = dict()
         for attr in 'greyscale alpha planes bitdepth interlace'.split():
             meta[attr] = getattr(self, attr)
