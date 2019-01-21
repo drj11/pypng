@@ -31,23 +31,34 @@
 # SOFTWARE.
 
 """
-Pure Python PNG Reader/Writer
+The ``png`` module can read and write PNG files.
 
-Reads and write PNG files.
-All allowable bit depths (1/2/4/8/16/24/32/48/64 bits per pixel) and
-colour combinations are supported:
-greyscale (1/2/4/8/16 bit);
-RGB, RGBA, LA (greyscale with alpha) with 8/16 bits per channel;
-colour mapped images (1/2/4/8 bit).
-Interlaced images,
-which support a progressive display when downloading,
-are supported for both reading and writing.
-A number of optional chunks can be specified (when writing)
-and understood (when reading): ``tRNS``, ``bKGD``, ``gAMA``.
+Installation and Overview
+-------------------------
+
+``pip install pypng``
 
 For help, type ``import png; help(png)`` in your python interpreter.
 
 A good place to start is the :class:`Reader` and :class:`Writer` classes.
+
+Coverage of PNG formats is fairly complete;
+all allowable bit depths (1/2/4/8/16/24/32/48/64 bits per pixel) and
+colour combinations are supported:
+
+- greyscale (1/2/4/8/16 bit);
+- RGB, RGBA, LA (greyscale with alpha) with 8/16 bits per channel;
+- colour mapped images (1/2/4/8 bit).
+
+Interlaced images,
+which support a progressive display when downloading,
+are supported for both reading and writing.
+
+A number of optional chunks can be specified (when writing)
+and understood (when reading): ``tRNS``, ``bKGD``, ``gAMA``.
+
+The ``sBIT`` chunk can be used to specify precision for
+non-native bit depths.
 
 Requires Python 3.4 or higher (or Python 2.7).
 Installation is trivial,
@@ -56,45 +67,56 @@ but see the ``README.txt`` file (with the source distribution) for details.
 Full use of all features will need some reading of the PNG specification
 http://www.w3.org/TR/2003/REC-PNG-20031110/.
 
-The package also comes with command line utilities that convert
-`Netpbm <http://netpbm.sourceforge.net/>`_ PNM files to PNG,
-and the reverse conversion from PNG to PNM,
-and some simple PNG manipulations.
+The package also comes with command line utilities.
 
-A note on spelling and terminology
-----------------------------------
+- ``pripamtopng`` converts `Netpbm <http://netpbm.sourceforge.net/>`_ PAM/PNM files to PNG;
+- ``pripngtopam`` converts PNG to file PAM/PNM.
+
+There are a few more for simple PNG manipulations.
+
+Spelling and Terminology
+------------------------
 
 Generally British English spelling is used in the documentation.
 So that's "greyscale" and "colour".
 This not only matches the author's native language,
 it's also used by the PNG specification.
 
+Colour Models
+-------------
+
 The major colour models supported by PNG (and hence by PyPNG) are:
-greyscale, RGB, greyscale--alpha, RGB--alpha.
-Also referred to using the abbreviations: L, RGB, LA, RGBA.
+
+- greyscale;
+- greyscale--alpha;
+- RGB;
+- RGB--alpha.
+
+Also referred to using the abbreviations: L, LA, RGB, RGBA.
 Each letter codes a single channel:
 *L* is for Luminance or Luma or Lightness (greyscale images);
-*R*, *G*, *B* stand for Red, Green, Blue (colour image);
 *A* stands for Alpha, the opacity channel
 (used for transparency effects, but higher values are more opaque,
-so it makes sense to call it opacity).
+so it makes sense to call it opacity);
+*R*, *G*, *B* stand for Red, Green, Blue (colour image).
 
-A note on formats
------------------
+Lists, arrays, sequences, and so on
+-----------------------------------
 
 When getting pixel data out of this module (reading) and
 presenting data to this module (writing) there are
 a number of ways the data could be represented as a Python value.
-Generally this module uses one of three formats called
-"flat row flat pixel", "boxed row flat pixel", and
-"boxed row boxed pixel".
-Basically the concern is whether each pixel and
-each row comes in its own little tuple (box), or not.
+
+The preferred format is a sequence of *rows*,
+which each row being a sequence of *values*.
+In this format, the values are in pixel order,
+with all the values from all the pixels in a row
+being concatenated into a single sequence for that row.
 
 Consider an image that is 3 pixels wide by 2 pixels high, and each pixel
 has RGB components:
 
-Boxed row flat pixel::
+Sequence of rows::
 
   list([R,G,B, R,G,B, R,G,B],
        [R,G,B, R,G,B, R,G,B])
@@ -102,16 +124,19 @@ Boxed row flat pixel::
 Each row appears as its own list,
 but the pixels are flattened so that three values for one pixel
 simply follow the three values for the previous pixel.
-This is the most common format used,
-because it provides a good compromise between space and convenience.
+
+This is the preferred because
+it provides a good compromise between space and convenience.
 PyPNG regards itself as at liberty to replace any sequence type with
 any sufficiently compatible other sequence type;
-in practice each row is an array (bytearray or array.array).
+in practice each row is an array (``bytearray`` or ``array.array``).
 
 To allow streaming the outer list is sometimes
 an iterator rather than an explicit list.
 
-Flat row flat pixel::
+An alternative format is a single array holding all the values.
+
+Array of values::
 
   [R,G,B, R,G,B, R,G,B,
    R,G,B, R,G,B, R,G,B]
@@ -119,26 +144,19 @@ Flat row flat pixel::
 The entire image is one single giant sequence of colour values.
 Generally an array will be used (to save space), not a list.
 
-Boxed row boxed pixel::
-
-  list([ (R,G,B), (R,G,B), (R,G,B) ],
-       [ (R,G,B), (R,G,B), (R,G,B) ])
-
-Each row is a list of tuples, one tuple per pixel.
-A serious memory burn in Python.
-
 The top row comes first,
 and within each row the pixels are ordered from left-to-right.
 Within a pixel the values appear in the order R-G-B-A
 (or L-A for greyscale--alpha).
 
-There is a fourth format, mentioned because it is used internally,
+There is another format, which should only be used with caution.
+It is mentioned because it is used internally,
 is close to what lies inside a PNG file itself,
 and has some support from the public API.
 This format is called packed.
 When packed, each row is a sequence of bytes (integers from 0 to 255),
 just as it is before PNG scanline filtering is applied.
-When the bit depth is 8 this is the same as boxed row flat pixel;
+When the bit depth is 8 this is the same as a sequence of rows;
 when the bit depth is less than 8 (1, 2 and 4),
 several pixels are packed into each byte;
 when the bit depth is 16 each pixel value is decomposed into 2 bytes
@@ -605,7 +623,7 @@ class Writer:
         """
         Write a PNG image to the output file.
         `rows` should be an iterable that yields each row
-        in boxed row flat pixel format.
+        (each row is a sequence of values).
         The rows should be the rows of the original image,
         so there should be ``self.height`` rows of
         ``self.width * self.planes`` values.
@@ -666,8 +684,8 @@ class Writer:
         For interlaced images the rows should have been interlaced before
         passing them to this function.
 
-        `rows` should be an iterable that yields each row.
-        The rows should be in boxed row flat pixel format.
+        `rows` should be an iterable that yields each row
+        (each row being a sequence of values).
         """
 
         # Ensure rows are scaled (to 4-/8-/16-bit),
@@ -686,8 +704,8 @@ class Writer:
     def write_packed(self, outfile, rows):
         """
         Write PNG file to `outfile`.
-        `rows` should be in boxed row packed format.
-        Each row should be a sequence of packed bytes.
+        `rows` should be an iterator that yields each packed row;
+        a packed row being a sequence of packed bytes.
 
         The rows have a filter byte prefixed and
         are then compressed into one or more IDAT chunks.
@@ -803,8 +821,8 @@ class Writer:
 
     def write_array(self, outfile, pixels):
         """
-        Write an array in flat row flat pixel format as
-        a PNG file on the output file.
+        Write an array that holds all the image values
+        as a PNG file on the output file.
         See also :meth:`write` method.
         """
 
@@ -819,8 +837,8 @@ class Writer:
 
     def array_scanlines(self, pixels):
         """
-        Generates boxed rows (flat pixels) from flat rows (flat pixels)
-        in an array.
+        Generates rows (each a sequence of values) from
+        a single array of values.
         """
 
         # Values per row
@@ -834,9 +852,9 @@ class Writer:
     def array_scanlines_interlace(self, pixels):
         """
         Generator for interlaced scanlines from an array.
-        `pixels` is the full source image in flat row flat pixel format.
+        `pixels` is the full source image as a single array of values.
         The generator yields each scanline of the reduced passes in turn,
-        in boxed row flat pixel format.
+        each scanline being a sequence of values.
         """
 
         # http://www.w3.org/TR/PNG/#8InterlaceMethods
@@ -1541,7 +1559,7 @@ class Reader:
     def _deinterlace(self, raw):
         """
         Read raw pixel data, undo filters, deinterlace, and flatten.
-        Return in flat row flat pixel format.
+        Return a single array of values.
         """
 
         # Values per row (of the target image)
@@ -1592,7 +1610,8 @@ class Reader:
 
     def _iter_bytes_to_values(self, byte_rows):
         """
-        Iterator that yields each scanline in boxed row flat pixel format.
+        Iterator that yields each scanline;
+        each scanline being a sequence of values.
         `byte_rows` should be an iterator that yields
         the bytes of each row in turn.
         """
@@ -1601,9 +1620,9 @@ class Reader:
             yield self._bytes_to_values(row)
 
     def _bytes_to_values(self, bs, width=None):
-        """Convert a row of bytes into a flat row of values.
-        Result will be a freshly allocated object, not shared with
-        argument.
+        """Convert a packed row of bytes into a row of values.
+        Result will be a freshly allocated object,
+        not shared with the argument.
         """
 
         if self.bitdepth == 8:
@@ -1844,11 +1863,12 @@ class Reader:
     def read(self, lenient=False):
         """
         Read the PNG file and decode it.  Returns (`width`, `height`,
-        `pixels`, `metadata`).
+        `rows`, `metadata`).
 
         May use excessive memory.
 
-        `pixels` are returned in boxed row flat pixel format.
+        `rows` is a sequence of rows;
+        each row is a sequence of values.
 
         If the optional `lenient` argument evaluates to True,
         checksum failures will raise warnings rather than exceptions.
@@ -1910,15 +1930,15 @@ class Reader:
 
     def read_flat(self):
         """
-        Read a PNG file and decode it into flat row flat pixel format.
-        Returns (*width*, *height*, *pixels*, *metadata*).
+        Read a PNG file and decode it into a single array of values.
+        Returns (*width*, *height*, *values*, *metadata*).
 
         May use excessive memory.
 
-        `pixels` are returned in flat row flat pixel format.
+        `values` is a single array.
 
-        See also the :meth:`read` method which returns pixels in the
-        more stream-friendly boxed row flat pixel format.
+        The :meth:`read` method is more stream-friendly than this,
+        because it returns a sequence of rows.
         """
 
         x, y, pixel, meta = self.read()
@@ -1927,7 +1947,8 @@ class Reader:
         return x, y, pixel, meta
 
     def palette(self, alpha='natural'):
-        """Returns a palette that is a sequence of 3-tuples or 4-tuples,
+        """
+        Returns a palette that is a sequence of 3-tuples or 4-tuples,
         synthesizing it from the ``PLTE`` and ``tRNS`` chunks.
         These chunks should have already been processed (for example,
         by calling the :meth:`preamble` method).
@@ -1990,8 +2011,9 @@ class Reader:
         will have ``planes=4`` and ``alpha=True`` because
         an alpha channel is synthesized and added.
 
-        *rows* is the pixel data in boxed row flat pixel format,
-        like the :meth:`read` method.
+        *rows* is a sequence of rows;
+        each row being a sequence of values
+        (like the :meth:`read` method).
 
         All the other aspects of the image data are not changed.
         """
@@ -2113,11 +2135,11 @@ class Reader:
         in the source image will raise an exception.
 
         This function returns a 4-tuple:
-        (*width*, *height*, *pixels*, *metadata*).
+        (*width*, *height*, *rows*, *metadata*).
         *width*, *height*, *metadata* are as per the
         :meth:`read` method.
 
-        *pixels* is the pixel data in boxed row flat pixel format.
+        *rows* is the pixel data as a sequence of rows.
         """
 
         return self._as_rescale(self.asRGB, 8)
