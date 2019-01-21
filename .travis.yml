@@ -1,13 +1,15 @@
 language: python
 matrix:
   include:
+  - python: 3
+    install: pip install flake8
+    script:
+    - flake8 . --count --show-source --statistics
   - python: "2.7"
   - python: "3.4"
   - python: "3.5"
   - python: "3.6"
   - python: "3.7"
     dist: xenial  # required for Python >= 3.7 (travis-ci/travis-ci#9069)
-install: pip install flake8
 script:
-  - flake8 . --count --show-source --statistics
   - cd code; nosetests
