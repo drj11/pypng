@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
-
 # png.py - PNG encoder/decoder in pure Python
 #
 # Copyright (C) 2006 Johann C. Rocholl <johann@browsershots.org>
@@ -154,6 +152,8 @@ the PNG image comes from something that uses a similar format
 And now, my famous members
 --------------------------
 """
+
+from __future__ import print_function
 
 __version__ = "0.0.19"
 
