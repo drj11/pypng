@@ -69,7 +69,8 @@ http://www.w3.org/TR/2003/REC-PNG-20031110/.
 
 The package also comes with command line utilities.
 
-- ``pripamtopng`` converts `Netpbm <http://netpbm.sourceforge.net/>`_ PAM/PNM files to PNG;
+- ``pripamtopng`` converts
+`Netpbm <http://netpbm.sourceforge.net/>`_ PAM/PNM files to PNG;
 - ``pripngtopam`` converts PNG to file PAM/PNM.
 
 There are a few more for simple PNG manipulations.
@@ -1644,9 +1645,9 @@ class Reader:
             out.extend([mask & (o >> i) for i in shifts])
         return out[:width]
 
-    def _iter_straight_byte_rows(self, byte_blocks):
+    def _iter_straight_packed(self, byte_blocks):
         """Iterator that undoes the effect of filtering;
-        yields each row as a sequence of bytes (in serialised format).
+        yields each row as a sequence of packed bytes.
         Assumes input is straightlaced.
         `byte_blocks` should be an iterable that yields the raw bytes
         in blocks of arbitrary size.
@@ -1911,7 +1912,7 @@ class Reader:
                     yield row
             rows = rows_from_interlace()
         else:
-            rows = self._iter_bytes_to_values(self._iter_straight_byte_rows(raw))
+            rows = self._iter_bytes_to_values(self._iter_straight_packed(raw))
         meta = dict()
         for attr in 'greyscale alpha planes bitdepth interlace'.split():
             meta[attr] = getattr(self, attr)
