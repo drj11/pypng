@@ -167,9 +167,6 @@ It isn't usually a convenient format,
 but may be just right if the source data for
 the PNG image comes from something that uses a similar format
 (for example, 1-bit BMPs, or another PNG file).
-
-And now, my famous members
---------------------------
 """
 
 from __future__ import print_function
