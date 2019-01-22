@@ -32,6 +32,9 @@ PyPNG allows PNG image files to be read and written using pure Python.
 
 It's available from github.com
 https://github.com/drj11/pypng
+
+Documentation kindly hosted at Read the Docs
+https://pypng.readthedocs.io/en/latest/
 """,
     author='David Jones',
     author_email='drj@pobox.com',
