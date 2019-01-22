@@ -70,7 +70,7 @@ http://www.w3.org/TR/2003/REC-PNG-20031110/.
 The package also comes with command line utilities.
 
 - ``pripamtopng`` converts
-`Netpbm <http://netpbm.sourceforge.net/>`_ PAM/PNM files to PNG;
+  `Netpbm <http://netpbm.sourceforge.net/>`_ PAM/PNM files to PNG;
 - ``pripngtopam`` converts PNG to file PAM/PNM.
 
 There are a few more for simple PNG manipulations.
