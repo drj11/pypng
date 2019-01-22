@@ -202,10 +202,12 @@ integers less than 4, because the image has a bit depth of 2.
 NumPy
 -----
 
-`NumPy <http://numpy.scipy.org/>`_ is a package for scientific computing with Python.  It is not part
+`NumPy <http://www.numpy.org/>`_ is a package for scientific computing with Python.
+It is not part
 of a standard Python installation, it is
-`downloaded and installed separately <http://sourceforge.net/project/showfiles.php?group_id=1369&package_id=175103>`_
-if needed.  Numpy's array manipulation facilities make it good for doing
+`downloaded and installed separately <https://pypi.org/project/numpy/>`_
+if needed.
+Numpy's array manipulation facilities make it good for doing
 certain type of image processing, and scientific users of NumPy may wish
 to output PNG files for visualisation.
 
