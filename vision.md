@@ -8,7 +8,7 @@ state, and conversions. This object will also be iterable.
 Object will also "know" its preferred iterator item (rows,
 pixels, boxed rows, etc).
 
-Arguments via info dict.
+Arguments via info dict / namespace.
 
 generally monad/jQuery style:
 
@@ -38,6 +38,15 @@ well as reading).
 In principle format neutral when reading/writing, but in
 practice will only support PNG and PNM.
 
+Convert via info.
+One cute thing is that instead of having lots of `.asRGB` and
+`.asRGBA8` methods, could have a single `.as(info)` method
+that _receives_ an `info` object and coerces the stream as
+specified.
+
+So, `.as(dict(greyscale=False))` would ensure RGB or RGBA;
+`.as(dict(bitdepth=8))` would scale up to 8-bit.
+
 # Convention
 
 `as` methods generally do not change (perceptual) value. For
@@ -54,11 +63,11 @@ approximately equivalent ones.
 
 How to deal with random PNG chunks?
 
-# Unified metadata
+# Unified mode
 
-Each element of the axes list corresponds to an axis of the
-array. The type of the axis is denoted by a short string (at the
-moment, a single character string).
+Each element of the axes list corresponds to an axis of the array.
+The type of the axis is denoted by a short string
+(at the moment, a single character string).
 
 x - X axis
 y - Y axis
@@ -104,15 +113,17 @@ but the "value" is a 3-element tuple (for RGB images).
     shape = [300, 400]
     values = 'RGBA'
 
-`values` describes the elements of the R dimensional array. It
-is either: 'i' for integer intensities (from 0 to 2**k-1; k
-being the channel depth); 'RGBA' for an integer (>=0) that 
-consists of the channel values packed, bitwise, into a single
-integer. The integer is considered as a string of bits,
-left-to-right corresponding to most-to-least significant. The
-rightmost channel in the value string corresponds to the least
-(rightmost, in the usual way of writing integers in binary
-notation) significant bits of the integer.
+`values` describes the elements of the R dimensional array.
+It is either:
+'i' for integer intensities (from 0 to 2**k-1;
+k being the channel depth);
+'RGBA' for an integer (>=0) that consists of the channel values packed,
+bitwise, into a single integer.
+The integer is considered as a string of bits,
+left-to-right corresponding to most-to-least significant.
+The rightmost channel in the value string corresponds to the least
+(rightmost, in the usual way of writing integers in binary notation)
+significant bits of the integer.
 
 With pixels packed into a single integer it is less convenient
 to extract channels, but it will be easier to do operations that
