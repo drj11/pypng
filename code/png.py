@@ -154,7 +154,7 @@ There is another format, which should only be used with caution.
 It is mentioned because it is used internally,
 is close to what lies inside a PNG file itself,
 and has some support from the public API.
-This format is called packed.
+This format is called *packed*.
 When packed, each row is a sequence of bytes (integers from 0 to 255),
 just as it is before PNG scanline filtering is applied.
 When the bit depth is 8 this is the same as a sequence of rows;
@@ -421,8 +421,8 @@ class Writer:
         If `size` is used it should be a pair (*width*, *height*).
 
         The `greyscale` argument indicates whether input pixels
-        are greyscale (when true), or colour (when False).
-        The default is true unless palette= is used.
+        are greyscale (when true), or colour (when false).
+        The default is true unless `palette=` is used.
 
         The `alpha` argument (a boolean) specifies
         whether input pixels have an alpha channel (or not).
@@ -1387,13 +1387,11 @@ class Image:
 
 class Reader:
     """
-    PNG decoder in pure Python.
+    Pure Python PNG decoder in pure Python.
     """
 
     def __init__(self, _guess=None, **kw):
         """
-        Create a PNG decoder object.
-
         The constructor expects exactly one keyword argument.
         If you supply a positional argument instead,
         it will guess the input type.
@@ -1980,7 +1978,7 @@ class Reader:
 
         Like the :meth:`read` method this method returns a 4-tuple:
 
-        (*width*, *height*, *rows*, *meta*)
+        (*width*, *height*, *rows*, *info*)
 
         This method normally returns pixel values with
         the bit depth they have in the source image, but
@@ -1993,13 +1991,13 @@ class Reader:
         the maximum of the ones specified in the ``sBIT`` chunk.
         An RGB565 image will be rescaled to 6-bit RGB666.
 
-        The *meta* dictionary that is returned reflects
+        The *info* dictionary that is returned reflects
         the `direct` format and not the original source image.
         For example, an RGB source image with a ``tRNS`` chunk
         to represent a transparent colour,
         will start with ``planes=3`` and ``alpha=False`` for the
         source image,
-        but the *meta* dictionary returned by this method
+        but the *info* dictionary returned by this method
         will have ``planes=4`` and ``alpha=True`` because
         an alpha channel is synthesized and added.
 
@@ -2016,13 +2014,13 @@ class Reader:
         if not self.colormap and not self.trns and not self.sbit:
             return self.read()
 
-        x, y, pixels, meta = self.read()
+        x, y, pixels, info = self.read()
 
         if self.colormap:
-            meta['colormap'] = False
-            meta['alpha'] = bool(self.trns)
-            meta['bitdepth'] = 8
-            meta['planes'] = 3 + bool(self.trns)
+            info['colormap'] = False
+            info['alpha'] = bool(self.trns)
+            info['bitdepth'] = 8
+            info['planes'] = 3 + bool(self.trns)
             plte = self.palette()
 
             def iterpal(pixels):
@@ -2039,11 +2037,11 @@ class Reader:
             # perhaps go faster (all those 1-tuples!), but I still
             # wonder whether the code proliferation is worth it)
             it = self.transparent
-            maxval = 2 ** meta['bitdepth'] - 1
-            planes = meta['planes']
-            meta['alpha'] = True
-            meta['planes'] += 1
-            typecode = 'BH'[meta['bitdepth'] > 8]
+            maxval = 2 ** info['bitdepth'] - 1
+            planes = info['planes']
+            info['alpha'] = True
+            info['planes'] += 1
+            typecode = 'BH'[info['bitdepth'] > 8]
 
             def itertrns(pixels):
                 for row in pixels:
@@ -2064,22 +2062,22 @@ class Reader:
         if self.sbit:
             sbit = struct.unpack('%dB' % len(self.sbit), self.sbit)
             targetbitdepth = max(sbit)
-            if targetbitdepth > meta['bitdepth']:
+            if targetbitdepth > info['bitdepth']:
                 raise Error('sBIT chunk %r exceeds bitdepth %d' %
                             (sbit, self.bitdepth))
             if min(sbit) <= 0:
                 raise Error('sBIT chunk %r has a 0-entry' % sbit)
-            if targetbitdepth == meta['bitdepth']:
+            if targetbitdepth == info['bitdepth']:
                 targetbitdepth = None
         if targetbitdepth:
-            shift = meta['bitdepth'] - targetbitdepth
-            meta['bitdepth'] = targetbitdepth
+            shift = info['bitdepth'] - targetbitdepth
+            info['bitdepth'] = targetbitdepth
 
             def itershift(pixels):
                 for row in pixels:
                     yield [p >> shift for p in row]
             pixels = itershift(pixels)
-        return x, y, pixels, meta
+        return x, y, pixels, info
 
     def asFloat(self, maxval=1.0):
         """Return image pixels as per :meth:`asDirect` method, but scale
@@ -2127,9 +2125,8 @@ class Reader:
         in the source image will raise an exception.
 
         This function returns a 4-tuple:
-        (*width*, *height*, *rows*, *metadata*).
-        *width*, *height*, *metadata* are as per the
-        :meth:`read` method.
+        (*width*, *height*, *rows*, *info*).
+        *width*, *height*, *info* are as per the :meth:`read` method.
 
         *rows* is the pixel data as a sequence of rows.
         """
@@ -2151,24 +2148,23 @@ class Reader:
         through unchanged; greyscales are expanded into RGB
         triplets (there is a small speed overhead for doing this).
 
-        An alpha channel in the source image will raise an
-        exception.
+        An alpha channel in the source image will raise an exception.
 
-        The return values are as for the :meth:`read` method
-        except that the *metadata* reflect the returned pixels, not the
-        source image.  In particular, for this method
-        ``metadata['greyscale']`` will be ``False``.
+        The return values are as for the :meth:`read` method except that
+        the *info* reflect the returned pixels, not the source image.
+        In particular,
+        for this method ``info['greyscale']`` will be ``False``.
         """
 
-        width, height, pixels, meta = self.asDirect()
-        if meta['alpha']:
+        width, height, pixels, info = self.asDirect()
+        if info['alpha']:
             raise Error("will not convert image with alpha channel to RGB")
-        if not meta['greyscale']:
-            return width, height, pixels, meta
-        meta['greyscale'] = False
-        meta['planes'] = 3
+        if not info['greyscale']:
+            return width, height, pixels, info
+        info['greyscale'] = False
+        info['planes'] = 3
 
-        if meta['bitdepth'] > 8:
+        if info['bitdepth'] > 8:
             def newarray():
                 return array('H', [0])
         else:
@@ -2181,33 +2177,35 @@ class Reader:
                 for i in range(3):
                     a[i::3] = row
                 yield a
-        return width, height, iterrgb(), meta
+        return width, height, iterrgb(), info
 
     def asRGBA(self):
-        """Return image as RGBA pixels.  Greyscales are expanded into
-        RGB triplets; an alpha channel is synthesized if necessary.
-        The return values are as for the :meth:`read` method
-        except that the *metadata* reflect the returned pixels, not the
-        source image.  In particular, for this method
-        ``metadata['greyscale']`` will be ``False``, and
-        ``metadata['alpha']`` will be ``True``.
+        """
+        Return image as RGBA pixels.
+        Greyscales are expanded into RGB triplets;
+        an alpha channel is synthesized if necessary.
+        The return values are as for the :meth:`read` method except that
+        the *info* reflect the returned pixels, not the source image.
+        In particular, for this method
+        ``info['greyscale']`` will be ``False``, and
+        ``info['alpha']`` will be ``True``.
         """
 
-        width, height, pixels, meta = self.asDirect()
-        if meta['alpha'] and not meta['greyscale']:
-            return width, height, pixels, meta
-        typecode = 'BH'[meta['bitdepth'] > 8]
-        maxval = 2**meta['bitdepth'] - 1
+        width, height, pixels, info = self.asDirect()
+        if info['alpha'] and not info['greyscale']:
+            return width, height, pixels, info
+        typecode = 'BH'[info['bitdepth'] > 8]
+        maxval = 2**info['bitdepth'] - 1
         maxbuffer = struct.pack('=' + typecode, maxval) * 4 * width
 
-        if meta['bitdepth'] > 8:
+        if info['bitdepth'] > 8:
             def newarray():
                 return array('H', maxbuffer)
         else:
             def newarray():
                 return bytearray(maxbuffer)
 
-        if meta['alpha'] and meta['greyscale']:
+        if info['alpha'] and info['greyscale']:
             # LA to RGBA
             def convert():
                 for row in pixels:
@@ -2217,7 +2215,7 @@ class Reader:
                     a = newarray()
                     convert_la_to_rgba(row, a)
                     yield a
-        elif meta['greyscale']:
+        elif info['greyscale']:
             # L to RGBA
             def convert():
                 for row in pixels:
@@ -2225,7 +2223,7 @@ class Reader:
                     convert_l_to_rgba(row, a)
                     yield a
         else:
-            assert not meta['alpha'] and not meta['greyscale']
+            assert not info['alpha'] and not info['greyscale']
             # RGB to RGBA
 
             def convert():
@@ -2233,10 +2231,10 @@ class Reader:
                     a = newarray()
                     convert_rgb_to_rgba(row, a)
                     yield a
-        meta['alpha'] = True
-        meta['greyscale'] = False
-        meta['planes'] = 4
-        return width, height, convert(), meta
+        info['alpha'] = True
+        info['greyscale'] = False
+        info['planes'] = 4
+        return width, height, convert(), info
 
 
 def decompress(data_blocks):
