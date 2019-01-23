@@ -5,13 +5,13 @@ Why Use PyPNG?
 ==============
 
 - PyPNG is pure Python;
-- install with pip: `pip install pypng`;
-- install traditional way: `python setup.py install`;
-- install by copying `code/png.py`;
+- install with pip: ``pip install pypng``;
+- install traditional way: ``python setup.py install``;
+- install by copying ``code/png.py``;
 - read/write all PNG bitdepths (16 bit!) and colour modes;
 - read/write interlace PNG;
 - convert to/from 1-, 2-, 3, 4- channel NetPBM PAM files;
-- support for `sBIT` chunk;
+- support for ``sBIT`` chunk;
 - support for many other PNG chunk types;
 - fun command line utilities.
 
