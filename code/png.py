@@ -1156,19 +1156,20 @@ RegexModeDecode = re.compile("(LA?|RGBA?);?([0-9]*)", flags=re.IGNORECASE)
 
 
 def from_array(a, mode=None, info={}):
-    """Create a PNG :class:`Image` object from a 2- or 3-dimensional
-    array.  One application of this function is easy PIL-style saving:
+    """
+    Create a PNG :class:`Image` object from a 2-dimensional array.
+    One application of this function is easy PIL-style saving:
     ``png.from_array(pixels, 'L').save('foo.png')``.
 
-    Unless they are specified using the *info* parameter, the PNG's
-    height and width are taken from the array size.  For a 3 dimensional
-    array the first axis is the height; the second axis is the width;
-    and the third axis is the channel number.  Thus an RGB image that is
-    16 pixels high and 8 wide will use an array that is 16x8x3.  For 2
-    dimensional arrays the first axis is the height, but the second axis
-    is ``width*channels``, so an RGB image that is 16 pixels high and 8
-    wide will use a 2-dimensional array that is 16x24 (each row will be
-    8*3 = 24 sample values).
+    Unless they are specified using the *info* parameter,
+    the PNG's height and width are taken from the array size.
+    The first axis is the height; the second axis is the
+    ravelled width and channel index.
+    The array is treated is a sequence of rows,
+    each row being a sequence of values (``width*channels`` in number).
+    So an RGB image that is 16 pixels high and 8 wide will
+    occupy a 2-dimensional array that is 16x24
+    (each row will be 8*3 = 24 sample values).
 
     *mode* is a string that specifies the image colour format in a
     PIL-style mode.  It can be:
@@ -1182,54 +1183,59 @@ def from_array(a, mode=None, info={}):
     ``'RGBA'``
       colour image with alpha (4 channel)
 
-    The mode string can also specify the bit depth (overriding how this
-    function normally derives the bit depth, see below).  Appending
-    ``';16'`` to the mode will cause the PNG to be 16 bits per channel;
+    The mode string can also specify the bit depth
+    (overriding how this function normally derives the bit depth,
+    see below).
+    Appending ``';16'`` to the mode will cause the PNG to be
+    16 bits per channel;
     any decimal from 1 to 16 can be used to specify the bit depth.
 
     When a 2-dimensional array is used *mode* determines how many
     channels the image has, and so allows the width to be derived from
     the second array dimension.
 
-    The array is expected to be a ``numpy`` array, but it can be any
-    suitable Python sequence.  For example, a list of lists can be used:
-    ``png.from_array([[0, 255, 0], [255, 0, 255]], 'L')``.  The exact
-    rules are: ``len(a)`` gives the first dimension, height;
-    ``len(a[0])`` gives the second dimension; ``len(a[0][0])`` gives the
-    third dimension, unless an exception is raised in which case a
-    2-dimensional array is assumed.  It's slightly more complicated than
-    that because an iterator of rows can be used, and it all still
-    works.  Using an iterator allows data to be streamed efficiently.
+    The array is expected to be a ``numpy`` array,
+    but it can be any suitable Python sequence.
+    For example, a list of lists can be used:
+    ``png.from_array([[0, 255, 0], [255, 0, 255]], 'L')``.
+    The exact rules are: ``len(a)`` gives the first dimension, height;
+    ``len(a[0])`` gives the second dimension.
+    It's slightly more complicated than that because
+    an iterator of rows can be used, and it all still works.
+    Using an iterator allows data to be streamed efficiently.
 
-    The bit depth of the PNG is normally taken from the array element's
-    datatype (but if *mode* specifies a bitdepth then that is used
-    instead).  The array element's datatype is determined in a way which
+    The bit depth of the PNG is normally taken from
+    the array element's datatype
+    (but if *mode* specifies a bitdepth then that is used instead).
+    The array element's datatype is determined in a way which
     is supposed to work both for ``numpy`` arrays and for Python
-    ``array.array`` objects.  A 1 byte datatype will give a bit depth of
-    8, a 2 byte datatype will give a bit depth of 16.  If the datatype
-    does not have an implicit size, for example it is a plain Python
-    list of lists, as above, then a default of 8 is used.
+    ``array.array`` objects.
+    A 1 byte datatype will give a bit depth of 8,
+    a 2 byte datatype will give a bit depth of 16.
+    If the datatype does not have an implicit size,
+    like the above example where it is a plain Python list of lists,
+    then a default of 8 is used.
 
-    The *info* parameter is a dictionary that can be used to specify
-    metadata (in the same style as the arguments to the
-    :class:`png.Writer` class).  For this function the keys that are
-    useful are:
+    The *info* parameter is a dictionary that can
+    be used to specify metadata (in the same style as
+    the arguments to the :class:`png.Writer` class).
+    For this function the keys that are useful are:
 
     height
-      overrides the height derived from the array dimensions and allows
-      *a* to be an iterable.
+      overrides the height derived from the array dimensions and
+      allows *a* to be an iterable.
     width
       overrides the width derived from the array dimensions.
     bitdepth
-      overrides the bit depth derived from the element datatype (but
-      must match *mode* if that also specifies a bit depth).
+      overrides the bit depth derived from the element datatype
+      (but must match *mode* if that also specifies a bit depth).
 
-    Generally anything specified in the
-    *info* dictionary will override any implicit choices that this
-    function would otherwise make, but must match any explicit ones.
+    Generally anything specified in the *info* dictionary will
+    override any implicit choices that this function would otherwise make,
+    but must match any explicit ones.
     For example, if the *info* dictionary has a ``greyscale`` key then
-    this must be true when mode is ``'L'`` or ``'LA'`` and false when
-    mode is ``'RGB'`` or ``'RGBA'``.
+    this must be true when mode is ``'L'`` or ``'LA'`` and
+    false when mode is ``'RGB'`` or ``'RGBA'``.
     """
 
     # We abuse the *info* parameter by modifying it.  Take a copy here.
@@ -1242,7 +1248,6 @@ def from_array(a, mode=None, info={}):
         raise Error("mode string should be 'RGB' or 'L;16' or similar.")
 
     mode, bitdepth = match.groups()
-    alpha = 'A' in mode
     if bitdepth:
         bitdepth = int(bitdepth)
 
@@ -1252,6 +1257,7 @@ def from_array(a, mode=None, info={}):
             raise Error("info['greyscale'] should match mode.")
     info['greyscale'] = 'L' in mode
 
+    alpha = 'A' in mode
     if 'alpha' in info:
         if bool(info['alpha']) != alpha:
             raise Error("info['alpha'] should match mode.")
@@ -1296,23 +1302,11 @@ def from_array(a, mode=None, info={}):
     a, t = itertools.tee(a)
     row = next(t)
     del t
-    try:
-        row[0][0]
-        threed = True
-        testelement = row[0]
-    except (IndexError, TypeError):
-        threed = False
-        testelement = row
-    if 'width' not in info:
-        if threed:
-            width = len(row)
-        else:
-            width = len(row) // planes
-        info['width'] = width
 
-    if threed:
-        # Flatten the threed rows
-        a = (itertools.chain.from_iterable(x) for x in a)
+    testelement = row
+    if 'width' not in info:
+        width = len(row) // planes
+        info['width'] = width
 
     if 'bitdepth' not in info:
         try:
@@ -1323,12 +1317,12 @@ def from_array(a, mode=None, info={}):
                 # Try a Python array.array.
                 bitdepth = 8 * testelement.itemsize
             except AttributeError:
-                # We can't determine it from the array element's
-                # datatype, use a default of 8.
+                # We can't determine it from the array element's datatype,
+                # use a default of 8.
                 bitdepth = 8
         else:
-            # If we got here without exception, we now assume that
-            # the array is a numpy array.
+            # If we got here without exception,
+            # we now assume that the array is a numpy array.
             if dtype.kind == 'b':
                 bitdepth = 1
             else:
