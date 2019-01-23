@@ -260,5 +260,3 @@ that a NumPy array is an iterator over its rows:
    :start-after: extract 003 start
    :end-before: extract 003 end
 
-Currently (writing on 2009-04-16) this generates a warning; this warning
-appears to be a bug/limitation in NumPy, but it is harmless.
