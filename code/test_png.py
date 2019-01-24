@@ -231,6 +231,16 @@ class Test(unittest.TestCase):
         self.assertEqual(row9[0:8],
                          [222, 222, 222, 255, 221, 221, 221, 255])
 
+    def test_LA_to_RGBA(self):
+        """asRGBA() on LA source."""
+        r = png.Reader(bytes=pngsuite.basn4a16)
+        x, y, rows, meta = r.asRGBA()
+        self.assertEqual(meta['planes'], 4)
+        row9 = list(list(rows)[9])
+        self.assertEqual(
+            row9[0:8],
+            [38052, 38052, 38052, 0, 36157, 36157, 36157, 4229])
+
     def test_RGB_trns(self):
         "Test colour type 2 and tRNS chunk."
         # Test for Issue 25 (googlecode)
