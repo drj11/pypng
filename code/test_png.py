@@ -392,7 +392,21 @@ class Test(unittest.TestCase):
         info = r.read()[3]
         png.Writer(**info)
 
-    def test_write_background(self):
+    def test_write_background_colour(self):
+        """Test that background keyword works."""
+
+        w = png.Writer(1, 2, greyscale=False, background=[0x55, 0xFF, 0xAA])
+        o = BytesIO()
+        w.write(o, [[1, 4, 192], [16, 224, 255]])
+        r = png.Reader(bytes=o.getvalue())
+        _, _, rows, info = r.asDirect()
+        rows = list(rows)
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(
+            [list(row) for row in rows],
+            [[1, 4, 192], [16, 224, 255]])
+
+    def test_write_background_grey(self):
         """Test that background keyword works."""
 
         w = png.Writer(2, 2, alpha=True, background=[0x55])
