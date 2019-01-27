@@ -751,49 +751,6 @@ class Test(unittest.TestCase):
 
     # Filters and unfilters
 
-    def test_filter_first(self):
-        """Test that filter_scanline works for the first line
-        when there is no previous line.
-        """
-        fo = 3  # bytes per pixel
-        line = [30, 31, 32, 230, 231, 232]
-        out = png.filter_scanline(0, line, fo, None)  # none
-        self.assertEqual(list(out), [0, 30, 31, 32, 230, 231, 232])
-        out = png.filter_scanline(1, line, fo, None)  # sub
-        self.assertEqual(list(out), [1, 30, 31, 32, 200, 200, 200])
-        out = png.filter_scanline(2, line, fo, None)  # up
-        self.assertEqual(list(out), [2, 30, 31, 32, 230, 231, 232])
-        out = png.filter_scanline(3, line, fo, None)  # average
-        self.assertEqual(list(out), [3, 30, 31, 32, 215, 216, 216])
-        out = png.filter_scanline(4, line, fo, None)  # paeth
-        self.assertEqual(list(out), [
-            4, paeth(30, 0, 0, 0), paeth(31, 0, 0, 0),
-            paeth(32, 0, 0, 0), paeth(230, 30, 0, 0),
-            paeth(231, 31, 0, 0), paeth(232, 32, 0, 0)
-        ])
-
-    def test_filter(self):
-        """Test that filter_scanline works for lines subsequent
-        to the first line.
-        """
-        prev = [20, 21, 22, 210, 211, 212]
-        line = [30, 32, 34, 230, 233, 236]
-        fo = 3
-        out = png.filter_scanline(0, line, fo, prev)  # none
-        self.assertEqual(list(out), [0, 30, 32, 34, 230, 233, 236])
-        out = png.filter_scanline(1, line, fo, prev)  # sub
-        self.assertEqual(list(out), [1, 30, 32, 34, 200, 201, 202])
-        out = png.filter_scanline(2, line, fo, prev)  # up
-        self.assertEqual(list(out), [2, 10, 11, 12, 20, 22, 24])
-        out = png.filter_scanline(3, line, fo, prev)  # average
-        self.assertEqual(list(out), [3, 20, 22, 23, 110, 112, 113])
-        out = png.filter_scanline(4, line, fo, prev)  # paeth
-        self.assertEqual(list(out), [
-            4, paeth(30, 0, 20, 0), paeth(32, 0, 21, 0),
-            paeth(34, 0, 22, 0), paeth(230, 30, 210, 20),
-            paeth(233, 32, 211, 21), paeth(236, 34, 212, 22)
-        ])
-
     def test_undo_filter(self):
         reader = png.Reader(bytes=b'')
         reader.psize = 3
