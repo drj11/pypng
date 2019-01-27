@@ -221,6 +221,15 @@ class Test(unittest.TestCase):
         self.assertEqual(row9[0:6],
                          [222, 222, 222, 221, 221, 221])
 
+    def test_L16_to_RGB(self):
+        """asRGB() on 16-bit grey source."""
+        r = png.Reader(bytes=pngsuite.basi0g16)
+        _, _, rows, meta = r.asRGB()
+        self.assertEqual(meta['planes'], 3)
+        row9 = list(list(rows)[9])
+        self.assertEqual(row9[0:6],
+                         [4608, 4608, 4608, 6912, 6912, 6912])
+
     def test_L_to_RGBA(self):
         """asRGBA() on grey source."""
         # Test for Issue 60 (googlecode)
