@@ -567,7 +567,7 @@ class Test(unittest.TestCase):
 
         def more_chunks():
             for t, v in reader.chunks():
-                if t == b'IDAT':
+                if t == b'IEND':
                     yield text_chunk
                 yield t, v
 
