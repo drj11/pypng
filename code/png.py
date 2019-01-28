@@ -1976,8 +1976,6 @@ class Reader:
                             (sbit, self.bitdepth))
             if min(sbit) <= 0:
                 raise Error('sBIT chunk %r has a 0-entry' % sbit)
-            if targetbitdepth == info['bitdepth']:
-                targetbitdepth = None
         if targetbitdepth:
             shift = info['bitdepth'] - targetbitdepth
             info['bitdepth'] = targetbitdepth
