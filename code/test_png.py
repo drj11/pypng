@@ -556,6 +556,28 @@ class Test(unittest.TestCase):
         self.assertEqual(1, res.y)
         self.assertFalse(res.unit_is_meter)
 
+    def test_chunk_after_idat(self):
+        """
+        Test with a PNG that has an ancillary chunk after IDAT chunks.
+        For coverage.
+        """
+        k = 'f02n0g08'
+        reader = png.Reader(bytes=pngsuite.png[k])
+        text_chunk = (b'tEXt', b'Comment\x00Test chunk follows IDAT')
+
+        def more_chunks():
+            for t, v in reader.chunks():
+                if t == b'IDAT':
+                    yield text_chunk
+                yield t, v
+
+        o = BytesIO()
+        png.write_chunks(o, more_chunks())
+
+        reader = png.Reader(bytes=o.getvalue())
+        _, _, rows, info = reader.read()
+        list(rows)
+
     def test_modify_rows(self):
         """Tests that the rows yielded by the pixels generator
         can be safely modified.
