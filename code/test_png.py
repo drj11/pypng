@@ -578,6 +578,27 @@ class Test(unittest.TestCase):
         _, _, rows, info = reader.read()
         list(rows)
 
+    def test_plte_bkgd(self):
+        """
+        Test colortype 3 PNG with bKGD chunk.
+        For coverage.
+        """
+        k = 'basn3p04'
+        reader = png.Reader(bytes=pngsuite.png[k])
+
+        def more_chunks():
+            for t,v in reader.chunks():
+                yield t, v
+                if t == b'PLTE':
+                    yield b'bKGD', b'\x00'
+
+        o = BytesIO()
+        png.write_chunks(o, more_chunks())
+
+        reader = png.Reader(bytes=o.getvalue())
+        _, _, rows, info = reader.read()
+        list(rows)
+
     def test_modify_rows(self):
         """Tests that the rows yielded by the pixels generator
         can be safely modified.
