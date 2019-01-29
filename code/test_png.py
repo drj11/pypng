@@ -836,6 +836,15 @@ class Test(unittest.TestCase):
                           writer.write,
                           o, [[1, 111, 222]])
 
+    def test_size_length_bad(self):
+        """
+        Wrong tuple length in size keyword.
+        """
+        self.assertRaises(
+            png.ProtocolError,
+            png.Writer,
+            size=(2, 2, 3))
+
     def test_write_palette_big(self):
         """Palette too big should raise error."""
         a = (255, 255, 255)

@@ -280,7 +280,7 @@ def check_sizes(size, width, height):
         return width, height
 
     if len(size) != 2:
-        raise ValueError(
+        raise ProtocolError(
             "size argument should be a pair (width, height)")
     if width is not None and width != size[0]:
         raise ValueError(
