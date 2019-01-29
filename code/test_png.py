@@ -771,9 +771,9 @@ class Test(unittest.TestCase):
 
         numpy or self.skipTest("numpy is not available")
 
-        rows = [map(numpy.bool, [0, 1])]
-        topngbytes('numpybool.png', rows, 2, 1,
-                   greyscale=True, alpha=False, bitdepth=1)
+        rows = numpy.array([[0, 1]], dtype=bool)
+        img = png.from_array(rows, 'L')
+        assert img.info['bitdepth'] == 1
 
     def test_numpy_array(self):
         """numpy array."""
