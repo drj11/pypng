@@ -465,15 +465,6 @@ class Test(unittest.TestCase):
         r = png.Reader(bytes=pngsuite.tbrn2c08)
         list(r.asDirect()[2])[0].tostring
 
-    def test_row_length_bad(self):
-        # See https://github.com/drj11/pypng/issues/28
-        writer = png.Writer(width=4, height=1, greyscale=True)
-        o = BytesIO()
-
-        self.assertRaises(png.ProtocolError,
-                          writer.write,
-                          o, [[1, 111, 222]])
-
     def test_flat(self):
         """Test read_flat."""
         import hashlib
@@ -835,6 +826,15 @@ class Test(unittest.TestCase):
         self.assertEqual(list(out), [8, 10, 9, 108, 111, 113])
 
     # Generally, protocol errors
+
+    def test_row_length_bad(self):
+        # See https://github.com/drj11/pypng/issues/28
+        writer = png.Writer(width=4, height=1, greyscale=True)
+        o = BytesIO()
+
+        self.assertRaises(png.ProtocolError,
+                          writer.write,
+                          o, [[1, 111, 222]])
 
     def test_write_palette_big(self):
         """Palette too big should raise error."""
