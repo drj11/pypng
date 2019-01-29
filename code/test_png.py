@@ -859,6 +859,14 @@ class Test(unittest.TestCase):
             png.Writer,
             height=3, size=(3, 2))
 
+    def test_background_bad(self):
+        """Wrong background in constructor."""
+        self.assertRaises(
+            png.ProtocolError,
+            png.Writer,
+            size=(2, 2),
+            background=[0x55, 0x55, 0x55])
+
     def test_write_palette_big(self):
         """Palette too big should raise error."""
         a = (255, 255, 255)

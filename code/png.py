@@ -309,7 +309,7 @@ def check_color(c, greyscale, which):
         except TypeError:
             c = (c,)
         if len(c) != 1:
-            raise ValueError("%s for greyscale must be 1-tuple" % which)
+            raise ProtocolError("%s for greyscale must be 1-tuple" % which)
         if not is_natural(c[0]):
             raise ValueError(
                 "%s colour for greyscale must be integer" % which)
