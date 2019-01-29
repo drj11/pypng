@@ -884,6 +884,15 @@ class Test(unittest.TestCase):
             greyscale=False,
             background=[1, 1, 0.5])
 
+    def test_alpha_trns(self):
+        """alpha and transparent don't mix."""
+        self.assertRaises(
+            png.ProtocolError,
+            png.Writer,
+            size=(2, 2),
+            alpha=True,
+            transparent=[1])
+
     def test_write_palette_big(self):
         """Palette too big should raise error."""
         a = (255, 255, 255)

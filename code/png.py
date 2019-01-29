@@ -542,7 +542,7 @@ class Writer:
             raise ProtocolError("width and height cannot exceed 2**31-1")
 
         if alpha and transparent is not None:
-            raise ValueError(
+            raise ProtocolError(
                 "transparent colour not allowed with alpha channel")
 
         # bitdepth is either single integer, or tuple of integers.
