@@ -875,6 +875,15 @@ class Test(unittest.TestCase):
             size=(2, 2),
             background=[0.5])
 
+    def test_background_rgb_unnatural(self):
+        """non-integer background in constructor."""
+        self.assertRaises(
+            png.ProtocolError,
+            png.Writer,
+            size=(2, 2),
+            greyscale=False,
+            background=[1, 1, 0.5])
+
     def test_write_palette_big(self):
         """Palette too big should raise error."""
         a = (255, 255, 255)

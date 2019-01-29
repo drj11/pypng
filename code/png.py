@@ -318,7 +318,7 @@ def check_color(c, greyscale, which):
                 is_natural(c[0]) and
                 is_natural(c[1]) and
                 is_natural(c[2])):
-            raise ValueError(
+            raise ProtocolError(
                 "%s colour must be a triple of integers" % which)
     return c
 
