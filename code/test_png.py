@@ -938,19 +938,5 @@ def group(s, n):
     return list(zip(* [iter(s)] * n))
 
 
-def paeth(x, a, b, c):
-    p = a + b - c
-    pa = abs(p - a)
-    pb = abs(p - b)
-    pc = abs(p - c)
-    if pa <= pb and pa <= pc:
-        pr = a
-    elif pb <= pc:
-        pr = b
-    else:
-        pr = c
-    return x - pr
-
-
 if __name__ == '__main__':
     unittest.main(__name__)
