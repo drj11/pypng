@@ -852,6 +852,13 @@ class Test(unittest.TestCase):
             png.Writer,
             width=3, size=(2, 3))
 
+    def test_height_bad(self):
+        """Wrong height in constructor."""
+        self.assertRaises(
+            png.ProtocolError,
+            png.Writer,
+            height=3, size=(3, 2))
+
     def test_write_palette_big(self):
         """Palette too big should raise error."""
         a = (255, 255, 255)
