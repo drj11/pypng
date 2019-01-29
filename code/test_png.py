@@ -587,7 +587,7 @@ class Test(unittest.TestCase):
         reader = png.Reader(bytes=pngsuite.png[k])
 
         def more_chunks():
-            for t,v in reader.chunks():
+            for t, v in reader.chunks():
                 yield t, v
                 if t == b'PLTE':
                     yield b'bKGD', b'\x00'
