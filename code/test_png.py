@@ -37,10 +37,6 @@ import png
 import pngsuite
 
 
-def runTest():
-    unittest.main(__name__)
-
-
 def topngbytes(name, rows, x, y, **k):
     """
     Convenience function for creating a PNG file "in memory" as
