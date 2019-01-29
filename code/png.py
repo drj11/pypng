@@ -311,7 +311,7 @@ def check_color(c, greyscale, which):
         if len(c) != 1:
             raise ProtocolError("%s for greyscale must be 1-tuple" % which)
         if not is_natural(c[0]):
-            raise ValueError(
+            raise ProtocolError(
                 "%s colour for greyscale must be integer" % which)
     else:
         if not (len(c) == 3 and
