@@ -845,6 +845,13 @@ class Test(unittest.TestCase):
             png.Writer,
             size=(2, 2, 3))
 
+    def test_width_bad(self):
+        """Wrong width in constructor."""
+        self.assertRaises(
+            png.ProtocolError,
+            png.Writer,
+            width=3, size=(2, 3))
+
     def test_write_palette_big(self):
         """Palette too big should raise error."""
         a = (255, 255, 255)
