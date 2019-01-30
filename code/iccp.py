@@ -553,7 +553,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
 
     if args.o:
-        return iccpout(open(o, "wb"), png.cli_open(args.input))
+        return iccpout(open(args.o, "wb"), png.cli_open(args.input))
     return iccp(sys.stdout, png.cli_open(args.input))
 
 
