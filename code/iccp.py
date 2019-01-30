@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 
 # iccp
 #
@@ -26,8 +28,11 @@
 # [ICC 2001] ICC Specification ICC.1:2001-04 (Profile version 2.4.0)
 # [ICC 2004] ICC Specification ICC.1:2004-10 (Profile version 4.2.0.0)
 
+import argparse
 import struct
+import sys
 import warnings
+import zlib
 
 import png
 
@@ -353,9 +358,9 @@ def tagblock(tag):
 
 def iccp(out, inp):
     profile = Profile().fromString(*profileFromPNG(inp))
-    print >>out, profile.d
-    print >>out, map(lambda x: x[0], profile.rawtagtable)
-    print >>out, profile.tag
+    print(profile.d, file=out)
+    print([x[0] for x in profile.rawtagtable], file=out)
+    print(profile.tag, file=out)
 
 
 def profileFromPNG(inp):
@@ -365,11 +370,11 @@ def profileFromPNG(inp):
     """
     r = png.Reader(file=inp)
     _, chunk = r.chunk('iCCP')
-    i = chunk.index('\x00')
+    i = chunk.index(b'\x00')
     name = chunk[: i]
     compression = chunk[i + 1]
-    assert compression == chr(0)
-    profile = chunk[i + 2:].decode('zlib')
+    assert compression == 0
+    profile = zlib.decompress(chunk[i + 2:])
     return profile, name
 
 
@@ -538,21 +543,18 @@ def group(s, n):
 
 
 def main(argv=None):
-    import sys
-    from getopt import getopt
     if argv is None:
         argv = sys.argv
     argv = argv[1:]
-    opt, arg = getopt(argv, 'o:')
-    if len(arg) > 0:
-        inp = open(arg[0], 'rb')
-    else:
-        inp = sys.stdin
-    for o, v in opt:
-        if o == '-o':
-            f = open(v, 'wb')
-            return iccpout(f, inp)
-    return iccp(sys.stdout, inp)
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-o")
+    parser.add_argument("input", default="-")
+    args = parser.parse_args(argv)
+
+    if args.o:
+        return iccpout(open(o, "wb"), png.cli_open(args.input))
+    return iccp(sys.stdout, png.cli_open(args.input))
 
 
 if __name__ == '__main__':
