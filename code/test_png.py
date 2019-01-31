@@ -893,6 +893,13 @@ class Test(unittest.TestCase):
             alpha=True,
             transparent=[1])
 
+    def test_bitdepth_bad(self):
+        self.assertRaises(
+            png.ProtocolError,
+            png.Writer,
+            size=(2, 2),
+            bitdepth=0)
+
     def test_write_palette_big(self):
         """Palette too big should raise error."""
         a = (255, 255, 255)

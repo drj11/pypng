@@ -554,7 +554,7 @@ class Writer:
         for b in bitdepth:
             valid = is_natural(b) and 1 <= b <= 16
             if not valid:
-                raise ValueError(
+                raise ProtocolError(
                     "each bitdepth %r must be a positive integer <= 16" %
                     (bitdepth,))
 
