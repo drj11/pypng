@@ -601,6 +601,15 @@ class Test(unittest.TestCase):
             for i in range(len(row1)):
                 row1[i] = 11117 % (i + 1)
 
+    def test_cannot_length_check(self):
+        """
+        The length check cannot be used on an itertools.chain object.
+        For coverage.
+        """
+        rows = [itertools.chain([0, 0xaa], [0x55, 0xff])]
+        w = png.Writer(size=(4, 1))
+        w.write(BytesIO(), rows)
+
     # Invalid file format tests.  These construct various badly
     # formatted PNG files, then feed them into a Reader.  When
     # everything is working properly, we should get FormatError
