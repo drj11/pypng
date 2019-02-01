@@ -1199,7 +1199,8 @@ def from_array(a, mode=None, info={}):
         try:
             info['height'] = len(a)
         except TypeError:
-            raise ProtocolError("len(a) does not work, supply info['height'] instead.")
+            raise ProtocolError(
+                "len(a) does not work, supply info['height'] instead.")
 
     planes = len(mode)
     if 'planes' in info:
