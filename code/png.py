@@ -1173,7 +1173,7 @@ def from_array(a, mode=None, info={}):
     alpha = 'A' in mode
     if 'alpha' in info:
         if bool(info['alpha']) != alpha:
-            raise Error("info['alpha'] should match mode.")
+            raise ProtocolError("info['alpha'] should match mode.")
     info['alpha'] = alpha
 
     # Get bitdepth from *mode* if possible.
