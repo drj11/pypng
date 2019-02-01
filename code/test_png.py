@@ -939,6 +939,18 @@ class Test(unittest.TestCase):
             png.Writer,
             1, 4, bitdepth=2, palette=[a, b, c])
 
+    def test_wrong_rows(self):
+        """
+        Wrong number of rows.
+        """
+        rows = [[0, 0xaa], [0x55, 0xff]]
+        w = png.Writer(size=(2, 1))
+        self.assertRaises(
+            png.ProtocolError,
+            w.write,
+            BytesIO(),
+            rows)
+
     def test_write_palette_bad_fraction(self):
         """Palette with fractions should raise error."""
         a = (255, 255, 255, 0.9)

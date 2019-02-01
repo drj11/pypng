@@ -665,7 +665,7 @@ class Writer:
 
         nrows = self.write_passes(outfile, check_rows(rows))
         if nrows != self.height:
-            raise ValueError(
+            raise ProtocolError(
                 "rows supplied (%d) does not match height (%d)" %
                 (nrows, self.height))
 
