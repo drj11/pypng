@@ -977,11 +977,18 @@ class Test(unittest.TestCase):
             1, 4, bitdepth=7, palette=_palette3)
 
     def test_palette_transparent(self):
-        """Palette is incompatible with some bitdepths."""
+        """Palette is incompatible with transarent."""
         self.assertRaises(
             png.ProtocolError,
             png.Writer,
             1, 4, palette=_palette3, transparent=(9,))
+
+    def test_palette_alpha(self):
+        """Palette is incompatible with alpha."""
+        self.assertRaises(
+            png.ProtocolError,
+            png.Writer,
+            1, 4, palette=_palette3, alpha=True)
 
     def test_writer_noargs(self):
         """Invoking Writer with no args should raise error."""

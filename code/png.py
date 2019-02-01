@@ -566,8 +566,12 @@ class Writer:
         if greyscale is Default and palette:
             greyscale = False
         greyscale = bool(greyscale)
-        color_planes = (3, 1)[greyscale or colormap]
-        planes = color_planes + alpha
+        if colormap:
+            color_planes = 1
+            planes = 1
+        else:
+            color_planes = (3, 1)[greyscale]
+            planes = color_planes + alpha
         if len(bitdepth) == 1:
             bitdepth *= planes
 
@@ -1027,7 +1031,7 @@ def check_bitdepth_rescale(
         if transparent is not None:
             raise ProtocolError("transparent and palette not compatible")
         if alpha:
-            raise ValueError("alpha and palette not compatible")
+            raise ProtocolError("alpha and palette not compatible")
         if greyscale:
             raise ValueError("greyscale and palette not compatible")
         return bitdepth, None
