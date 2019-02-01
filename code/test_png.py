@@ -746,6 +746,16 @@ class Test(unittest.TestCase):
         png.from_array([[3, 1], [0, 3]], 'LA2',
                        info=dict(greyscale=True)).save(BytesIO())
 
+    def test_from_array_iterator_height(self):
+        """Row iterator without height raises Error."""
+        i = itertools.islice(itertools.count(10), 20)
+        i = ([x, x, x] for x in i)
+        self.assertRaises(
+            png.ProtocolError,
+            png.from_array,
+            i,
+            'RGB;5')
+
 # numpy dependent tests.
 
     def test_numpy_uint16(self):
