@@ -1018,7 +1018,7 @@ def check_bitdepth_rescale(
 
     if palette:
         if len(bitdepth) != 1:
-            raise ValueError(
+            raise ProtocolError(
                 "with palette, only a single bitdepth may be used")
         (bitdepth, ) = bitdepth
         if bitdepth not in (1, 2, 4, 8):

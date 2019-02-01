@@ -961,6 +961,16 @@ class Test(unittest.TestCase):
             png.Writer,
             1, 4, bitdepth=2, palette=[a, b, c])
 
+    def test_palette_bitdepths(self):
+        """Palette is incompatible with multiple bitdepths."""
+        a = (255, 255, 255)
+        b = (200, 120, 120)
+        c = (50, 99, 50)
+        self.assertRaises(
+            png.ProtocolError,
+            png.Writer,
+            1, 4, bitdepth=(2, 2), palette=[a, b, c])
+
     def test_writer_noargs(self):
         """Invoking Writer with no args should raise error."""
         self.assertRaises(png.ProtocolError, png.Writer)
