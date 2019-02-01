@@ -2314,29 +2314,9 @@ def cli_open(path):
 
 def main(argv):
     """
-    Run the PNG encoder with options from the command line.
+    Run command line PNG.
     """
-
-    # Parse command line arguments
-    from optparse import OptionParser
-    version = '%prog ' + __version__
-    parser = OptionParser(version=version)
-    parser.set_usage("%prog [options] [imagefile]")
-
-    (options, args) = parser.parse_args(args=argv[1:])
-
-    # Prepare input and output files
-    if len(args) == 0:
-        infilename = '-'
-        infile = sys.stdin
-    elif len(args) == 1:
-        infilename = args[0]
-        infile = open(infilename, 'rb')
-    else:
-        parser.error("more than one input file")
-
-    image = Reader(file=infile)
-    image
+    print("What should the command line tool do?", file=sys.stderr)
 
 
 if __name__ == '__main__':
