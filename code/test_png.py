@@ -746,13 +746,21 @@ class Test(unittest.TestCase):
         png.from_array([[3, 1], [0, 3]], 'LA2',
                        info=dict(greyscale=True)).save(BytesIO())
 
-    def test_from_array_LA_info_bad(self):
+    def test_from_array_LA_alpha_bad(self):
         self.assertRaises(
             png.ProtocolError,
             png.from_array,
             [[3, 1], [0, 3]],
             'LA2',
             info=dict(greyscale=True, alpha=False))
+
+    def test_from_array_LA_grey_bad(self):
+        self.assertRaises(
+            png.ProtocolError,
+            png.from_array,
+            [[3, 1], [0, 3]],
+            'LA2',
+            info=dict(greyscale=False, alpha=True))
 
     def test_from_array_iterator_height(self):
         """Row iterator without height raises Error."""
