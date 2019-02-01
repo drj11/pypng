@@ -1033,7 +1033,7 @@ def check_bitdepth_rescale(
         if alpha:
             raise ProtocolError("alpha and palette not compatible")
         if greyscale:
-            raise ValueError("greyscale and palette not compatible")
+            raise ProtocolError("greyscale and palette not compatible")
         return bitdepth, None
 
     # No palette, check for sBIT chunk generation.

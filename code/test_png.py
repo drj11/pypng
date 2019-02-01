@@ -990,6 +990,13 @@ class Test(unittest.TestCase):
             png.Writer,
             1, 4, palette=_palette3, alpha=True)
 
+    def test_palette_greyscale(self):
+        """Palette is incompatible with greyscale."""
+        self.assertRaises(
+            png.ProtocolError,
+            png.Writer,
+            1, 4, palette=_palette3, greyscale=True)
+
     def test_writer_noargs(self):
         """Invoking Writer with no args should raise error."""
         self.assertRaises(png.ProtocolError, png.Writer)
