@@ -36,6 +36,12 @@ except ImportError:
 import png
 import pngsuite
 
+_palette3 = [
+    (255, 255, 255),
+    (200, 120, 120),
+    (50, 99, 50),
+]
+
 
 def topngbytes(name, rows, x, y, **k):
     """
@@ -162,10 +168,8 @@ class Test(unittest.TestCase):
 
     def test_P2(self):
         """2-bit palette."""
-        a = (255, 255, 255)
-        b = (200, 120, 120)
-        c = (50, 99, 50)
-        w = png.Writer(1, 4, bitdepth=2, palette=[a, b, c])
+        a, b, c = _palette3
+        w = png.Writer(1, 4, bitdepth=2, palette=_palette3)
         f = BytesIO()
         w.write_array(f, array('B', (0, 1, 1, 2)))
         r = png.Reader(bytes=f.getvalue())
@@ -911,19 +915,16 @@ class Test(unittest.TestCase):
 
     def test_write_palette_big(self):
         """Palette too big should raise error."""
-        a = (255, 255, 255)
-        b = (200, 120, 120)
-        c = (50, 99, 50)
         self.assertRaises(
             png.ProtocolError,
             png.Writer,
-            1, 4, bitdepth=2, palette=[a, b, c]*86)
+            1, 4, bitdepth=2, palette=_palette3*86)
 
     def test_write_palette_bad_tuples(self):
         """Palette with incorrect size tuples should raise error."""
-        a = (255, 255, 255)
-        b = (200, 120, 120)
-        c = (50, 99)    # Deliberately short
+        a, b, c = _palette3
+        # Corrupt c by shortening it.
+        c = c[:2]
         self.assertRaises(
             png.ProtocolError,
             png.Writer,
@@ -963,13 +964,10 @@ class Test(unittest.TestCase):
 
     def test_palette_bitdepths(self):
         """Palette is incompatible with multiple bitdepths."""
-        a = (255, 255, 255)
-        b = (200, 120, 120)
-        c = (50, 99, 50)
         self.assertRaises(
             png.ProtocolError,
             png.Writer,
-            1, 4, bitdepth=(2, 2), palette=[a, b, c])
+            1, 4, bitdepth=(2, 2), palette=_palette3)
 
     def test_writer_noargs(self):
         """Invoking Writer with no args should raise error."""
