@@ -1,13 +1,7 @@
 language: python
+install: pip install coverage codecov
 matrix:
   include:
-  - name: codecov
-    install: pip install coverage codecov
-    python: "3.6"
-    script:
-    - cd code
-    - coverage run test_png.py
-    - codecov
   - name: flake8
     install: pip install flake8
     python: "3.6"
@@ -20,4 +14,6 @@ matrix:
   - python: "3.7"
     dist: xenial  # required for Python >= 3.7 (travis-ci/travis-ci#9069)
 script:
-  - cd code; nosetests
+  - cd code
+  - coverage run test_png.py
+  - codecov
