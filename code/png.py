@@ -1186,19 +1186,16 @@ def from_array(a, mode=None, info={}):
 
     # Fill in and/or check entries in *info*.
     # Dimensions.
-    if 'size' in info:
-        assert len(info["size"]) == 2
+    width, height = check_sizes(
+        info.get("size"),
+        info.get("width"),
+        info.get("height"))
+    if width:
+        info["width"] = width
+    if height:
+        info["height"] = height
 
-        # Check width, height, size all match where used.
-        for dimension, axis in [('width', 0), ('height', 1)]:
-            if dimension in info:
-                if info[dimension] != info['size'][axis]:
-                    raise Error(
-                        "info[%r] should match info['size'][%r]." %
-                        (dimension, axis))
-        info['width'], info['height'] = info['size']
-
-    if 'height' not in info:
+    if "height" not in info:
         try:
             info['height'] = len(a)
         except TypeError:
