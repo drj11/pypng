@@ -1025,7 +1025,7 @@ def check_bitdepth_rescale(
             raise ProtocolError(
                 "with palette, bitdepth must be 1, 2, 4, or 8")
         if transparent is not None:
-            raise ValueError("transparent and palette not compatible")
+            raise ProtocolError("transparent and palette not compatible")
         if alpha:
             raise ValueError("alpha and palette not compatible")
         if greyscale:
