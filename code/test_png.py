@@ -742,6 +742,18 @@ class Test(unittest.TestCase):
     def test_from_array_L2(self):
         png.from_array([[0, 1], [2, 3]], 'L2').save(BytesIO())
 
+    def test_from_array_width(self):
+        """
+        Test width argument.
+        For coverage.
+        """
+        img = png.from_array(
+            [[0, 0x33, 0x66], [0xff, 0xcc, 0x99]],
+            'L',
+            info=dict(size=(3, 2))
+            )
+        img.save(BytesIO())
+
     def test_from_array_LA(self):
         png.from_array([[3, 1], [0, 3]], 'LA2',
                        info=dict(greyscale=True)).save(BytesIO())
