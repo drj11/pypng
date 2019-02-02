@@ -1386,7 +1386,7 @@ class Reader:
             (a, ) = struct.unpack('!I', checksum)
             (b, ) = struct.unpack('!I', verify)
             message = ("Checksum error in %s chunk: 0x%08X != 0x%08X."
-                       % (type, a, b))
+                       % (type.decode('ascii'), a, b))
             if lenient:
                 warnings.warn(message, RuntimeWarning)
             else:
