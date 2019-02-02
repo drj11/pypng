@@ -762,6 +762,14 @@ class Test(unittest.TestCase):
             'LA2',
             info=dict(greyscale=False, alpha=True))
 
+    def test_from_array_LA_bitdepth_bad(self):
+        self.assertRaises(
+            png.ProtocolError,
+            png.from_array,
+            [[3, 1], [0, 3]],
+            'LA2',
+            info=dict(bitdepth=4))
+
     def test_from_array_iterator_height(self):
         """Row iterator without height raises Error."""
         i = itertools.islice(itertools.count(10), 20)

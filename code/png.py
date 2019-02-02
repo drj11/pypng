@@ -1179,7 +1179,7 @@ def from_array(a, mode=None, info={}):
     # Get bitdepth from *mode* if possible.
     if bitdepth:
         if info.get("bitdepth") and bitdepth != info['bitdepth']:
-            raise Error(
+            raise ProtocolError(
                 "bitdepth (%d) should match bitdepth of info (%d)." %
                 (bitdepth, info['bitdepth']))
         info['bitdepth'] = bitdepth
