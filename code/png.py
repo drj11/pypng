@@ -1627,7 +1627,8 @@ class Reader:
             raise FormatError('Chunk %s is too large: %d.' % (type, length))
         # Check that all bytes are in valid ASCII range.
         # https://www.w3.org/TR/2003/REC-PNG-20031110/#5Chunk-layout
-        if not(set(type) <= set(range(65, 91)) | set(range(97, 123))):
+        type_bytes = set(bytearray(type))
+        if not(type_bytes <= set(range(65, 91)) | set(range(97, 123))):
             raise FormatError(
                 'Chunk %r has invalid Chunk Type.'
                 % list(type))
