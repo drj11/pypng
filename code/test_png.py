@@ -720,6 +720,21 @@ class Test(unittest.TestCase):
             read_modify_chunks,
             change_ihdr_compression)
 
+    def test_ihdr_interlace(self):
+        """Test file that has invalid interlace IHDR value."""
+
+        def change_ihdr_interlace(chunk):
+            if chunk[0] != b'IHDR':
+                return chunk
+            data = chunk[1]
+            data = data[:12] + b'\x80'
+            chunk = (chunk[0], data)
+            return chunk
+        self.assertRaises(
+            png.FormatError,
+            read_modify_chunks,
+            change_ihdr_interlace)
+
     def test_ihdr_filter(self):
         """Test file that has invalid filter IHDR value."""
 
