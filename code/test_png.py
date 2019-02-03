@@ -705,6 +705,21 @@ class Test(unittest.TestCase):
             read_modify_chunks,
             change_ihdr_length)
 
+    def test_ihdr_compression(self):
+        """Test file that has invalid compression IHDR value."""
+
+        def change_ihdr_compression(chunk):
+            if chunk[0] != b'IHDR':
+                return chunk
+            data = chunk[1]
+            data = data[:10] + b'\x80' + data[11:]
+            chunk = (chunk[0], data)
+            return chunk
+        self.assertRaises(
+            png.FormatError,
+            read_modify_chunks,
+            change_ihdr_compression)
+
     def test_extra_pixels(self):
         """Test file that contains too many pixels."""
 

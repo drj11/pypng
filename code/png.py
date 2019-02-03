@@ -1659,7 +1659,8 @@ class Reader:
         check_bitdepth_colortype(self.bitdepth, self.color_type)
 
         if self.compression != 0:
-            raise Error("unknown compression method %d" % self.compression)
+            raise FormatError(
+                "Unknown compression method %d" % self.compression)
         if self.filter != 0:
             raise FormatError(
                 "Unknown filter method %d,"
