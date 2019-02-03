@@ -677,6 +677,19 @@ class Test(unittest.TestCase):
             self.assertIsInstance(e, png.FormatError)
             self.assertIn('hecksum error', str(e))
 
+    def test_type_bad(self):
+        """
+        Chunk has bad type.
+        """
+        bad_png = bytearray(pngsuite.basi0g01)
+        bad_png[15] |= 0x80
+        r = png.Reader(bytes=bad_png)
+        try:
+            r.read()
+        except Exception as e:
+            self.assertIsInstance(e, png.FormatError)
+            self.assertIn('invalid Chunk', str(e))
+
     def test_extra_pixels(self):
         """Test file that contains too many pixels."""
 

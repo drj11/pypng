@@ -1365,6 +1365,7 @@ class Reader:
             self.atchunk = self._chunk_len_type()
         length, type = self.atchunk
         self.atchunk = None
+
         data = self.file.read(length)
         if len(data) != length:
             raise ChunkError(
@@ -1624,6 +1625,12 @@ class Reader:
         length, type = struct.unpack('!I4s', x)
         if length > 2 ** 31 - 1:
             raise FormatError('Chunk %s is too large: %d.' % (type, length))
+        # Check that all bytes are in valid ASCII range.
+        # https://www.w3.org/TR/2003/REC-PNG-20031110/#5Chunk-layout
+        if not(set(type) <= set(range(65, 91)) | set(range(97, 123))):
+            raise FormatError(
+                'Chunk %r has invalid Chunk Type.'
+                % list(type))
         return length, type
 
     def process_chunk(self, lenient=False):
