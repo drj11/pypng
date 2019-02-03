@@ -690,7 +690,7 @@ class Test(unittest.TestCase):
             self.assertIsInstance(e, png.FormatError)
             self.assertIn('invalid Chunk', str(e))
 
-    def test_ihdr_levels(self):
+    def test_ihdr_length(self):
         """Test file that has wrong length IHDR."""
 
         def change_ihdr_length(chunk):
