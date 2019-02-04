@@ -65,6 +65,12 @@ Python 3.4 and onwards are supported (Python 2.7 also works).
 
 Cython code is removed, which simplifies the implementation.
 
+Remove the (optional) dependency `setuptools`.
+
+Change the default for `png.Writer` to be greyscale.
+
+Removed 3D support from `.from_array()`.
+
 ### Release 0.0.19
 
 Support for earlier versions of Python is dropped in order to
