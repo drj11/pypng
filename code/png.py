@@ -1301,7 +1301,7 @@ class Reader:
     Pure Python PNG decoder in pure Python.
     """
 
-    def __init__(self, _guess=None, **kw):
+    def __init__(self, _guess=None, filename=None, file=None, bytes=None):
         """
         The constructor expects exactly one keyword argument.
         If you supply a positional argument instead,
@@ -1316,8 +1316,12 @@ class Reader:
           ``bytes`` or ``bytearray`` with PNG data.
 
         """
-        if ((_guess is not None and len(kw) != 0) or
-                (_guess is None and len(kw) != 1)):
+        keywords_supplied = (
+            (_guess is not None) +
+            (filename is not None) +
+            (file is not None) +
+            (bytes is not None))
+        if keywords_supplied != 1:
             raise TypeError("Reader() takes exactly 1 argument")
 
         # Will be the first 8 bytes, later on.  See validate_signature.
@@ -1331,20 +1335,20 @@ class Reader:
 
         if _guess is not None:
             if isarray(_guess):
-                kw["bytes"] = _guess
+                bytes = _guess
             elif isinstance(_guess, str):
-                kw["filename"] = _guess
+                filename = _guess
             elif hasattr(_guess, 'read'):
-                kw["file"] = _guess
+                file = _guess
 
-        if "filename" in kw:
-            self.file = open(kw["filename"], "rb")
-        elif "file" in kw:
-            self.file = kw["file"]
-        elif "bytes" in kw:
-            self.file = io.BytesIO(kw["bytes"])
+        if bytes is not None:
+            self.file = io.BytesIO(bytes)
+        elif filename is not None:
+            self.file = open(filename, "rb")
+        elif file is not None:
+            self.file = file
         else:
-            raise TypeError("expecting filename, file or bytes array")
+            raise ProtocolError("expecting filename, file or bytes array")
 
     def chunk(self, lenient=False):
         """
