@@ -1367,6 +1367,8 @@ class Reader:
         # http://www.w3.org/TR/PNG/#5Chunk-layout
         if not self.atchunk:
             self.atchunk = self._chunk_len_type()
+        if not self.atchunk:
+            raise ChunkError("No more chunks.")
         length, type = self.atchunk
         self.atchunk = None
 
@@ -1791,10 +1793,7 @@ class Reader:
         def iteridat():
             """Iterator that yields all the ``IDAT`` chunks as strings."""
             while True:
-                try:
-                    type, data = self.chunk(lenient=lenient)
-                except ValueError as e:
-                    raise ChunkError(e.args[0])
+                type, data = self.chunk(lenient=lenient)
                 if type == b'IEND':
                     # http://www.w3.org/TR/PNG/#11IEND
                     break
