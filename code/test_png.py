@@ -750,6 +750,15 @@ class Test(unittest.TestCase):
             read_modify_chunks,
             change_ihdr_filter)
 
+    def test_iend_missing(self):
+        """Test file with missing IEND chunk."""
+        r = png.Reader(bytes=pngsuite.basn0g02[:-12])
+        _, _, rows, info = r.read()
+        self.assertRaises(
+            png.ChunkError,
+            list,
+            rows)
+
     def test_extra_pixels(self):
         """Test file that contains too many pixels."""
 
