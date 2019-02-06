@@ -110,6 +110,12 @@ def main(argv=None):
     except AttributeError:
         pass
 
+    # Fix for binary stdin on Python 3
+    try:
+        args.palette = args.palette.buffer
+    except AttributeError:
+        pass
+
     palette_convert(args.input, png.binary_stdout(), args.palette)
 
 

@@ -1,0 +1,11 @@
+#!/bin/sh
+
+Code=${PWD%code*}code
+PATH=$Code:$PATH
+
+# Encode a file using a palette taken from stdin
+
+cat $Code/../asset/g229.png |
+  pripalpng --palette - $Code/../asset/basn0g08.png |
+  pripnglsch - | grep IHDR |
+  grep -q 00000020000000200803000000
