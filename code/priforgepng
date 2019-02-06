@@ -58,27 +58,27 @@ def stripe(x, n):
     return int(x * n) & 1
 
 
-def gen_hs2(x):
+def gen_vs2(x):
     return stripe(x, 2)
 
 
-def gen_hs4(x):
+def gen_vs4(x):
     return stripe(x, 4)
 
 
-def gen_hs10(x):
+def gen_vs10(x):
     return stripe(x, 10)
 
 
-def gen_vs2(x, y):
+def gen_hs2(x, y):
     return stripe(float(y), 2)
 
 
-def gen_vs4(x, y):
+def gen_hs4(x, y):
     return stripe(float(y), 4)
 
 
-def gen_vs10(x, y):
+def gen_hs10(x, y):
     return stripe(float(y), 10)
 
 
