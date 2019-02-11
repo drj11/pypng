@@ -1778,8 +1778,8 @@ class Reader:
 
     def read(self, lenient=False):
         """
-        Read the PNG file and decode it.  Returns (`width`, `height`,
-        `rows`, `metadata`).
+        Read the PNG file and decode it.
+        Returns (`width`, `height`, `rows`, `info`).
 
         May use excessive memory.
 
@@ -1825,26 +1825,26 @@ class Reader:
             rows = rows_from_interlace()
         else:
             rows = self._iter_bytes_to_values(self._iter_straight_packed(raw))
-        meta = dict()
+        info = dict()
         for attr in 'greyscale alpha planes bitdepth interlace'.split():
-            meta[attr] = getattr(self, attr)
-        meta['size'] = (self.width, self.height)
+            info[attr] = getattr(self, attr)
+        info['size'] = (self.width, self.height)
         for attr in 'gamma transparent background'.split():
             a = getattr(self, attr, None)
             if a is not None:
-                meta[attr] = a
+                info[attr] = a
         if getattr(self, 'x_pixels_per_unit', None):
-            meta['physical'] = Resolution(self.x_pixels_per_unit,
+            info['physical'] = Resolution(self.x_pixels_per_unit,
                                           self.y_pixels_per_unit,
                                           self.unit_is_meter)
         if self.plte:
-            meta['palette'] = self.palette()
-        return self.width, self.height, rows, meta
+            info['palette'] = self.palette()
+        return self.width, self.height, rows, info
 
     def read_flat(self):
         """
         Read a PNG file and decode it into a single array of values.
-        Returns (*width*, *height*, *values*, *metadata*).
+        Returns (*width*, *height*, *values*, *info*).
 
         May use excessive memory.
 
@@ -1854,10 +1854,10 @@ class Reader:
         because it returns a sequence of rows.
         """
 
-        x, y, pixel, meta = self.read()
-        arraycode = 'BH'[meta['bitdepth'] > 8]
+        x, y, pixel, info = self.read()
+        arraycode = 'BH'[info['bitdepth'] > 8]
         pixel = array(arraycode, itertools.chain(*pixel))
-        return x, y, pixel, meta
+        return x, y, pixel, info
 
     def palette(self, alpha='natural'):
         """
@@ -2003,19 +2003,19 @@ class Reader:
     def _as_rescale(self, get, targetbitdepth):
         """Helper used by :meth:`asRGB8` and :meth:`asRGBA8`."""
 
-        width, height, pixels, meta = get()
-        maxval = 2**meta['bitdepth'] - 1
+        width, height, pixels, info = get()
+        maxval = 2**info['bitdepth'] - 1
         targetmaxval = 2**targetbitdepth - 1
         factor = float(targetmaxval) / float(maxval)
-        meta['bitdepth'] = targetbitdepth
+        info['bitdepth'] = targetbitdepth
 
         def iterscale():
             for row in pixels:
                 yield [int(round(x * factor)) for x in row]
         if maxval == targetmaxval:
-            return width, height, pixels, meta
+            return width, height, pixels, info
         else:
-            return width, height, iterscale(), meta
+            return width, height, iterscale(), info
 
     def asRGB8(self):
         """Return the image data as an RGB pixels with 8-bits per
