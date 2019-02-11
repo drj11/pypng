@@ -1582,7 +1582,8 @@ class Reader:
         assert len(a) == 0
 
     def validate_signature(self):
-        """If signature (header) has not been read then read and
+        """
+        If signature (header) has not been read then read and
         validate it; otherwise do nothing.
         """
 
@@ -1594,13 +1595,14 @@ class Reader:
 
     def preamble(self, lenient=False):
         """
-        Extract the image metadata by reading the initial part of
-        the PNG file up to the start of the ``IDAT`` chunk.  All the
-        chunks that precede the ``IDAT`` chunk are read and either
-        processed for metadata or discarded.
+        Extract the image metadata by reading
+        the initial part of the PNG file up to
+        the start of the ``IDAT`` chunk.
+        All the chunks that precede the ``IDAT`` chunk are
+        read and either processed for metadata or discarded.
 
-        If the optional `lenient` argument evaluates to `True`, checksum
-        failures will raise warnings rather than exceptions.
+        If the optional `lenient` argument evaluates to `True`,
+        checksum failures will raise warnings rather than exceptions.
         """
 
         self.validate_signature()
@@ -1641,9 +1643,11 @@ class Reader:
         return length, type
 
     def process_chunk(self, lenient=False):
-        """Process the next chunk and its data.  This only processes the
-        following chunk types, all others are ignored: ``IHDR``,
-        ``PLTE``, ``bKGD``, ``tRNS``, ``gAMA``, ``sBIT``, ``pHYs``.
+        """
+        Process the next chunk and its data.
+        This only processes the following chunk types:
+        ``IHDR``, ``PLTE``, ``bKGD``, ``tRNS``, ``gAMA``, ``sBIT``, ``pHYs``.
+        All other chunk types are ignored.
 
         If the optional `lenient` argument evaluates to `True`,
         checksum failures will raise warnings rather than exceptions.
@@ -2018,15 +2022,18 @@ class Reader:
             return width, height, iterscale(), info
 
     def asRGB8(self):
-        """Return the image data as an RGB pixels with 8-bits per
-        sample.  This is like the :meth:`asRGB` method except that
-        this method additionally rescales the values so that they
-        are all between 0 and 255 (8-bit).  In the case where the
-        source image has a bit depth < 8 the transformation preserves
-        all the information; where the source image has bit depth
-        > 8, then rescaling to 8-bit values loses precision.  No
-        dithering is performed.  Like :meth:`asRGB`, an alpha channel
-        in the source image will raise an exception.
+        """
+        Return the image data as an RGB pixels with 8-bits per sample.
+        This is like the :meth:`asRGB` method except that
+        this method additionally rescales the values so that
+        they are all between 0 and 255 (8-bit).
+        In the case where the source image has a bit depth < 8
+        the transformation preserves all the information;
+        where the source image has bit depth > 8, then
+        rescaling to 8-bit values loses precision.
+        No dithering is performed.
+        Like :meth:`asRGB`,
+        an alpha channel in the source image will raise an exception.
 
         This function returns a 4-tuple:
         (*width*, *height*, *rows*, *info*).
@@ -2038,19 +2045,23 @@ class Reader:
         return self._as_rescale(self.asRGB, 8)
 
     def asRGBA8(self):
-        """Return the image data as RGBA pixels with 8-bits per
-        sample.  This method is similar to :meth:`asRGB8` and
-        :meth:`asRGBA`:  The result pixels have an alpha channel, *and*
-        values are rescaled to the range 0 to 255.  The alpha channel is
-        synthesized if necessary (with a small speed penalty).
+        """
+        Return the image data as RGBA pixels with 8-bits per sample.
+        This method is similar to :meth:`asRGB8` and :meth:`asRGBA`:
+        The result pixels have an alpha channel, *and*
+        values are rescaled to the range 0 to 255.
+        The alpha channel is synthesized if necessary
+        (with a small speed penalty).
         """
 
         return self._as_rescale(self.asRGBA, 8)
 
     def asRGB(self):
-        """Return image as RGB pixels.  RGB colour images are passed
-        through unchanged; greyscales are expanded into RGB
-        triplets (there is a small speed overhead for doing this).
+        """
+        Return image as RGB pixels.
+        RGB colour images are passed through unchanged;
+        greyscales are expanded into RGB triplets
+        (there is a small speed overhead for doing this).
 
         An alpha channel in the source image will raise an exception.
 
@@ -2142,8 +2153,9 @@ class Reader:
 
 
 def decompress(data_blocks):
-    """`data_blocks` should be an iterable that yields the
-    compressed data (from the ``IDAT`` chunks).
+    """
+    `data_blocks` should be an iterable that
+    yields the compressed data (from the ``IDAT`` chunks).
     This yields decompressed byte strings.
     """
 
@@ -2160,9 +2172,10 @@ def decompress(data_blocks):
 
 
 def check_bitdepth_colortype(bitdepth, colortype):
-    """Check that `bitdepth` and `colortype` are both valid,
-    and specified in a valid combination. Returns if valid,
-    raise an Exception if not valid.
+    """
+    Check that `bitdepth` and `colortype` are both valid,
+    and specified in a valid combination.
+    Returns (None) if valid, raise an Exception if not valid.
     """
 
     if bitdepth not in (1, 2, 4, 8, 16):
@@ -2267,17 +2280,20 @@ def convert_la_to_rgba(row, result):
 
 
 def convert_l_to_rgba(row, result):
-    """Convert a grayscale image to RGBA. This method assumes
-    the alpha channel in result is already correctly
-    initialized.
+    """
+    Convert a grayscale image to RGBA.
+    This method assumes the alpha channel in result is
+    already correctly initialized.
     """
     for i in range(3):
         result[i::4] = row
 
 
 def convert_rgb_to_rgba(row, result):
-    """Convert an RGB image to RGBA. This method assumes the
-    alpha channel in result is already correctly initialized.
+    """
+    Convert an RGB image to RGBA.
+    This method assumes the alpha channel in result is
+    already correctly initialized.
     """
     for i in range(3):
         result[i::4] = row[i::3]
