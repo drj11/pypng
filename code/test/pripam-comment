@@ -2,7 +2,7 @@
 
 PATH=${PWD%code*}code:$PATH
 
-printf 'P5\n#comment\n2 2 3\n\0\1\2\3' |
+printf 'P5\n#comment\n2#9\n 2 3\n\0\1\2\3' |
 pripamtopng - |
 pripnglsch - |
 grep -q 'IHDR.*000000020000000202000000'
