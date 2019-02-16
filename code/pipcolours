@@ -12,6 +12,7 @@ if all pixels are opaque, output PNG has no alpha channel.
 """
 
 import argparse
+import collections
 import itertools
 import sys
 
@@ -28,6 +29,21 @@ def png_colours(out, inp):
     writer.write(out, rows)
 
 
+def jasc_counts(out, inp):
+    r = png.Reader(file=inp)
+    _, _, rows, info = r.asDirect()
+
+    print("JASC-PAL", file=out)
+    # A version field? (the internet is unclear)
+    print("0100", file=out)
+
+    colour_dict = count_colours(rows, info)
+
+    print(len(colour_dict), file=out)
+    for colour, count in colour_dict.items():
+        print(*itertools.chain(colour, ["#", count]), file=out)
+
+
 def jasc_colours(out, inp):
     r = png.Reader(file=inp)
     _, _, rows, info = r.read()
@@ -37,6 +53,7 @@ def jasc_colours(out, inp):
     print("0100", file=out)
 
     if "palette" in info:
+        print(len(info['palette']), file=out)
         for pixel in info['palette']:
             print(*pixel, file=out)
         return
@@ -45,9 +62,23 @@ def jasc_colours(out, inp):
     planes = info['planes']
     bitdepth = info['bitdepth']
 
+    row, = rows
+    n = len(row) // planes
+    print(n, file=out)
+    for pixel in png.group(row, planes):
+        print(*pixel, file=out)
+
+
+def count_colours(rows, info):
+    planes = info["planes"]
+    bitdepth = info["bitdepth"]
+
+    count = collections.Counter()
     for row in rows:
         for pixel in png.group(row, planes):
-            print(*pixel, file=out)
+            count[pixel] += 1
+
+    return count
 
 
 def unique_colours(rows, info):
@@ -125,11 +156,14 @@ def main(argv=None):
     version = "%(prog)s " + png.__version__
     parser.add_argument("--version", action="version", version=version)
     parser.add_argument("--jasc", action="store_true")
+    parser.add_argument("--count", action="store_true")
     parser.add_argument("input", default="-", metavar="PNG")
 
     args = parser.parse_args(argv)
     input = png.cli_open(args.input)
 
+    if args.count:
+        return jasc_counts(sys.stdout, input)
     if args.jasc:
         return jasc_colours(sys.stdout, input)
 
