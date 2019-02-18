@@ -10,11 +10,10 @@
   (abstracted from Mel Raab's functioning code)
 '''
 
-# http://www.python.org/doc/2.4.4/lib/module-itertools.html
-import itertools
-
 import numpy
+
 import png
+import pngsuite
 
 
 ''' If you have a PNG file for an RGB image,
@@ -24,8 +23,8 @@ import png
 # class can take a filename, a file-like object, or the byte data
 # directly; this suggests alternatives such as using urllib to read
 # an image from the internet:
-# png.Reader(file=urllib.urlopen('http://www.libpng.org/pub/png/PngSuite/basn2c16.png'))
-pngReader = png.Reader(filename='picture.png')
+pngReader = png.Reader(bytes=pngsuite.basn2c16)
+
 # Tuple unpacking, using multiple assignment, is very useful for the
 # result of asDirect (and other methods).
 # See
@@ -57,7 +56,7 @@ assert plane_count == 3
 # to hold any pixel value for any PNG image but uses 4 bytes per value when
 # 1 or 2 would be enough.
 # --- extract 001 start
-image_2d = numpy.vstack(itertools.imap(numpy.uint16, pngdata))
+image_2d = numpy.vstack(map(numpy.uint16, pngdata))
 # --- extract 001 end
 # Do not be tempted to use ``numpy.asarray``; when passed an iterator
 # (`pngdata` is often an iterator) it will attempt to create a size 1
