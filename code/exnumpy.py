@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-# $URL$
-# $Rev$
 
 # Numpy example.
 # Original code created by Mel Raab, modified by David Jones.
