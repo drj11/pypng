@@ -25,9 +25,8 @@ and want to create a numpy array of data from it.
 # instead.
 pngReader = png.Reader(bytes=pngsuite.basn2c16)
 
-# Tuple unpacking, using multiple assignment, is very useful for
-# the result of asDirect (and other methods).
-# See http://docs.python.org/tutorial/introduction.html#first-steps-towards-programming
+# Tuple unpacking, using multiple assignment, is
+# very useful for the result of asDirect (and other methods).
 row_count, column_count, pngdata, meta = pngReader.asDirect()
 bitdepth = meta["bitdepth"]
 plane_count = meta["planes"]
@@ -57,17 +56,6 @@ assert plane_count == 3
 # --- extract 001 start
 image_2d = numpy.vstack(map(numpy.uint16, pngdata))
 # --- extract 001 end
-
-# Do not be tempted to use ``numpy.asarray``;
-# when passed an iterator (`pngdata` is often an iterator) it
-# will attempt to create a length 1 array with
-# the iterator as its only element.
-# An alternative to the above is to
-# create the target array of the right shape, then populate it row by row:
-if 0:
-    image_2d = numpy.zeros((row_count, plane_count * column_count), dtype=numpy.uint16)
-    for row_index, one_boxed_row_flat_pixels in enumerate(pngdata):
-        image_2d[row_index, :] = one_boxed_row_flat_pixels
 
 del pngReader
 del pngdata
@@ -108,5 +96,6 @@ with open("picture_out.png", "wb") as out:
         column_count, row_count, greyscale=False, alpha=False, bitdepth=16
     )
     # --- extract 003 start
-    pngWriter.write(out, numpy.reshape(image_3d, (-1, column_count * plane_count)))
+    image_2d = numpy.reshape(image_3d, (-1, column_count * plane_count))
+    pngWriter.write(out, image_2d)
 # --- extract 003 end
