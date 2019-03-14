@@ -925,6 +925,18 @@ class Test(unittest.TestCase):
         img = png.from_array(pixels, 'L')
         img.save(BytesIO())
 
+    def test_numpy_tranpose(self):
+        """Transposed numpy array."""
+
+        # See https://github.com/drj11/pypng/issues/91
+
+        numpy or self.skipTest("numpy is not available")
+
+        a = numpy.array([[0, 0x55], [0x55, 0xaa]], numpy.uint8)
+        aT = numpy.transpose(a)
+        img = png.from_array(a, mode='L')
+        img.save(BytesIO())
+
     def test_numpy_palette(self):
         """numpy palette."""
 
