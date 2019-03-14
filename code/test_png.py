@@ -934,7 +934,7 @@ class Test(unittest.TestCase):
 
         a = numpy.array([[0, 0x55], [0x55, 0xaa]], numpy.uint8)
         aT = numpy.transpose(a)
-        img = png.from_array(a, mode='L')
+        img = png.from_array(aT, mode='L')
         img.save(BytesIO())
 
     def test_numpy_palette(self):
