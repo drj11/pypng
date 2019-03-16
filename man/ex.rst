@@ -215,6 +215,34 @@ PyPNG does not have any direct integration with NumPy, but the basic
 data format used by PyPNG, an iterator over rows, is fairly easy to get
 into two- or three-dimensional NumPy arrays.
 
+.. note::
+
+  Using a NumPy array in PyPNG mostly just works.
+  Sometimes though you might have a problem.
+  An example is that apparently transposing a NumPy array
+  means that it then
+  `cannot be saved to a PNG using PyPNG <https://github.com/drj11/pypng/issues/91>`_.
+
+  >>> import numpy
+  >>> a = numpy.array([[1,2,3],[4,5,6]], dtype=numpy.uint8)
+  >>> png.from_array(a, mode="L").save("/tmp/foo.png") # works
+  >>> at = a.transpose()
+  >>> png.from_array(at, mode="L").save("/tmp/foo.png") # does not work
+
+  When trying to save the transposed array,
+  this currently (2019-03) gives a traceback and the error:
+  ``TypeError: can't set bytearray slice from numpy.ndarray``.
+
+  That's because in this case the NumPy array cannot be used to
+  extend a Python `bytearray` instance.
+  Unfortunately it seems difficult to tell which sorts of
+  NumPy arrays are going to cause difficulty.
+
+  A workaround is to use ``.copy()`` to copy the NumPy array.
+
+Examples
+^^^^^^^^
+
 The code in this section is extracted from ``exnumpy.py``, which is a
 complete runnable example in the ``code/`` subdirectory of the source
 distribution. Code was originally written by Mel Raab, but has been
