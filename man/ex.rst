@@ -80,7 +80,7 @@ that a *palette* argument is passed to the :meth:`write` method instead of
 
 Note that the palette consists of two entries (the bit depth is 1 so
 there are only 2 possible colours).  Each entry is an RGB triple.  If we
-wanted transparency then we can use RGBA 4-tuples for each palette
+wanted transparency then we can use RGBA 4‑tuples for each palette
 entry.
 
 
@@ -109,17 +109,17 @@ A further colour example illustrates some of the manoeuvres you have to
 perform in Python to get the pixel data in the right format.
 
 Say we want to produce a PNG image with 1 row of 8 pixels, with all the
-colours from a 3-bit colour system (with 1-bit for each channel;
-such systems were common on 8-bit micros from the 1980s).
+colours from a 3‑bit colour system (with 1‑bit for each channel;
+such systems were common on 8‑bit micros from the 1980s).
 
-We produce all possible 3-bit numbers:
+We produce all possible 3‑bit numbers:
 
 >>> list(range(8))
 [0, 1, 2, 3, 4, 5, 6, 7]
 
 We can convert each number into an RGB triple by assigning bit 0 to
 blue, bit 1 to red, bit 2 to green (the convention used by a certain
-8-bit micro):
+8‑bit micro):
 
 >>> [(bool(x&2), bool(x&4), bool(x&1)) for x in _]
 [(False, False, False), (False, False, True), (True, False, False),
@@ -176,7 +176,7 @@ a PNG file from the internet.
 (32, 32, <itertools.imap object at 0x10b7eb0>, {'greyscale': True,
 'alpha': False, 'interlace': 0, 'bitdepth': 2, 'gamma': 1.0})
 
-The :meth:`png.read` method returns a 4-tuple consisting of:
+The :meth:`png.read` method returns a 4‑tuple consisting of:
 
 * `width`: Width of PNG image in pixels;
 * `height`: Height of PNG image in pixes;
@@ -225,11 +225,11 @@ PNG to NumPy array (reading)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The best thing to do (I think) is to convert each PyPNG row to a
-1-dimensional numpy array, then stack all of those arrays together to
-make a 2-dimensional array.  A number of features make this surprising
+1‑dimensional numpy array, then stack all of those arrays together to
+make a 2‑dimensional array.  A number of features make this surprising
 compact.  Say `pngdata` is the row iterator returned from
 :meth:`png.Reader.asDirect`.  The following code will slurp it into a
-2-dimensional numpy array:
+2‑dimensional numpy array:
 
 .. literalinclude:: ../code/exnumpy.py
    :start-after: extract 001 start
@@ -244,7 +244,7 @@ Reshaping
 ^^^^^^^^^
 
 For some operations it's easier to have the image data in a
-3-dimensional array.  This plays to NumPy's strengths:
+3‑dimensional array.  This plays to NumPy's strengths:
 
 .. literalinclude:: ../code/exnumpy.py
    :start-after: extract 002 start
@@ -253,7 +253,7 @@ For some operations it's easier to have the image data in a
 NumPy array to PNG (writing)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Reshape your NumPy data into a 2-dimensional array, then use the fact
+Reshape your NumPy data into a 2‑dimensional array, then use the fact
 that a NumPy array is an iterator over its rows:
 
 .. literalinclude:: ../code/exnumpy.py
