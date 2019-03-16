@@ -10,7 +10,7 @@ Why Use PyPNG?
 - install by copying ``code/png.py``;
 - read/write all PNG bitdepths (16 bit!) and colour modes;
 - read/write interlace PNG;
-- convert to/from 1-, 2-, 3, 4- channel NetPBM PAM files;
+- convert to/from 1-, 2-, 3-, 4- channel NetPBM PAM files;
 - support for ``sBIT`` chunk;
 - support for many other PNG chunk types;
 - fun command line utilities.
