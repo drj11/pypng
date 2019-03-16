@@ -926,14 +926,16 @@ class Test(unittest.TestCase):
         img.save(BytesIO())
 
     def test_numpy_tranpose(self):
-        """Transposed numpy array."""
+        """Transposed numpy array (works when copied)."""
 
         # See https://github.com/drj11/pypng/issues/91
 
         numpy or self.skipTest("numpy is not available")
 
         a = numpy.array([[0, 0x55], [0x55, 0xaa]], numpy.uint8)
-        aT = numpy.transpose(a)
+        # I assert it's a bug in numpy that the copy is required here.
+        # But while it is required, I may as well test that it does work.
+        aT = numpy.transpose(a).copy()
         img = png.from_array(aT, mode='L')
         img.save(BytesIO())
 
