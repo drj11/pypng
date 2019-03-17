@@ -802,11 +802,11 @@ class Test(unittest.TestCase):
 
     def test_from_array_L(self):
         img = png.from_array([[0, 0x33, 0x66], [0xff, 0xcc, 0x99]], 'L')
-        img.save(BytesIO())
+        img.write(BytesIO())
 
     def test_from_array_L16(self):
         img = png.from_array(group(range(2**16), 256), 'L;16')
-        img.save(BytesIO())
+        img.write(BytesIO())
 
     def test_from_array_RGB(self):
         img = png.from_array([[0, 0, 0,
@@ -818,14 +818,14 @@ class Test(unittest.TestCase):
                               1, 1, 0,
                               1, 1, 1]], 'RGB;1')
         o = BytesIO()
-        img.save(o)
+        img.write(o)
 
     def test_from_array_iterator(self):
         i = itertools.islice(itertools.count(10), 20)
         i = ([x, x, x] for x in i)
         img = png.from_array(i, 'RGB;5', dict(height=20))
         f = BytesIO()
-        img.save(f)
+        img.write(f)
 
     def test_from_array_bad(self):
         """Invoke from_array incorrectly to provoke Error."""
@@ -835,7 +835,7 @@ class Test(unittest.TestCase):
             [[1]], 'gray')
 
     def test_from_array_L2(self):
-        png.from_array([[0, 1], [2, 3]], 'L2').save(BytesIO())
+        png.from_array([[0, 1], [2, 3]], 'L2').write(BytesIO())
 
     def test_from_array_width(self):
         """
@@ -847,11 +847,11 @@ class Test(unittest.TestCase):
             'L',
             info=dict(size=(3, 2))
             )
-        img.save(BytesIO())
+        img.write(BytesIO())
 
     def test_from_array_LA(self):
         png.from_array([[3, 1], [0, 3]], 'LA2',
-                       info=dict(greyscale=True)).save(BytesIO())
+                       info=dict(greyscale=True)).write(BytesIO())
 
     def test_from_array_LA_alpha_bad(self):
         self.assertRaises(
@@ -923,7 +923,7 @@ class Test(unittest.TestCase):
 
         pixels = numpy.array([[0, 0x5555], [0x5555, 0xaaaa]], numpy.uint16)
         img = png.from_array(pixels, 'L')
-        img.save(BytesIO())
+        img.write(BytesIO())
 
     def test_numpy_tranpose(self):
         """Transposed numpy array (works when copied)."""
@@ -937,7 +937,7 @@ class Test(unittest.TestCase):
         # But while it is required, I may as well test that it does work.
         aT = numpy.transpose(a).copy()
         img = png.from_array(aT, mode='L')
-        img.save(BytesIO())
+        img.write(BytesIO())
 
     def test_numpy_palette(self):
         """numpy palette."""

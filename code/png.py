@@ -1267,34 +1267,34 @@ class Image:
         self.info = info
 
     def save(self, file):
-        """Save the image to *file*.  If *file* looks like an open file
-        descriptor then it is used, otherwise it is treated as a
-        filename and a fresh file is opened.
+        """Save the image to the named *file*.
 
-        In general, you can only call this method once; after it has
-        been called the first time and the PNG image has been saved, the
-        source data will have been streamed, and cannot be streamed
-        again.
+        See `.write()` if you already have an open file object.
+
+        In general, you can only call this method once;
+        after it has been called the first time the PNG image is written,
+        the source data will have been streamed, and
+        cannot be streamed again.
         """
 
         w = Writer(**self.info)
 
-        try:
-            file.write
-
-            def close():
-                pass
-        except AttributeError:
-            file = open(file, 'wb')
-
-            def close():
-                file.close()
-
-        try:
+        with open(file, 'wb') as fd:
             w.write(file, self.rows)
-        finally:
-            close()
 
+    def write(self, file):
+        """Write the image to the open file object.
+
+        See `.save()` if you have a filename.
+
+        In general, you can only call this method once;
+        after it has been called the first time the PNG image is written,
+        the source data will have been streamed, and
+        cannot be streamed again.
+        """
+
+        w = Writer(**self.info)
+        w.write(file, self.rows)
 
 class Reader:
     """
