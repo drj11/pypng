@@ -1280,7 +1280,7 @@ class Image:
         w = Writer(**self.info)
 
         with open(file, 'wb') as fd:
-            w.write(file, self.rows)
+            w.write(fd, self.rows)
 
     def write(self, file):
         """Write the image to the open file object.
@@ -1295,6 +1295,7 @@ class Image:
 
         w = Writer(**self.info)
         w.write(file, self.rows)
+
 
 class Reader:
     """
