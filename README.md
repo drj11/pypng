@@ -58,16 +58,18 @@ your current directory:
 
 (For issues see https://github.com/drj11/pypng/issues?state=open )
 
-### Release (not released yet)
+### Release 0.0.20
 
 Support for earlier versions of Python is dropped.
-Python 3.4 and onwards are supported (Python 2.7 also works).
+Python 3.4 and onwards are supported.
+Python 2.7 also works, but this is intended to be the last
+release to support any version of Python 2.
 
 Cython code is removed, which simplifies the implementation.
 
-Remove the (optional) dependency `setuptools`.
+Removed the (optional) dependency `setuptools`.
 
-Change the default for `png.Writer` to be greyscale.
+Changed the default for `png.Writer` to be greyscale.
 
 Removed 3D support from `.from_array()`.
 
