@@ -171,7 +171,7 @@ the PNG image comes from something that uses a similar format
 
 from __future__ import print_function
 
-__version__ = "0.0.19"
+__version__ = "0.0.20"
 
 import collections
 import io   # For io.BytesIO
