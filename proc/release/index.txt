@@ -40,20 +40,16 @@ Run the shell script that drives Docker:
 It's possible at this point that you might want to smoke-test the actual
 release binary.  Let's assume that the release binary is good to go.
 
-Check that the `sh dock.sh` command populated the `dist/`
-directory.
+cd back into your main development directory::
+
+    cd ${PWD%pypng*}pypng
+
+Check that the `sh dock.sh` command populated
+the `dist/` directory in the original `pypng` directory.
 
     ls dist
 
-Put the `dist/` artefacts into your main `dist/`:
-
-    mv dist/pypng-$PYPNG_VERSION* ../pypng/dist
-
 Where does documentation go? (pythonhosted no longer host)
-
-cd back into your main development directory::
-
-    cd ../pypng
 
 Upload to PyPI:
 
