@@ -24,8 +24,6 @@ def _dehex(s):
 
     # Remove all non-hexadecimal digits
     s = re.sub(br'[^a-fA-F\d]', b'', s)
-    # binscii.unhexlify works in Python 2 and Python 3 (unlike
-    # thing.decode('hex')).
     return binascii.unhexlify(s)
 
 
@@ -637,12 +635,7 @@ def binary_stdout():
     A sys.stdout that accepts bytes.
     """
 
-    # First there is a Python3 issue.
-    try:
-        stdout = sys.stdout.buffer
-    except AttributeError:
-        # Probably Python 2, where bytes are strings.
-        stdout = sys.stdout
+    stdout = sys.stdout.buffer
 
     # On Windows the C runtime file orientation needs changing.
     if sys.platform == "win32":

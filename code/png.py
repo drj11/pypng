@@ -60,7 +60,7 @@ and understood (when reading): ``tRNS``, ``bKGD``, ``gAMA``.
 The ``sBIT`` chunk can be used to specify precision for
 non-native bit depths.
 
-Requires Python 3.4 or higher (or Python 2.7).
+Requires Python 3.4 or higher.
 Installation is trivial,
 but see the ``README.txt`` file (with the source distribution) for details.
 
@@ -744,8 +744,7 @@ class Writer:
             data.append(0)
             data.extend(row)
             if len(data) > self.chunk_limit:
-                # :todo: bytes() only necessary in Python 2
-                compressed = compressor.compress(bytes(data))
+                compressed = compressor.compress(data)
                 if len(compressed):
                     write_chunk(outfile, b'IDAT', compressed)
                 data = bytearray()
@@ -1383,12 +1382,6 @@ class Reader:
             raise ChunkError('Chunk %s too short for checksum.' % type)
         verify = zlib.crc32(type)
         verify = zlib.crc32(data, verify)
-        # Whether the output from zlib.crc32 is signed or not varies
-        # according to hideous implementation details, see
-        # http://bugs.python.org/issue1202 .
-        # We coerce it to be positive here (in a way which works on
-        # Python 2.3 and older).
-        verify &= 2**32 - 1
         verify = struct.pack('!I', verify)
         if checksum != verify:
             (a, ) = struct.unpack('!I', checksum)
@@ -2307,11 +2300,7 @@ def binary_stdin():
     A sys.stdin that returns bytes.
     """
 
-    try:
-        return sys.stdin.buffer
-    except AttributeError:
-        # Probably Python 2, where bytes are strings.
-        return sys.stdin
+    return sys.stdin.buffer
 
 
 def binary_stdout():
@@ -2319,12 +2308,7 @@ def binary_stdout():
     A sys.stdout that accepts bytes.
     """
 
-    # First there is a Python3 issue.
-    try:
-        stdout = sys.stdout.buffer
-    except AttributeError:
-        # Probably Python 2, where bytes are strings.
-        stdout = sys.stdout
+    stdout = sys.stdout.buffer
 
     # On Windows the C runtime file orientation needs changing.
     if sys.platform == "win32":

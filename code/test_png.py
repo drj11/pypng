@@ -84,16 +84,6 @@ def mycallersname():
     return funname
 
 
-def seq_to_bytes(s):
-    """Convert a sequence of integers to a *bytes* instance.  Good for
-    plastering over Python 2 / Python 3 cracks.
-    """
-
-    fmt = "{0}B".format(len(s))
-
-    return struct.pack(fmt, *s)
-
-
 class Test(unittest.TestCase):
     # This member is used by the superclass.  If we don't define a new
     # class here then when we use self.assertRaises() and the PyPNG code
@@ -475,7 +465,7 @@ class Test(unittest.TestCase):
 
         r = png.Reader(bytes=pngsuite.basn0g02)
         x, y, pixel, meta = r.read_flat()
-        d = hashlib.md5(seq_to_bytes(pixel)).hexdigest()
+        d = hashlib.md5(bytes(pixel)).hexdigest()
         self.assertEqual(d, '255cd971ab8cd9e7275ff906e5041aa0')
 
     def test_no_phys_chunk(self):
