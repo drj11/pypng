@@ -29,8 +29,7 @@ in the `man/` directory.
 ## INSTALLATION
 
 PyPNG is pure Python and has no dependencies.
-It requires Python 3.4 or any compatible higher version
-(Python 2.7 also works).
+It requires Python 3.4 or any compatible higher version.
 
 To install PyPNG package via pip use:
 
@@ -57,6 +56,11 @@ your current directory:
 ## RELEASE NOTES
 
 (For issues see https://github.com/drj11/pypng/issues?state=open )
+
+### Release 0.0.21 (not released yet)
+
+Support for Python 2 is dropped.
+Python 3.4 and onwards are supported.
 
 ### Release 0.0.20
 
