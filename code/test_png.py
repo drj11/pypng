@@ -19,7 +19,6 @@ from __future__ import print_function
 import glob
 import itertools
 import os
-import struct
 import sys
 # http://www.python.org/doc/2.4.4/lib/module-unittest.html
 import unittest
