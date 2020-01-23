@@ -658,7 +658,7 @@ class Writer:
                 if wrong_length:
                     # Note: row numbers start at 0.
                     raise ProtocolError(
-                        "Expected %d values but got %d value, in row %d" %
+                        "Expected %d values but got %d values, in row %d" %
                         (vpr, len(row), i))
                 yield row
 
