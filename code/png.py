@@ -1644,14 +1644,21 @@ class Reader:
         All other chunk types are ignored.
 
         If the optional `lenient` argument evaluates to `True`,
-        checksum failures will raise warnings rather than exceptions.
+        checksum failures and exceptions during processing
+        will raise warnings rather than exceptions.
         """
 
         type, data = self.chunk(lenient=lenient)
         method = '_process_' + type.decode('ascii')
         m = getattr(self, method, None)
         if m:
-            m(data)
+            try:
+                m(data)
+            except FormatError as e:
+                if lenient:
+                    warnings.warn(e.args[0])
+                else:
+                    raise
 
     def _process_IHDR(self, data):
         # http://www.w3.org/TR/PNG/#11IHDR
