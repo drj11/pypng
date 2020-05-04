@@ -14,8 +14,6 @@
 # If you have nose installed you can use that:
 #   nosetests .
 
-from __future__ import print_function
-
 import glob
 import itertools
 import os

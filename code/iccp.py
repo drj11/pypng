@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
-
-
 # iccp
 #
 # International Color Consortium Profile
@@ -30,7 +27,6 @@ from __future__ import print_function
 
 import argparse
 import struct
-import sys
 import warnings
 import zlib
 
@@ -55,7 +51,7 @@ class Profile:
         profile = inp.read(128)
         if len(profile) < 128:
             raise FormatError("ICC Profile is too short.")
-        size, = struct.unpack('>L', profile[:4])
+        size, = struct.unpack_from('>L', profile)
         profile += inp.read(self.d['size'] - len(profile))
         return self.fromString(profile, name)
 
@@ -67,7 +63,7 @@ class Profile:
         d.update(
             zip(['size', 'preferredCMM', 'version',
                  'profileclass', 'colourspace', 'pcs'],
-                struct.unpack('>L4sL4s4s4s', profile[:24])))
+                struct.unpack_from('>L4sL4s4s4s', profile)))
         if len(profile) < d['size']:
             warnings.warn(
                 "Profile size declared to be %d, but only got %d bytes" %
@@ -76,19 +72,19 @@ class Profile:
         d['created'] = readICCdatetime(profile[24:36])
         d.update(
             zip(['acsp', 'platform', 'flag', 'manufacturer', 'model'],
-                struct.unpack('>4s4s3L', profile[36:56])))
+                struct.unpack_from('>4s4s3L', profile, 36)))
         if d['acsp'] != 'acsp':
             warnings.warn('acsp field not present (not an ICC Profile?).')
         d['deviceattributes'] = profile[56:64]
-        d['intent'], = struct.unpack('>L', profile[64:68])
+        d['intent'], = struct.unpack_from('>L', profile, 64)
         d['pcsilluminant'] = readICCXYZNumber(profile[68:80])
         d['creator'] = profile[80:84]
         d['id'] = profile[84:100]
-        ntags, = struct.unpack('>L', profile[128:132])
+        ntags, = struct.unpack_from('>L', profile, 128)
         d['ntags'] = ntags
         fmt = '4s2L' * ntags
         # tag table
-        tt = struct.unpack('>' + fmt, profile[132: 132 + 12 * ntags])
+        tt = struct.unpack_from('>' + fmt, profile, 132)
         tt = group(tt, 3)
 
         # Could (should) detect 2 or more tags having the same sig.  But
@@ -482,11 +478,11 @@ def RDmluc(s):
     strings, but the ICC standard does not prohibit it."""
     # See [ICC 2004] 10.13
     assert s[0:4] == 'mluc'
-    n, sz = struct.unpack('>2L', s[8:16])
+    n, sz = struct.unpack_from('>2L', s, 8)
     assert sz == 12
     record = []
     for i in range(n):
-        lc, l, o = struct.unpack('4s2L', s[16 + 12 * n: 28 + 12 * n])
+        lc, l, o = struct.unpack_from('4s2L', s, 16 + 12 * n)
         record.append(lc, s[o: o + l])
     # How are strings encoded?
     return record
@@ -505,10 +501,10 @@ def RDcurv(s):
     """Convert ICC curveType."""
     # See [ICC 2001] 6.5.3
     assert s[0:4] == 'curv'
-    count, = struct.unpack('>L', s[8:12])
+    count, = struct.unpack_from('>L', s, 8)
     if count == 0:
         return dict(gamma=1)
-    table = struct.unpack('>%dH' % count, s[12:])
+    table = struct.unpack_from('>%dH' % count, s, 12)
     if count == 1:
         return dict(gamma=table[0] * 2 ** -8)
     return table
@@ -519,12 +515,12 @@ def RDvcgt(s):
     # See
     # http://developer.apple.com/documentation/GraphicsImaging/Reference/ColorSync_Manager/Reference/reference.html#//apple_ref/c/tdef/CMVideoCardGammaType
     assert s[0:4] == 'vcgt'
-    tagtype, = struct.unpack('>L', s[8:12])
+    tagtype, = struct.unpack_from('>L', s, 8)
     if tagtype != 0:
         return s[8:]
     if tagtype == 0:
         # Table.
-        channels, count, size = struct.unpack('>3H', s[12:18])
+        channels, count, size = struct.unpack_from('>3H', s, 12)
         if size == 1:
             fmt = 'B'
         elif size == 2:
@@ -532,7 +528,7 @@ def RDvcgt(s):
         else:
             return s[8:]
         n = len(s[18:]) // size
-        t = struct.unpack('>%d%s' % (n, fmt), s[18:])
+        t = struct.unpack_from('>%d%s' % (n, fmt), s, 18)
         t = group(t, count)
         return size, t
     return s[8:]
@@ -543,6 +539,8 @@ def group(s, n):
 
 
 def main(argv=None):
+    import sys
+
     if argv is None:
         argv = sys.argv
     argv = argv[1:]

@@ -6,7 +6,6 @@
 # change.
 
 import argparse
-import sys
 
 from array import array
 
@@ -68,4 +67,5 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
+    import sys
     sys.exit(main())

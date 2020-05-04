@@ -7,7 +7,6 @@
 
 from array import array
 import getopt
-import sys
 
 import png
 

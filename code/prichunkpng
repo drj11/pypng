@@ -2,8 +2,6 @@
 # pngchunk
 # Chunk editing/extraction tool.
 
-from __future__ import print_function
-
 import argparse
 import collections
 
@@ -11,8 +9,6 @@ import collections
 import io
 import string
 import struct
-import sys
-import warnings
 import zlib
 
 # Local module.
@@ -164,6 +160,7 @@ def hex_color(s):
 
 
 def main(argv=None):
+    import sys
     import re
 
     if argv is None:

@@ -2,12 +2,6 @@
 # pripnglsch
 # PNG List Chunks
 
-from __future__ import print_function
-
-import argparse
-import binascii
-import sys
-
 import png
 
 
@@ -16,19 +10,17 @@ def list_chunks(out, inp):
     for t, v in r.chunks():
         add = ""
         if len(v) <= 28:
-            add = " " + hex(v)
+            add = " " + v.hex()
         else:
-            add = " " + hex(v[:26]) + "..."
+            add = " " + v[:26].hex() + "..."
         t = t.decode("ascii")
         print("%s %10d%s" % (t, len(v), add), file=out)
 
 
-def hex(bs):
-    """Convert the bytes `bs` to a hex string."""
-    return binascii.hexlify(bs).decode("ascii")
-
-
 def main(argv=None):
+    import argparse
+    import sys
+
     parser = argparse.ArgumentParser()
     parser.add_argument("png", nargs="?", default="-")
     args = parser.parse_args()
