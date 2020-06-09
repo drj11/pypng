@@ -60,7 +60,7 @@ and understood (when reading): ``tRNS``, ``bKGD``, ``gAMA``.
 The ``sBIT`` chunk can be used to specify precision for
 non-native bit depths.
 
-Requires Python 3.4 or higher.
+Requires Python 3.5 or higher.
 Installation is trivial,
 but see the ``README.txt`` file (with the source distribution) for details.
 
@@ -168,8 +168,6 @@ but may be just right if the source data for
 the PNG image comes from something that uses a similar format
 (for example, 1-bit BMPs, or another PNG file).
 """
-
-from __future__ import print_function
 
 __version__ = "0.0.20"
 

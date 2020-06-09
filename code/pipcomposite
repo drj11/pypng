@@ -17,8 +17,6 @@ It is valid for the input to have no alpha channel, but it doesn't
 make much sense: the output will equal the input.
 """
 
-import sys
-
 def composite(out, inp, background):
     import png
 

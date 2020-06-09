@@ -19,12 +19,9 @@ Also a delicious command line tool.
 
 def _dehex(s):
     """Liberally convert from hex string to binary string."""
-    import re
     import binascii
 
-    # Remove all non-hexadecimal digits
-    s = re.sub(br'[^a-fA-F\d]', b'', s)
-    return binascii.unhexlify(s)
+    return binascii.unhexlify(s.replace(b"\n", b""))
 
 
 # Copies of PngSuite test files taken

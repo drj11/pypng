@@ -2,17 +2,12 @@
 # pripalpng
 # Convert to Palette PNG
 
-from __future__ import print_function
-
 import argparse
 import collections
 
 # https://docs.python.org/2.7/library/io.html
 import io
 import string
-import struct
-import sys
-import warnings
 import zlib
 
 # Local module.
@@ -91,6 +86,7 @@ def asRGBorA8(reader):
 
 
 def main(argv=None):
+    import sys
     import re
 
     if argv is None:

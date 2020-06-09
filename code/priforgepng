@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # priforgepng
 
-from __future__ import print_function
-
 """Forge PNG image from raw computation."""
 
 from array import array

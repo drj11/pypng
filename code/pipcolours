@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
-
 """
 pipcolours - extract all colours present in source image.
 Produces a PNG that has each colour exactly once.
@@ -14,7 +12,6 @@ if all pixels are opaque, output PNG has no alpha channel.
 import argparse
 import collections
 import itertools
-import sys
 
 import png
 
@@ -148,6 +145,8 @@ def reduce_alpha(col, planes, bitdepth):
 
 
 def main(argv=None):
+    import sys
+
     if argv is None:
         argv = sys.argv
 

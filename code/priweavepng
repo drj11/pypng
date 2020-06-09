@@ -4,13 +4,8 @@
 # Weave selected channels from input PNG files into
 # a multi-channel output PNG.
 
-from __future__ import print_function
-
-import argparse
 import collections
-import itertools
 import re
-import sys
 
 from array import array
 
@@ -190,6 +185,10 @@ def comma_list(s):
 
 
 def main(argv=None):
+    import argparse
+    import itertools
+    import sys
+
     if argv is None:
         argv = sys.argv
     argv = argv[1:]
