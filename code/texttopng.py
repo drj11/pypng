@@ -121,8 +121,8 @@ font = {
 
 def char(i):
     """Get image data for the character `i` (a one character string).
-    Returned as a list of rows.  Each row is a tuple containing the
-    packed pixels.
+    Returned as a list of rows.
+    Each row is a tuple containing the packed pixels.
     """
 
     i = ord(i)
@@ -132,11 +132,13 @@ def char(i):
 
 
 def texttoraster(m):
-    """Convert the string *m* to a raster image. Any newlines
-    in *m* will cause more than one line of output. The
-    resulting raster will be taller. Prior to rendering each
-    line, it is padded on the right with enough spaces to make
-    all lines the same length.
+    """
+    Convert the string *m* to a raster image.
+    Any newlines in *m* will cause more than one line of output.
+    The resulting raster will be taller.
+    Prior to rendering each line,
+    it is padded on the right with
+    enough spaces to make all lines the same length.
     """
 
     lines = m.split('\n')
@@ -150,7 +152,8 @@ def texttoraster(m):
 
 
 def linetoraster(m):
-    """Convert a single line of text *m* to a raster image,
+    """
+    Convert a single line of text *m* to a raster image,
     by rendering it using the font in *font*.
 
     A triple of (*width*, *height*, *pixels*) is returned;
