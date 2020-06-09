@@ -4,12 +4,16 @@
 # texttopng
 
 # Example (all ASCII glyphs):
-#
-# printf $(printf '\\%s' $(seq 40 176 | grep -v '[89]')) |
-#   fold -w 32 |
-#   ./texttopng > ascii.png
+"""
+printf $(printf '\\%s' $(seq 40 176 | grep -v '[89]')) |
+  fold -w 32 |
+  python3 texttopng.py > ascii.png
+"""
 
+import binascii
 import itertools
+
+import png
 
 
 def usage(fil):
@@ -124,7 +128,7 @@ def char(i):
     i = ord(i)
     if i not in font:
         return [(0,)] * 8
-    return [(ord(row),) for row in font[i].decode('hex')]
+    return [(row,) for row in binascii.unhexlify(font[i])]
 
 
 def texttoraster(m):
@@ -160,8 +164,6 @@ def linetoraster(m):
 
 
 def render(message, out):
-    import png
-
     x, y, pixels = texttoraster(message)
     w = png.Writer(x, y, greyscale=True, bitdepth=1)
     w.write_packed(out, pixels)
@@ -188,14 +190,7 @@ def main(argv=None):
         out = open("%s.png" % message, 'wb')
     else:
         message = sys.stdin.read()
-        out = sys.stdout
-        # on Windows it is necessary to switch stdout to binary mode
-        # to avoid \n translation
-        # http://stackoverflow.com/questions/2374427/python-2-x-write-binary-output-to-stdout
-        if sys.platform == "win32":
-            import msvcrt
-            import os
-            msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
+        out = png.binary_stdout()
 
     render(message, out)
 
