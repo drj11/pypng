@@ -252,8 +252,11 @@ def encodefuns():
             table.append(int(round(f(x) * 65535)))
         return struct.pack('>L%dH' % n, n, *table)
 
-    def XYZ(*l):
-        return struct.pack('>3l', *map(fs15f16, l))
+    def XYZ(x, y, z):
+        """
+        Encode an (X,Y,Z) colour.
+        """
+        return struct.pack('>3l', *map(fs15f16, [x, y, z]))
 
     return locals()
 
@@ -313,7 +316,7 @@ defaulttagtype = dict(
 )
 
 
-def encode(tsig, *l):
+def encode(tsig, *args):
     """Encode a Python value as an ICC type.  `tsig` is the type
     signature to (the first 4 bytes of the encoded value, see [ICC 2004]
     section 10.
@@ -322,7 +325,7 @@ def encode(tsig, *l):
     fun = encodefuns()
     if tsig not in fun:
         raise "No encoder for type %r." % tsig
-    v = fun[tsig](*l)
+    v = fun[tsig](*args)
     # Padd tsig out with spaces.
     tsig = (tsig + '   ')[: 4]
     return tsig + ('\x00' * 4) + v
