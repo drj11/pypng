@@ -39,6 +39,7 @@ https://pypng.readthedocs.io/en/latest/
     author='David Jones',
     author_email='drj@pobox.com',
     url='https://github.com/drj11/pypng',
+    license='MIT',
     package_dir={'': 'code'},
     py_modules=['png', 'test_png', 'pngsuite'],
     scripts=[
