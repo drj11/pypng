@@ -448,13 +448,13 @@ class Test(unittest.TestCase):
     def test_interlaced_array(self):
         """Reading an interlaced PNG yields each row as an array."""
         r = png.Reader(bytes=pngsuite.basi0g08)
-        list(r.read()[2])[0].tostring
+        list(r.read()[2])[0].tobytes
 
     def test_trns_array(self):
         """A type 2 PNG with tRNS chunk yields each row
         as an array (using asDirect)."""
         r = png.Reader(bytes=pngsuite.tbrn2c08)
-        list(r.asDirect()[2])[0].tostring
+        list(r.asDirect()[2])[0].tobytes
 
     def test_flat(self):
         """Test read_flat."""
