@@ -41,7 +41,7 @@ https://pypng.readthedocs.io/en/latest/
     url='https://github.com/drj11/pypng',
     license='MIT',
     package_dir={'': 'code'},
-    py_modules=['png', 'test_png', 'pngsuite'],
+    py_modules=['png'],
     scripts=[
         "code/prichunkpng",
         "code/priforgepng",
