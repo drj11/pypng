@@ -388,6 +388,24 @@ class Test(unittest.TestCase):
         info = r.read()[3]
         png.Writer(**info)
 
+    def test_write_empty(self):
+        """Test writing an empty file without the expected error.
+        """
+        w = png.Writer(1, 1)
+        o = BytesIO()
+        empty = []
+
+        try:
+            w.write(o, empty)
+        except UnboundLocalError as e:
+            """
+            Protect against:
+            File "test_png.py", line 399, in test_write_empty
+              w.write(o, empty)
+            UnboundLocalError: local variable 'i' referenced before assignment
+            """
+            self.fail("UnexpectedLocalError exception: {}".format(e))
+
     def test_write_background_colour(self):
         """Test that background keyword works."""
 
