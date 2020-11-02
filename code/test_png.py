@@ -389,22 +389,29 @@ class Test(unittest.TestCase):
         png.Writer(**info)
 
     def test_write_empty(self):
-        """Test writing an empty file without the expected error.
+        """Test writing an empty file expecting an error.
         """
         w = png.Writer(1, 1)
         o = BytesIO()
         empty = []
 
-        try:
-            w.write(o, empty)
-        except UnboundLocalError as e:
-            """
-            Protect against:
-            File "test_png.py", line 399, in test_write_empty
-              w.write(o, empty)
-            UnboundLocalError: local variable 'i' referenced before assignment
-            """
-            self.fail("UnexpectedLocalError exception: {}".format(e))
+        with self.assertRaises(png.ProtocolError) as cm:
+            try:
+                w.write(o, empty)
+            except UnboundLocalError as e:
+                """
+                Protect against:
+                File "test_png.py", line 399, in test_write_empty
+                w.write(o, empty)
+                UnboundLocalError: local variable 'i' referenced before
+                assignment
+                """
+                self.fail("UnexpectedLocalError exception: {}".format(e))
+
+        self.assertEqual(
+            str(cm.exception),
+            "ProtocolError: rows supplied (0) does not match height (1)"
+        )
 
     def test_write_background_colour(self):
         """Test that background keyword works."""

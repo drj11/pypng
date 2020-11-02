@@ -731,8 +731,9 @@ class Writer:
         # it's compressed when sufficiently large.
         data = bytearray()
 
-        # raise i scope out of the for loop
-        i = 0
+        # raise i scope out of the for loop. set to -1, because the for loop
+        # sets i to 0 on the first pass
+        i = -1
         for i, row in enumerate(rows):
             # Add "None" filter type.
             # Currently, it's essential that this filter type be used
