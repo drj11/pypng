@@ -670,6 +670,7 @@ class Writer:
             raise ProtocolError(
                 "rows supplied (%d) does not match height (%d)" %
                 (nrows, self.height))
+        return nrows
 
     def write_passes(self, outfile, rows):
         """
@@ -833,9 +834,15 @@ class Writer:
                 # Coerce to array type
                 fmt = 'BH'[self.bitdepth > 8]
                 pixels = array(fmt, pixels)
-            self.write_passes(outfile, self.array_scanlines_interlace(pixels))
+            return self.write_passes(
+                outfile,
+                self.array_scanlines_interlace(pixels)
+            )
         else:
-            self.write_passes(outfile, self.array_scanlines(pixels))
+            return self.write_passes(
+                outfile,
+                self.array_scanlines(pixels)
+            )
 
     def array_scanlines(self, pixels):
         """

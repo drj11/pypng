@@ -413,6 +413,21 @@ class Test(unittest.TestCase):
             "ProtocolError: rows supplied (0) does not match height (1)"
         )
 
+    def test_write_length(self):
+        """Test row length is returned consistently from Writer.write()
+        """
+        w = png.Writer(1, 2)
+        o = BytesIO()
+        empty = [[1], [1]]
+        row_count = w.write(o, empty)
+        self.assertEqual(row_count, 2)
+
+        w = png.Writer(1, 2, interlace=True)
+        o = BytesIO()
+        empty = [[1], [1]]
+        row_count = w.write(o, empty)
+        self.assertEqual(row_count, 2)
+
     def test_write_background_colour(self):
         """Test that background keyword works."""
 
