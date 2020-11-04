@@ -670,6 +670,7 @@ class Writer:
             raise ProtocolError(
                 "rows supplied (%d) does not match height (%d)" %
                 (nrows, self.height))
+        return nrows
 
     def write_passes(self, outfile, rows):
         """
@@ -731,6 +732,9 @@ class Writer:
         # it's compressed when sufficiently large.
         data = bytearray()
 
+        # raise i scope out of the for loop. set to -1, because the for loop
+        # sets i to 0 on the first pass
+        i = -1
         for i, row in enumerate(rows):
             # Add "None" filter type.
             # Currently, it's essential that this filter type be used
@@ -830,9 +834,15 @@ class Writer:
                 # Coerce to array type
                 fmt = 'BH'[self.bitdepth > 8]
                 pixels = array(fmt, pixels)
-            self.write_passes(outfile, self.array_scanlines_interlace(pixels))
+            return self.write_passes(
+                outfile,
+                self.array_scanlines_interlace(pixels)
+            )
         else:
-            self.write_passes(outfile, self.array_scanlines(pixels))
+            return self.write_passes(
+                outfile,
+                self.array_scanlines(pixels)
+            )
 
     def array_scanlines(self, pixels):
         """
