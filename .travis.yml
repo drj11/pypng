@@ -10,6 +10,19 @@ matrix:
   - python: "3.5"
   - python: "3.6"
   - python: "3.7"
+ # ppc64le support code
+  - name: flake8
+    arch: ppc64le
+    install: pip install flake8
+    python: "3.6"
+    script:
+    - flake8 . --count --show-source --statistics
+  - python: "3.5"
+    arch: ppc64le
+  - python: "3.6"
+    arch: ppc64le
+  - python: "3.7"
+    arch: ppc64le
     dist: xenial  # required for Python >= 3.7 (travis-ci/travis-ci#9069)
 script:
   - cd code
