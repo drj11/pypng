@@ -89,7 +89,7 @@ def process(out, args):
             xppu /= l
             yppu /= l
             unit_spec = 1
-        elif arg.physical.endswith("ppm"):
+        elif args.physical.endswith("ppm"):
             unit_spec = 1
 
         v = struct.pack("!LLB", round(xppu), round(yppu), unit_spec)
