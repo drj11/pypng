@@ -1,6 +1,10 @@
 #!/usr/bin/env python
-# pngchunk
-# Chunk editing/extraction tool.
+# prichunkpng
+# Chunk editing tool.
+
+"""
+Make a new PNG by adding, delete, or replacing particular chunks.
+"""
 
 import argparse
 import collections
@@ -68,7 +72,8 @@ def process(out, args):
     # - a list of chunk to add
 
     delete = set(args.delete)
-    # Generally, there should be at most one of the 'replacing' chunks.
+    # The set of chunks to replace are those where the specification says
+    # that there should be at most one of them.
     replacing = set([b"gAMA", b"sBIT", b"PLTE", b"tRNS", b"sPLT", b"IHDR"])
     replace = dict()
     add = []
@@ -129,7 +134,7 @@ def chunk_name(s):
 def comma_list(s):
     """
     Convert s, a command separated list of whole numbers,
-    into a list of int.
+    into a sequence of int.
     """
 
     return tuple(int(v) for v in s.split(","))
