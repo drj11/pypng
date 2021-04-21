@@ -62,6 +62,11 @@ your current directory:
 Support for Python 2 is dropped.
 Python 3.5 and onwards are supported.
 
+`prichunkpng` command line too now has a new `--physical` option
+to add a `pHYs` chunk, which allows the intended pixel size to be
+specified.
+
+
 ### Release 0.0.20
 
 Support for earlier versions of Python is dropped.

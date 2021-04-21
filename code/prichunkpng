@@ -11,6 +11,7 @@ import collections
 
 # https://docs.python.org/2.7/library/io.html
 import io
+import re
 import string
 import struct
 import zlib
@@ -20,6 +21,10 @@ import png
 
 
 Chunk = collections.namedtuple("Chunk", "type content")
+
+
+class ArgumentError(Exception):
+    """A user problem with the command arguments."""
 
 
 def process(out, args):
@@ -65,6 +70,31 @@ def process(out, args):
         v = struct.pack(">%dH" % len(args.background), *args.background)
         bs = io.BytesIO(v)
         args.chunk.insert(0, Chunk(b"bKGD", bs))
+    if args.physical:
+        # https://www.w3.org/TR/PNG/#11pHYs
+        numbers = re.findall(r"(\d+\.?\d*)", args.physical)
+        if len(numbers) not in {1, 2}:
+            raise ArgumentError("One or two numbers are required for --physical")
+        xppu = float(numbers[0])
+        if len(numbers) == 1:
+            yppu = xppu
+        else:
+            yppu = float(numbers[1])
+
+        unit_spec = 0
+        if args.physical.endswith("dpi"):
+            # Convert from DPI to Pixels Per Metre
+            # 1 inch is 0.0254 metres
+            l = 0.0254
+            xppu /= l
+            yppu /= l
+            unit_spec = 1
+        elif arg.physical.endswith("ppm"):
+            unit_spec = 1
+
+        v = struct.pack("!LLB", round(xppu), round(yppu), unit_spec)
+        bs = io.BytesIO(v)
+        args.chunk.insert(0, Chunk(b"pHYs", bs))
 
     # Create:
     # - a set of chunks to delete
@@ -166,7 +196,6 @@ def hex_color(s):
 
 def main(argv=None):
     import sys
-    import re
 
     if argv is None:
         argv = sys.argv
@@ -175,6 +204,12 @@ def main(argv=None):
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--gamma", type=float)
+    parser.add_argument(
+        "--physical",
+        type=str,
+        metavar="x[,y][dpi|ppm]",
+        help="specify intended pixel size or aspect ratio",
+    )
     parser.add_argument("--sigbit", type=comma_list, metavar="D[,D[,D[,D]]]")
     parser.add_argument("--iccprofile", type=argparse.FileType("rb"))
     parser.add_argument("--transparent", type=hex_color, metavar="#RRGGBB")
