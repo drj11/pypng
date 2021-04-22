@@ -4,5 +4,6 @@ PATH=${PWD%code*}code:$PATH
 
 python -m pngsuite basn2c08 |
 pripngtopam - |
-# The last 3072(3x32x32) bytes are binary data; extract header
-head -c -3072 | tr -cs 0-9A-Z ' ' | grep -q 'P6 32 32 255'
+# Assume header is in first line.
+sed q | tr -cs 0-9A-Z ' ' |
+grep -q 'P6 32 32 255'
