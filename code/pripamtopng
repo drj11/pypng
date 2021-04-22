@@ -4,10 +4,9 @@
 #
 # Python Raster Image PAM to PNG
 
+import array
 import struct
 import sys
-
-from array import array
 
 import png
 
@@ -200,12 +199,12 @@ def scan_rows_from_file(infile, width, height, planes, bitdepth):
         fmt = ">%dH" % vpr
 
         def line():
-            return array("H", struct.unpack(fmt, infile.read(bpr)))
+            return array.array("H", struct.unpack(fmt, infile.read(bpr)))
 
     else:
 
         def line():
-            return array("B", infile.read(bpr))
+            return array.array("B", infile.read(bpr))
 
     for y in range(height):
         yield line()

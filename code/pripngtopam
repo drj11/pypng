@@ -6,8 +6,7 @@ import png
 
 
 def write_pnm(file, rows, meta):
-    """Write a Netpbm PNM (or PAM) file.
-    """
+    """Write a Netpbm PNM (or PAM) file."""
 
     meta = dict(meta)
     meta["maxval"] = 2 ** meta["bitdepth"] - 1

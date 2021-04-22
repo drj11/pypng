@@ -2,12 +2,11 @@
 
 # prigreypng
 
-# Convert image to grey (L, or LA), but only if that involves no colour
-# change.
+# Convert image to grey (L, or LA), but only if that involves no colour change.
 
 import argparse
+import array
 
-from array import array
 
 import png
 
@@ -38,8 +37,8 @@ def as_grey(out, inp):
 
     def iterasgrey():
         for i, row in enumerate(rows):
-            row = array(typecode, row)
-            targetrow = array(typecode, [0] * vpr)
+            row = array.array(typecode, row)
+            targetrow = array.array(typecode, [0] * vpr)
             # Copy G (and possibly A) channel.
             green = row[0::planes]
             if alpha:
@@ -68,4 +67,5 @@ def main(argv=None):
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(main())

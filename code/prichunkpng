@@ -202,16 +202,31 @@ def main(argv=None):
     argv = argv[1:]
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--gamma", type=float)
+    parser.add_argument("--gamma", type=float, help="Gamma value for gAMA chunk")
     parser.add_argument(
         "--physical",
         type=str,
         metavar="x[,y][dpi|ppm]",
         help="specify intended pixel size or aspect ratio",
     )
-    parser.add_argument("--sigbit", type=comma_list, metavar="D[,D[,D[,D]]]")
-    parser.add_argument("--iccprofile", type=argparse.FileType("rb"))
-    parser.add_argument("--transparent", type=hex_color, metavar="#RRGGBB")
+    parser.add_argument(
+        "--sigbit",
+        type=comma_list,
+        metavar="D[,D[,D[,D]]]",
+        help="Number of significant bits in each channel",
+    )
+    parser.add_argument(
+        "--iccprofile",
+        metavar="file.iccp",
+        type=argparse.FileType("rb"),
+        help="add an ICC Profile from a file",
+    )
+    parser.add_argument(
+        "--transparent",
+        type=hex_color,
+        metavar="#RRGGBB",
+        help="Specify the colour that is transparent (tRNS chunk)",
+    )
     parser.add_argument(
         "--background",
         type=hex_color,
