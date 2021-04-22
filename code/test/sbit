@@ -4,5 +4,8 @@
 
 PATH=${PWD%code*}code:$PATH
 
+# macOS (and good POSIX principles) require that tr is invoked in POSIX locale.
+export LC_ALL=C
+
 printf 'P6 8 1 1\n\0\0\0\0\0\1\0\1\0\0\1\1\1\0\0\1\0\1\1\1\0\1\1\1\n' |
 pripamtopng - | tr -dc a-zA-Z | grep -q sBIT
