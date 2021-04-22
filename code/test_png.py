@@ -18,6 +18,7 @@ import glob
 import itertools
 import os
 import sys
+
 # http://www.python.org/doc/2.4.4/lib/module-unittest.html
 import unittest
 import zlib
@@ -51,13 +52,13 @@ def topngbytes(name, rows, x, y, **k):
 
     import os
 
-    if os.environ.get('PYPNG_TEST_FILENAME'):
+    if os.environ.get("PYPNG_TEST_FILENAME"):
         print(name, file=sys.stderr)
     f = BytesIO()
     w = png.Writer(x, y, **k)
     w.write(f, rows)
-    if os.environ.get('PYPNG_TEST_TMP'):
-        w = open(name, 'wb')
+    if os.environ.get("PYPNG_TEST_TMP"):
+        w = open(name, "wb")
         w.write(f.getvalue())
         w.close()
     return f.getvalue()
@@ -76,8 +77,14 @@ def mycallersname():
     frame = inspect.currentframe()
     if not frame:
         return None
-    frame_, filename_, lineno_, funname, linelist_, listi_ = (
-        inspect.getouterframes(frame)[2])
+    (
+        frame_,
+        filename_,
+        lineno_,
+        funname,
+        linelist_,
+        listi_,
+    ) = inspect.getouterframes(frame)[2]
     return funname
 
 
@@ -126,14 +133,13 @@ class Test(unittest.TestCase):
         x, y, pixels, meta = r.asDirect()
         self.assertEqual(x, 15)
         self.assertEqual(y, 17)
-        self.assertEqual(list(itertools.chain(*pixels)),
-                         list(source_pixels))
+        self.assertEqual(list(itertools.chain(*pixels)), list(source_pixels))
 
     def test_L2(self):
         """Test L2 (and asRGB8)."""
         w = png.Writer(1, 4, greyscale=True, bitdepth=2)
         f = BytesIO()
-        w.write_array(f, array('B', range(4)))
+        w.write_array(f, array("B", range(4)))
         r = png.Reader(bytes=f.getvalue())
         x, y, pixels, meta = r.asRGB8()
         self.assertEqual(x, 1)
@@ -144,27 +150,29 @@ class Test(unittest.TestCase):
 
     def test_LA4(self):
         """Create an LA image with bitdepth 4."""
-        bytes = topngbytes('la4.png', [[5, 12]], 1, 1,
-                           greyscale=True, alpha=True, bitdepth=4)
+        bytes = topngbytes(
+            "la4.png", [[5, 12]], 1, 1, greyscale=True, alpha=True, bitdepth=4
+        )
         sbit = None
         for chunk_type, content in png.Reader(bytes=bytes).chunks():
-            if chunk_type == b'sBIT':
+            if chunk_type == b"sBIT":
                 sbit = content
                 break
-        self.assertEqual(sbit, b'\x04\x04')
+        self.assertEqual(sbit, b"\x04\x04")
 
     def test_P2(self):
         """2-bit palette."""
         a, b, c = _palette3
         w = png.Writer(1, 4, bitdepth=2, palette=_palette3)
         f = BytesIO()
-        w.write_array(f, array('B', (0, 1, 1, 2)))
+        w.write_array(f, array("B", (0, 1, 1, 2)))
         r = png.Reader(bytes=f.getvalue())
         x, y, pixels, meta = r.asRGB8()
         self.assertEqual(x, 1)
         self.assertEqual(y, 4)
-        self.assertEqual([list(row) for row in pixels],
-                         [list(row) for row in [a, b, b, c]])
+        self.assertEqual(
+            [list(row) for row in pixels], [list(row) for row in [a, b, b, c]]
+        )
 
     def test_palette_trns(self):
         """Test colour type 3 and tRNS chunk (and 4-bit palette)."""
@@ -175,7 +183,7 @@ class Test(unittest.TestCase):
         e = (50, 99, 50)
         w = png.Writer(3, 3, bitdepth=4, palette=[a, b, c, d, e])
         f = BytesIO()
-        w.write_array(f, array('B', (4, 3, 2, 3, 2, 0, 2, 0, 1)))
+        w.write_array(f, array("B", (4, 3, 2, 3, 2, 0, 2, 0, 1)))
         r = png.Reader(bytes=f.getvalue())
         x, y, pixels, meta = r.asRGBA8()
         self.assertEqual(x, 3)
@@ -185,8 +193,9 @@ class Test(unittest.TestCase):
         e = e + (255,)
         boxed = [(e, d, c), (d, c, a), (c, a, b)]
         flat = map(lambda row: itertools.chain(*row), boxed)
-        self.assertEqual([list(row) for row in pixels],
-                         [list(row) for row in flat])
+        self.assertEqual(
+            [list(row) for row in pixels], [list(row) for row in flat]
+        )
 
     def test_RGB_to_RGBA(self):
         """asRGBA8() on colour type 2 source."""
@@ -196,46 +205,44 @@ class Test(unittest.TestCase):
         x, y, pixels, meta = r.asRGBA8()
         # Test the pixels at row 9 columns 0 and 1.
         row9 = list(pixels)[9]
-        self.assertEqual(list(row9[0:8]),
-                         [0xff, 0xdf, 0xff, 0xff, 0xff, 0xde, 0xff, 0xff])
+        self.assertEqual(
+            list(row9[0:8]), [0xFF, 0xDF, 0xFF, 0xFF, 0xFF, 0xDE, 0xFF, 0xFF]
+        )
 
     def test_L_to_RGB(self):
         """asRGB() on grey source."""
         r = png.Reader(bytes=pngsuite.basi0g08)
         x, y, rows, meta = r.asRGB()
-        self.assertEqual(meta['planes'], 3)
+        self.assertEqual(meta["planes"], 3)
         row9 = list(list(rows)[9])
-        self.assertEqual(row9[0:6],
-                         [222, 222, 222, 221, 221, 221])
+        self.assertEqual(row9[0:6], [222, 222, 222, 221, 221, 221])
 
     def test_L16_to_RGB(self):
         """asRGB() on 16-bit grey source."""
         r = png.Reader(bytes=pngsuite.basi0g16)
         _, _, rows, meta = r.asRGB()
-        self.assertEqual(meta['planes'], 3)
+        self.assertEqual(meta["planes"], 3)
         row9 = list(list(rows)[9])
-        self.assertEqual(row9[0:6],
-                         [4608, 4608, 4608, 6912, 6912, 6912])
+        self.assertEqual(row9[0:6], [4608, 4608, 4608, 6912, 6912, 6912])
 
     def test_L_to_RGBA(self):
         """asRGBA() on grey source."""
         # Test for Issue 60 (googlecode)
         r = png.Reader(bytes=pngsuite.basi0g08)
         x, y, pixels, meta = r.asRGBA()
-        self.assertEqual(meta['planes'], 4)
+        self.assertEqual(meta["planes"], 4)
         row9 = list(list(pixels)[9])
-        self.assertEqual(row9[0:8],
-                         [222, 222, 222, 255, 221, 221, 221, 255])
+        self.assertEqual(row9[0:8], [222, 222, 222, 255, 221, 221, 221, 255])
 
     def test_LA_to_RGBA(self):
         """asRGBA() on LA source."""
         r = png.Reader(bytes=pngsuite.basn4a16)
         x, y, rows, meta = r.asRGBA()
-        self.assertEqual(meta['planes'], 4)
+        self.assertEqual(meta["planes"], 4)
         row9 = list(list(rows)[9])
         self.assertEqual(
-            row9[0:8],
-            [38052, 38052, 38052, 0, 36157, 36157, 36157, 4229])
+            row9[0:8], [38052, 38052, 38052, 0, 36157, 36157, 36157, 4229]
+        )
 
     def test_RGB_trns(self):
         "Test colour type 2 and tRNS chunk."
@@ -245,7 +252,7 @@ class Test(unittest.TestCase):
         # I just happen to know that the first pixel is transparent.
         # In particular it should be #7f7f7f00
         row0 = list(pixels)[0]
-        self.assertEqual(tuple(row0[0:4]), (0x7f, 0x7f, 0x7f, 0x00))
+        self.assertEqual(tuple(row0[0:4]), (0x7F, 0x7F, 0x7F, 0x00))
 
     def test_interlace_read(self):
         """Adam7 interlace reading.
@@ -253,9 +260,9 @@ class Test(unittest.TestCase):
         an interlaced and straightlaced pair,
         test that both images of the pair give the same array of pixels."""
         for candidate in pngsuite.png:
-            if not candidate.startswith('basn'):
+            if not candidate.startswith("basn"):
                 continue
-            candi = candidate.replace('n', 'i')
+            candi = candidate.replace("n", "i")
             if candi not in pngsuite.png:
                 continue
             straight = png.Reader(bytes=pngsuite.png[candidate])
@@ -265,8 +272,9 @@ class Test(unittest.TestCase):
             # "interlace" member differs.  Lame.
             straight = straight.read()[2]
             adam7 = adam7.read()[2]
-            self.assertEqual([list(row) for row in straight],
-                             [list(row) for row in adam7])
+            self.assertEqual(
+                [list(row) for row in straight], [list(row) for row in adam7]
+            )
 
     def test_interlace_write(self):
         """Adam7 interlace writing.
@@ -278,28 +286,39 @@ class Test(unittest.TestCase):
 
         for name, bytes in pngsuite.png.items():
             # Only certain colour types supported for this test.
-            if name[3:5] not in ['n0', 'n2', 'n4', 'n6']:
+            if name[3:5] not in ["n0", "n2", "n4", "n6"]:
                 continue
             it = png.Reader(bytes=bytes)
             x, y, pixels, meta = it.read()
             pngi = topngbytes(
-                'adam7wn' + name + '.png', pixels,
-                x=x, y=y, bitdepth=it.bitdepth,
-                greyscale=it.greyscale, alpha=it.alpha,
+                "adam7wn" + name + ".png",
+                pixels,
+                x=x,
+                y=y,
+                bitdepth=it.bitdepth,
+                greyscale=it.greyscale,
+                alpha=it.alpha,
                 transparent=it.transparent,
-                interlace=False)
+                interlace=False,
+            )
             x, y, ps, meta = png.Reader(bytes=pngi).read()
             it = png.Reader(bytes=bytes)
             x, y, pixels, meta = it.read()
             pngs = topngbytes(
-                'adam7wi' + name + '.png', pixels,
-                x=x, y=y, bitdepth=it.bitdepth,
-                greyscale=it.greyscale, alpha=it.alpha,
+                "adam7wi" + name + ".png",
+                pixels,
+                x=x,
+                y=y,
+                bitdepth=it.bitdepth,
+                greyscale=it.greyscale,
+                alpha=it.alpha,
                 transparent=it.transparent,
-                interlace=True)
+                interlace=True,
+            )
             x, y, pi, meta = png.Reader(bytes=pngs).read()
-            self.assertEqual([list(row) for row in ps],
-                             [list(row) for row in pi])
+            self.assertEqual(
+                [list(row) for row in ps], [list(row) for row in pi]
+            )
 
     def test_interlace_write_array_bytes(self):
         """
@@ -310,7 +329,7 @@ class Test(unittest.TestCase):
 
         f = BytesIO()
         w = png.Writer(3, 2, interlace=True, greyscale=True)
-        w.write_array(f, bytes([0x55, 0xaa, 0xff, 0xaa, 0x55, 0x00]))
+        w.write_array(f, bytes([0x55, 0xAA, 0xFF, 0xAA, 0x55, 0x00]))
 
     def test_palette_info(self):
         """Test that a palette PNG returns the palette in info."""
@@ -318,7 +337,7 @@ class Test(unittest.TestCase):
         x, y, pixels, info = r.read()
         self.assertEqual(x, 32)
         self.assertEqual(y, 32)
-        self.assertIn('palette', info)
+        self.assertIn("palette", info)
 
     def test_read_palette_write(self):
         """Test metadata for paletted PNG can be passed from one PNG
@@ -333,7 +352,7 @@ class Test(unittest.TestCase):
         r = png.Reader(file=o)
         _, _, _, again_info = r.read()
         # Same palette
-        self.assertEqual(again_info['palette'], info['palette'])
+        self.assertEqual(again_info["palette"], info["palette"])
 
     def test_deepen_palette(self):
         """Test that palette bitdepth can be increased,
@@ -341,7 +360,7 @@ class Test(unittest.TestCase):
         r = png.Reader(bytes=pngsuite.basn3p04)
         x, y, pixels, info = r.read()
         pixels = [list(row) for row in pixels]
-        info['bitdepth'] = 8
+        info["bitdepth"] = 8
         w = png.Writer(**info)
         o = BytesIO()
         w.write(o, pixels)
@@ -357,7 +376,7 @@ class Test(unittest.TestCase):
         """Test forcing alpha channel for palette."""
         r = png.Reader(bytes=pngsuite.basn3p04)
         r.preamble()
-        r.palette(alpha='force')
+        r.palette(alpha="force")
 
     def test_L_trns_0(self):
         """Create greyscale image with tRNS chunk."""
@@ -369,16 +388,17 @@ class Test(unittest.TestCase):
 
     def helper_L_trns(self, transparent):
         """Helper used by :meth:`test_L_trns*`."""
-        pixels = zip([0x00, 0x38, 0x4c, 0x54, 0x5c, 0x40, 0x38, 0x00])
+        pixels = zip([0x00, 0x38, 0x4C, 0x54, 0x5C, 0x40, 0x38, 0x00])
         o = BytesIO()
-        w = png.Writer(8, 8,
-                       greyscale=True, bitdepth=1, transparent=transparent)
+        w = png.Writer(
+            8, 8, greyscale=True, bitdepth=1, transparent=transparent
+        )
         w.write_packed(o, pixels)
         r = png.Reader(bytes=o.getvalue())
         x, y, pixels, meta = r.asDirect()
-        self.assertTrue(meta['alpha'])
-        self.assertTrue(meta['greyscale'])
-        self.assertEqual(meta['bitdepth'], 1)
+        self.assertTrue(meta["alpha"])
+        self.assertTrue(meta["greyscale"])
+        self.assertEqual(meta["bitdepth"], 1)
 
     def test_read_info_write(self):
         """Test that the dictionary returned by `read`
@@ -389,8 +409,7 @@ class Test(unittest.TestCase):
         png.Writer(**info)
 
     def test_write_empty(self):
-        """Test writing an empty file expecting an error.
-        """
+        """Test writing an empty file expecting an error."""
         w = png.Writer(1, 1)
         o = BytesIO()
         empty = []
@@ -410,12 +429,11 @@ class Test(unittest.TestCase):
 
         self.assertEqual(
             str(cm.exception),
-            "ProtocolError: rows supplied (0) does not match height (1)"
+            "ProtocolError: rows supplied (0) does not match height (1)",
         )
 
     def test_write_length(self):
-        """Test row length is returned consistently from Writer.write()
-        """
+        """Test row length is returned consistently from Writer.write()"""
         w = png.Writer(1, 2)
         o = BytesIO()
         empty = [[1], [1]]
@@ -439,8 +457,8 @@ class Test(unittest.TestCase):
         rows = list(rows)
         self.assertEqual(len(rows), 2)
         self.assertEqual(
-            [list(row) for row in rows],
-            [[1, 4, 192], [16, 224, 255]])
+            [list(row) for row in rows], [[1, 4, 192], [16, 224, 255]]
+        )
 
     def test_write_background_grey(self):
         """Test that background keyword works."""
@@ -453,8 +471,8 @@ class Test(unittest.TestCase):
         rows = list(rows)
         self.assertEqual(len(rows), 2)
         self.assertEqual(
-            [list(row) for row in rows],
-            [[1, 255, 4, 192], [16, 0, 224, 255]])
+            [list(row) for row in rows], [[1, 255, 4, 192], [16, 0, 224, 255]]
+        )
 
     def test_write_compression(self):
         """Test that compression keyword works."""
@@ -466,9 +484,7 @@ class Test(unittest.TestCase):
         x, y, rows, info = r.asDirect()
         rows = list(rows)
         self.assertEqual(len(rows), 2)
-        self.assertEqual(
-            [list(row) for row in rows],
-            [[1, 4], [16, 224]])
+        self.assertEqual([list(row) for row in rows], [[1, 4], [16, 224]])
 
     def test_write_packed(self):
         """Test iterator for row when using write_packed.
@@ -477,8 +493,10 @@ class Test(unittest.TestCase):
         """
         w = png.Writer(16, 2, greyscale=True, alpha=False, bitdepth=1)
         o = BytesIO()
-        w.write_packed(o, [itertools.chain([0x0a], [0xaa]),
-                           itertools.chain([0x0f], [0xff])])
+        w.write_packed(
+            o,
+            [itertools.chain([0x0A], [0xAA]), itertools.chain([0x0F], [0xFF])],
+        )
         r = png.Reader(bytes=o.getvalue())
         x, y, pixels, info = r.asDirect()
         pixels = list(pixels)
@@ -503,7 +521,7 @@ class Test(unittest.TestCase):
         r = png.Reader(bytes=pngsuite.basn0g02)
         x, y, pixel, meta = r.read_flat()
         d = hashlib.md5(bytes(pixel)).hexdigest()
-        self.assertEqual(d, '255cd971ab8cd9e7275ff906e5041aa0')
+        self.assertEqual(d, "255cd971ab8cd9e7275ff906e5041aa0")
 
     def test_no_phys_chunk(self):
         """
@@ -516,12 +534,12 @@ class Test(unittest.TestCase):
         writer = png.Writer(width=width, height=height, greyscale=True)
         writer.write(out, pixels)
         out.seek(0)
-        self.assertNotIn(b'pHYs', out.getvalue())
+        self.assertNotIn(b"pHYs", out.getvalue())
         out.seek(0)
         reader = png.Reader(file=out)
         w, h, _, meta = reader.read()
-        self.assertNotIn('physical', meta)
-        self.assertFalse(hasattr(reader, 'x_pixels_per_unit'))
+        self.assertNotIn("physical", meta)
+        self.assertFalse(hasattr(reader, "x_pixels_per_unit"))
 
     def test_phys_chunk(self):
         """
@@ -530,21 +548,25 @@ class Test(unittest.TestCase):
         width = height = 3
         pixels = [[0] * width] * height
         out = BytesIO()
-        writer = png.Writer(width=width, height=height, greyscale=True,
-                            x_pixels_per_unit=2000,
-                            y_pixels_per_unit=1000,
-                            unit_is_meter=True)
+        writer = png.Writer(
+            width=width,
+            height=height,
+            greyscale=True,
+            x_pixels_per_unit=2000,
+            y_pixels_per_unit=1000,
+            unit_is_meter=True,
+        )
         writer.write(out, pixels)
         out.seek(0)
         reader = png.Reader(file=out)
         w, h, _, meta = reader.read()
-        self.assertIn('physical', meta)
+        self.assertIn("physical", meta)
         self.assertEqual(2000, reader.x_pixels_per_unit)
         self.assertEqual(1000, reader.y_pixels_per_unit)
         self.assertTrue(reader.unit_is_meter)
         expected = (2000, 1000, True)
-        self.assertEqual(expected, meta['physical'])
-        res = meta['physical']
+        self.assertEqual(expected, meta["physical"])
+        res = meta["physical"]
         self.assertEqual(2000, res.x)
         self.assertEqual(1000, res.y)
         self.assertTrue(res.unit_is_meter)
@@ -556,20 +578,25 @@ class Test(unittest.TestCase):
         width = height = 3
         pixels = [[0] * width] * height
         out = BytesIO()
-        writer = png.Writer(width=width, height=height, greyscale=True,
-                            x_pixels_per_unit=2, y_pixels_per_unit=1,
-                            unit_is_meter=False)
+        writer = png.Writer(
+            width=width,
+            height=height,
+            greyscale=True,
+            x_pixels_per_unit=2,
+            y_pixels_per_unit=1,
+            unit_is_meter=False,
+        )
         writer.write(out, pixels)
         out.seek(0)
         reader = png.Reader(file=out)
         w, h, _, meta = reader.read()
-        self.assertIn('physical', meta)
+        self.assertIn("physical", meta)
         self.assertEqual(2, reader.x_pixels_per_unit)
         self.assertEqual(1, reader.y_pixels_per_unit)
         self.assertFalse(reader.unit_is_meter)
         expected = (2, 1, False)
-        self.assertEqual(expected, meta['physical'])
-        res = meta['physical']
+        self.assertEqual(expected, meta["physical"])
+        res = meta["physical"]
         self.assertEqual(2, res.x)
         self.assertEqual(1, res.y)
         self.assertFalse(res.unit_is_meter)
@@ -579,13 +606,13 @@ class Test(unittest.TestCase):
         Test with a PNG that has an ancillary chunk after IDAT chunks.
         For coverage.
         """
-        k = 'f02n0g08'
+        k = "f02n0g08"
         reader = png.Reader(bytes=pngsuite.png[k])
-        text_chunk = (b'tEXt', b'Comment\x00Test chunk follows IDAT')
+        text_chunk = (b"tEXt", b"Comment\x00Test chunk follows IDAT")
 
         def more_chunks():
             for t, v in reader.chunks():
-                if t == b'IEND':
+                if t == b"IEND":
                     yield text_chunk
                 yield t, v
 
@@ -601,14 +628,14 @@ class Test(unittest.TestCase):
         Test colortype 3 PNG with bKGD chunk.
         For coverage.
         """
-        k = 'basn3p04'
+        k = "basn3p04"
         reader = png.Reader(bytes=pngsuite.png[k])
 
         def more_chunks():
             for t, v in reader.chunks():
                 yield t, v
-                if t == b'PLTE':
-                    yield b'bKGD', b'\x00'
+                if t == b"PLTE":
+                    yield b"bKGD", b"\x00"
 
         o = BytesIO()
         png.write_chunks(o, more_chunks())
@@ -621,12 +648,12 @@ class Test(unittest.TestCase):
         """Tests that the rows yielded by the pixels generator
         can be safely modified.
         """
-        k = 'f02n0g08'
+        k = "f02n0g08"
         r1 = png.Reader(bytes=pngsuite.png[k])
         r2 = png.Reader(bytes=pngsuite.png[k])
         _, _, pixels1, info1 = r1.asDirect()
         _, _, pixels2, info2 = r2.asDirect()
-        izip = getattr(itertools, 'izip', zip)
+        izip = getattr(itertools, "izip", zip)
         for row1, row2 in izip(pixels1, pixels2):
             self.assertEqual(row1, row2)
             for i in range(len(row1)):
@@ -637,7 +664,7 @@ class Test(unittest.TestCase):
         The length check cannot be used on an itertools.chain object.
         For coverage.
         """
-        rows = [itertools.chain([0, 0xaa], [0x55, 0xff])]
+        rows = [itertools.chain([0, 0xAA], [0x55, 0xFF])]
         w = png.Writer(size=(4, 1))
         w.write(BytesIO(), rows)
 
@@ -649,7 +676,7 @@ class Test(unittest.TestCase):
     def test_empty(self):
         """Test empty file."""
 
-        r = png.Reader(bytes=b'')
+        r = png.Reader(bytes=b"")
         self.assertRaises(png.FormatError, r.asDirect)
 
     def test_signature_only(self):
@@ -667,7 +694,7 @@ class Test(unittest.TestCase):
             r.asDirect()
         except Exception as e:
             self.assertIsInstance(e, png.FormatError)
-            self.assertIn('chunk length', str(e))
+            self.assertIn("chunk length", str(e))
 
     def test_chunk_short(self):
         """
@@ -678,7 +705,7 @@ class Test(unittest.TestCase):
             r.asDirect()
         except Exception as e:
             self.assertIsInstance(e, png.FormatError)
-            self.assertIn('too short', str(e))
+            self.assertIn("too short", str(e))
 
     def test_no_checksum(self):
         """
@@ -689,7 +716,7 @@ class Test(unittest.TestCase):
             r.asDirect()
         except Exception as e:
             self.assertIsInstance(e, png.FormatError)
-            self.assertIn('checksum', str(e))
+            self.assertIn("checksum", str(e))
 
     def test_checksum_bad(self):
         """
@@ -702,7 +729,7 @@ class Test(unittest.TestCase):
             r.read()
         except Exception as e:
             self.assertIsInstance(e, png.FormatError)
-            self.assertIn('hecksum error', str(e))
+            self.assertIn("hecksum error", str(e))
 
     def test_type_bad(self):
         """
@@ -715,154 +742,150 @@ class Test(unittest.TestCase):
             r.read()
         except Exception as e:
             self.assertIsInstance(e, png.FormatError)
-            self.assertIn('invalid Chunk', str(e))
+            self.assertIn("invalid Chunk", str(e))
 
     def test_ihdr_length(self):
         """Test file that has wrong length IHDR."""
 
         def change_ihdr_length(chunk):
-            if chunk[0] != b'IHDR':
+            if chunk[0] != b"IHDR":
                 return chunk
             data = chunk[1]
-            data += b'garbage'
+            data += b"garbage"
             chunk = (chunk[0], data)
             return chunk
+
         self.assertRaises(
-            png.FormatError,
-            read_modify_chunks,
-            change_ihdr_length)
+            png.FormatError, read_modify_chunks, change_ihdr_length
+        )
 
     def test_ihdr_compression(self):
         """Test file that has invalid compression IHDR value."""
 
         def change_ihdr_compression(chunk):
-            if chunk[0] != b'IHDR':
+            if chunk[0] != b"IHDR":
                 return chunk
             data = chunk[1]
-            data = data[:10] + b'\x80' + data[11:]
+            data = data[:10] + b"\x80" + data[11:]
             chunk = (chunk[0], data)
             return chunk
+
         self.assertRaises(
-            png.FormatError,
-            read_modify_chunks,
-            change_ihdr_compression)
+            png.FormatError, read_modify_chunks, change_ihdr_compression
+        )
 
     def test_ihdr_interlace(self):
         """Test file that has invalid interlace IHDR value."""
 
         def change_ihdr_interlace(chunk):
-            if chunk[0] != b'IHDR':
+            if chunk[0] != b"IHDR":
                 return chunk
             data = chunk[1]
-            data = data[:12] + b'\x80'
+            data = data[:12] + b"\x80"
             chunk = (chunk[0], data)
             return chunk
+
         self.assertRaises(
-            png.FormatError,
-            read_modify_chunks,
-            change_ihdr_interlace)
+            png.FormatError, read_modify_chunks, change_ihdr_interlace
+        )
 
     def test_ihdr_filter(self):
         """Test file that has invalid filter IHDR value."""
 
         def change_ihdr_filter(chunk):
-            if chunk[0] != b'IHDR':
+            if chunk[0] != b"IHDR":
                 return chunk
             data = chunk[1]
-            data = data[:11] + b'\x80' + data[12:]
+            data = data[:11] + b"\x80" + data[12:]
             chunk = (chunk[0], data)
             return chunk
+
         self.assertRaises(
-            png.FormatError,
-            read_modify_chunks,
-            change_ihdr_filter)
+            png.FormatError, read_modify_chunks, change_ihdr_filter
+        )
 
     def test_iend_missing(self):
         """Test file with missing IEND chunk."""
         r = png.Reader(bytes=pngsuite.basn0g02[:-12])
         _, _, rows, info = r.read()
-        self.assertRaises(
-            png.ChunkError,
-            list,
-            rows)
+        self.assertRaises(png.ChunkError, list, rows)
 
     def test_extra_pixels(self):
         """Test file that contains too many pixels."""
 
         def add_garbage(chunk):
-            if chunk[0] != b'IDAT':
+            if chunk[0] != b"IDAT":
                 return chunk
             data = zlib.decompress(chunk[1])
-            data += b'\x00garbage'
+            data += b"\x00garbage"
             data = zlib.compress(data)
             chunk = (chunk[0], data)
             return chunk
+
         self.assertRaises(png.FormatError, read_modify_chunks, add_garbage)
 
     def test_lack_pixels(self):
         """Test file that contains too few pixels."""
 
         def truncate_idat(chunk):
-            if chunk[0] != b'IDAT':
+            if chunk[0] != b"IDAT":
                 return chunk
             # Remove last byte.
             data = zlib.decompress(chunk[1])
             data = data[:-1]
             data = zlib.compress(data)
             return (chunk[0], data)
+
         self.assertRaises(png.FormatError, read_modify_chunks, truncate_idat)
 
     def test_bad_filter(self):
         """Test file that contains impossible filter type."""
 
         def corrupt_filter(chunk):
-            if chunk[0] != b'IDAT':
+            if chunk[0] != b"IDAT":
                 return chunk
             data = zlib.decompress(chunk[1])
             # Corrupt the first filter byte
-            data = b'\x99' + data[1:]
+            data = b"\x99" + data[1:]
             data = zlib.compress(data)
             return (chunk[0], data)
+
         self.assertRaises(png.FormatError, read_modify_chunks, corrupt_filter)
 
     # from_array
 
     def test_from_array_L(self):
-        img = png.from_array([[0, 0x33, 0x66], [0xff, 0xcc, 0x99]], 'L')
+        img = png.from_array([[0, 0x33, 0x66], [0xFF, 0xCC, 0x99]], "L")
         img.write(BytesIO())
 
     def test_from_array_L16(self):
-        img = png.from_array(group(range(2**16), 256), 'L;16')
+        img = png.from_array(group(range(2 ** 16), 256), "L;16")
         img.write(BytesIO())
 
     def test_from_array_RGB(self):
-        img = png.from_array([[0, 0, 0,
-                               0, 0, 1,
-                               0, 1, 0,
-                               0, 1, 1],
-                             [1, 0, 0,
-                              1, 0, 1,
-                              1, 1, 0,
-                              1, 1, 1]], 'RGB;1')
+        img = png.from_array(
+            [
+                [0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1],
+                [1, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1],
+            ],
+            "RGB;1",
+        )
         o = BytesIO()
         img.write(o)
 
     def test_from_array_iterator(self):
         i = itertools.islice(itertools.count(10), 20)
         i = ([x, x, x] for x in i)
-        img = png.from_array(i, 'RGB;5', dict(height=20))
+        img = png.from_array(i, "RGB;5", dict(height=20))
         f = BytesIO()
         img.write(f)
 
     def test_from_array_bad(self):
         """Invoke from_array incorrectly to provoke Error."""
-        self.assertRaises(
-            png.Error,
-            png.from_array,
-            [[1]], 'gray')
+        self.assertRaises(png.Error, png.from_array, [[1]], "gray")
 
     def test_from_array_L2(self):
-        png.from_array([[0, 1], [2, 3]], 'L2').write(BytesIO())
+        png.from_array([[0, 1], [2, 3]], "L2").write(BytesIO())
 
     def test_from_array_width(self):
         """
@@ -870,51 +893,49 @@ class Test(unittest.TestCase):
         For coverage.
         """
         img = png.from_array(
-            [[0, 0x33, 0x66], [0xff, 0xcc, 0x99]],
-            'L',
-            info=dict(size=(3, 2))
-            )
+            [[0, 0x33, 0x66], [0xFF, 0xCC, 0x99]], "L", info=dict(size=(3, 2))
+        )
         img.write(BytesIO())
 
     def test_from_array_LA(self):
-        png.from_array([[3, 1], [0, 3]], 'LA2',
-                       info=dict(greyscale=True)).write(BytesIO())
+        png.from_array(
+            [[3, 1], [0, 3]], "LA2", info=dict(greyscale=True)
+        ).write(BytesIO())
 
     def test_from_array_LA_alpha_bad(self):
         self.assertRaises(
             png.ProtocolError,
             png.from_array,
             [[3, 1], [0, 3]],
-            'LA2',
-            info=dict(greyscale=True, alpha=False))
+            "LA2",
+            info=dict(greyscale=True, alpha=False),
+        )
 
     def test_from_array_LA_grey_bad(self):
         self.assertRaises(
             png.ProtocolError,
             png.from_array,
             [[3, 1], [0, 3]],
-            'LA2',
-            info=dict(greyscale=False, alpha=True))
+            "LA2",
+            info=dict(greyscale=False, alpha=True),
+        )
 
     def test_from_array_LA_bitdepth_bad(self):
         self.assertRaises(
             png.ProtocolError,
             png.from_array,
             [[3, 1], [0, 3]],
-            'LA2',
-            info=dict(bitdepth=4))
+            "LA2",
+            info=dict(bitdepth=4),
+        )
 
     def test_from_array_iterator_height(self):
         """Row iterator without height raises Error."""
         i = itertools.islice(itertools.count(10), 20)
         i = ([x, x, x] for x in i)
-        self.assertRaises(
-            png.ProtocolError,
-            png.from_array,
-            i,
-            'RGB;5')
+        self.assertRaises(png.ProtocolError, png.from_array, i, "RGB;5")
 
-# numpy dependent tests.
+    # numpy dependent tests.
 
     def test_numpy_uint16(self):
         """numpy uint16."""
@@ -922,8 +943,15 @@ class Test(unittest.TestCase):
         numpy or self.skipTest("numpy is not available")
 
         rows = [[numpy.uint16(x) for x in range(0, 0x10000, 0x5555)]]
-        topngbytes('numpyuint16.png', rows, 4, 1,
-                   greyscale=True, alpha=False, bitdepth=16)
+        topngbytes(
+            "numpyuint16.png",
+            rows,
+            4,
+            1,
+            greyscale=True,
+            alpha=False,
+            bitdepth=16,
+        )
 
     def test_numpy_uint8(self):
         """numpy uint8."""
@@ -931,8 +959,15 @@ class Test(unittest.TestCase):
         numpy or self.skipTest("numpy is not available")
 
         rows = [[numpy.uint8(x) for x in range(0, 0x100, 0x55)]]
-        topngbytes('numpyuint8.png', rows, 4, 1,
-                   greyscale=True, alpha=False, bitdepth=8)
+        topngbytes(
+            "numpyuint8.png",
+            rows,
+            4,
+            1,
+            greyscale=True,
+            alpha=False,
+            bitdepth=8,
+        )
 
     def test_numpy_bool(self):
         """numpy bool."""
@@ -940,16 +975,16 @@ class Test(unittest.TestCase):
         numpy or self.skipTest("numpy is not available")
 
         rows = numpy.array([[0, 1]], dtype=bool)
-        img = png.from_array(rows, 'L')
-        assert img.info['bitdepth'] == 1
+        img = png.from_array(rows, "L")
+        assert img.info["bitdepth"] == 1
 
     def test_numpy_array(self):
         """numpy array."""
 
         numpy or self.skipTest("numpy is not available")
 
-        pixels = numpy.array([[0, 0x5555], [0x5555, 0xaaaa]], numpy.uint16)
-        img = png.from_array(pixels, 'L')
+        pixels = numpy.array([[0, 0x5555], [0x5555, 0xAAAA]], numpy.uint16)
+        img = png.from_array(pixels, "L")
         img.write(BytesIO())
 
     def test_numpy_tranpose(self):
@@ -959,11 +994,11 @@ class Test(unittest.TestCase):
 
         numpy or self.skipTest("numpy is not available")
 
-        a = numpy.array([[0, 0x55], [0x55, 0xaa]], numpy.uint8)
+        a = numpy.array([[0, 0x55], [0x55, 0xAA]], numpy.uint8)
         # I assert it's a bug in numpy that the copy is required here.
         # But while it is required, I may as well test that it does work.
         aT = numpy.transpose(a).copy()
-        img = png.from_array(aT, mode='L')
+        img = png.from_array(aT, mode="L")
         img.write(BytesIO())
 
     def test_numpy_palette(self):
@@ -971,14 +1006,11 @@ class Test(unittest.TestCase):
 
         numpy or self.skipTest("numpy is not available")
 
-        s = ['110010010011',
-             '101011010100',
-             '110010110101',
-             '100010010011']
+        s = ["110010010011", "101011010100", "110010110101", "100010010011"]
 
         s = [[int(p) for p in row] for row in s]
 
-        palette = [(0x55, 0x55, 0x55), (0xff, 0x99, 0x99)]
+        palette = [(0x55, 0x55, 0x55), (0xFF, 0x99, 0x99)]
         # Creates a 2x3 array
         pnp = numpy.array(palette)
         png.Writer(len(s[0]), len(s), palette=pnp, bitdepth=1)
@@ -986,13 +1018,13 @@ class Test(unittest.TestCase):
     # Filters and unfilters
 
     def test_undo_filter(self):
-        reader = png.Reader(bytes=b'')
+        reader = png.Reader(bytes=b"")
         reader.psize = 3
-        scanprev = array('B', [20, 21, 22, 210, 211, 212])
-        scanline = array('B', [30, 32, 34, 230, 233, 236])
+        scanprev = array("B", [20, 21, 22, 210, 211, 212])
+        scanline = array("B", [30, 32, 34, 230, 233, 236])
 
         def cp(a):
-            return array('B', a)
+            return array("B", a)
 
         # none
         out = reader.undo_filter(0, cp(scanline), cp(scanprev))
@@ -1012,10 +1044,10 @@ class Test(unittest.TestCase):
 
     def test_undo_filter_paeth(self):
         """Edge cases for undoing paeth filter."""
-        reader = png.Reader(bytes=b'')
+        reader = png.Reader(bytes=b"")
         reader.psize = 3
-        scanprev = array('B', [2, 0, 0, 0, 9, 11])
-        scanline = array('B', [6, 10, 9, 100, 101, 102])
+        scanprev = array("B", [2, 0, 0, 0, 9, 11])
+        scanline = array("B", [6, 10, 9, 100, 101, 102])
 
         out = reader.undo_filter(4, scanline, scanprev)
         self.assertEqual(list(out), [8, 10, 9, 108, 111, 113])
@@ -1027,32 +1059,21 @@ class Test(unittest.TestCase):
         writer = png.Writer(width=4, height=1, greyscale=True)
         o = BytesIO()
 
-        self.assertRaises(png.ProtocolError,
-                          writer.write,
-                          o, [[1, 111, 222]])
+        self.assertRaises(png.ProtocolError, writer.write, o, [[1, 111, 222]])
 
     def test_size_length_bad(self):
         """
         Wrong tuple length in size keyword.
         """
-        self.assertRaises(
-            png.ProtocolError,
-            png.Writer,
-            size=(2, 2, 3))
+        self.assertRaises(png.ProtocolError, png.Writer, size=(2, 2, 3))
 
     def test_width_bad(self):
         """Wrong width in constructor."""
-        self.assertRaises(
-            png.ProtocolError,
-            png.Writer,
-            width=3, size=(2, 3))
+        self.assertRaises(png.ProtocolError, png.Writer, width=3, size=(2, 3))
 
     def test_height_bad(self):
         """Wrong height in constructor."""
-        self.assertRaises(
-            png.ProtocolError,
-            png.Writer,
-            height=3, size=(3, 2))
+        self.assertRaises(png.ProtocolError, png.Writer, height=3, size=(3, 2))
 
     def test_background_bad(self):
         """Wrong background in constructor."""
@@ -1060,15 +1081,14 @@ class Test(unittest.TestCase):
             png.ProtocolError,
             png.Writer,
             size=(2, 2),
-            background=[0x55, 0x55, 0x55])
+            background=[0x55, 0x55, 0x55],
+        )
 
     def test_background_unnatural(self):
         """non-integer background in constructor."""
         self.assertRaises(
-            png.ProtocolError,
-            png.Writer,
-            size=(2, 2),
-            background=[0.5])
+            png.ProtocolError, png.Writer, size=(2, 2), background=[0.5]
+        )
 
     def test_background_rgb_unnatural(self):
         """non-integer background in constructor."""
@@ -1077,7 +1097,8 @@ class Test(unittest.TestCase):
             png.Writer,
             size=(2, 2),
             greyscale=False,
-            background=[1, 1, 0.5])
+            background=[1, 1, 0.5],
+        )
 
     def test_alpha_trns(self):
         """alpha and transparent don't mix."""
@@ -1086,21 +1107,24 @@ class Test(unittest.TestCase):
             png.Writer,
             size=(2, 2),
             alpha=True,
-            transparent=[1])
+            transparent=[1],
+        )
 
     def test_bitdepth_bad(self):
         self.assertRaises(
-            png.ProtocolError,
-            png.Writer,
-            size=(2, 2),
-            bitdepth=0)
+            png.ProtocolError, png.Writer, size=(2, 2), bitdepth=0
+        )
 
     def test_write_palette_big(self):
         """Palette too big should raise error."""
         self.assertRaises(
             png.ProtocolError,
             png.Writer,
-            1, 4, bitdepth=2, palette=_palette3*86)
+            1,
+            4,
+            bitdepth=2,
+            palette=_palette3 * 86,
+        )
 
     def test_write_palette_bad_tuples(self):
         """Palette with incorrect size tuples should raise error."""
@@ -1108,9 +1132,8 @@ class Test(unittest.TestCase):
         # Corrupt c by shortening it.
         c = c[:2]
         self.assertRaises(
-            png.ProtocolError,
-            png.Writer,
-            1, 4, bitdepth=2, palette=[a, b, c])
+            png.ProtocolError, png.Writer, 1, 4, bitdepth=2, palette=[a, b, c]
+        )
 
     def test_write_palette_bad_transparency(self):
         """Palette with transparent entries following opaque ones."""
@@ -1118,21 +1141,16 @@ class Test(unittest.TestCase):
         b = (200, 120, 120)
         c = (50, 99, 50, 50)
         self.assertRaises(
-            png.ProtocolError,
-            png.Writer,
-            1, 4, bitdepth=2, palette=[a, b, c])
+            png.ProtocolError, png.Writer, 1, 4, bitdepth=2, palette=[a, b, c]
+        )
 
     def test_wrong_rows(self):
         """
         Wrong number of rows.
         """
-        rows = [[0, 0xaa], [0x55, 0xff]]
+        rows = [[0, 0xAA], [0x55, 0xFF]]
         w = png.Writer(size=(2, 1))
-        self.assertRaises(
-            png.ProtocolError,
-            w.write,
-            BytesIO(),
-            rows)
+        self.assertRaises(png.ProtocolError, w.write, BytesIO(), rows)
 
     def test_write_palette_bad_fraction(self):
         """Palette with fractions should raise error."""
@@ -1140,44 +1158,53 @@ class Test(unittest.TestCase):
         b = (200, 120, 120)
         c = (50, 99, 50)
         self.assertRaises(
-            png.ProtocolError,
-            png.Writer,
-            1, 4, bitdepth=2, palette=[a, b, c])
+            png.ProtocolError, png.Writer, 1, 4, bitdepth=2, palette=[a, b, c]
+        )
 
     def test_palette_bitdepths(self):
         """Palette is incompatible with multiple bitdepths."""
         self.assertRaises(
             png.ProtocolError,
             png.Writer,
-            1, 4, bitdepth=(2, 2), palette=_palette3)
+            1,
+            4,
+            bitdepth=(2, 2),
+            palette=_palette3,
+        )
 
     def test_palette_bitdepth_wrong(self):
         """Palette is incompatible with some bitdepths."""
         self.assertRaises(
-            png.ProtocolError,
-            png.Writer,
-            1, 4, bitdepth=7, palette=_palette3)
+            png.ProtocolError, png.Writer, 1, 4, bitdepth=7, palette=_palette3
+        )
 
     def test_palette_transparent(self):
         """Palette is incompatible with transarent."""
         self.assertRaises(
             png.ProtocolError,
             png.Writer,
-            1, 4, palette=_palette3, transparent=(9,))
+            1,
+            4,
+            palette=_palette3,
+            transparent=(9,),
+        )
 
     def test_palette_alpha(self):
         """Palette is incompatible with alpha."""
         self.assertRaises(
-            png.ProtocolError,
-            png.Writer,
-            1, 4, palette=_palette3, alpha=True)
+            png.ProtocolError, png.Writer, 1, 4, palette=_palette3, alpha=True
+        )
 
     def test_palette_greyscale(self):
         """Palette is incompatible with greyscale."""
         self.assertRaises(
             png.ProtocolError,
             png.Writer,
-            1, 4, palette=_palette3, greyscale=True)
+            1,
+            4,
+            palette=_palette3,
+            greyscale=True,
+        )
 
     def test_writer_noargs(self):
         """Invoking Writer with no args should raise error."""
@@ -1193,13 +1220,13 @@ class Test(unittest.TestCase):
 
     def test_writer_width_big(self):
         """Invoking Writer with big width should raise error."""
-        self.assertRaises(png.ProtocolError, png.Writer, 2**31, 4)
+        self.assertRaises(png.ProtocolError, png.Writer, 2 ** 31, 4)
 
     def test_writer_height_big(self):
         """Invoking Writer with big height should raise error."""
-        self.assertRaises(png.ProtocolError, png.Writer, 4, 2**31)
+        self.assertRaises(png.ProtocolError, png.Writer, 4, 2 ** 31)
 
-# scripts in test directory
+    # scripts in test directory
 
     def test_test_dir(self):
         """Runs each executable in the test directory."""
@@ -1211,19 +1238,19 @@ class Test(unittest.TestCase):
         status = os.system("test/00run-python3")
 
         if status:
-            self.skipTest("skipping test directory; is python on PATH Python 2?")
+            self.skipTest(
+                "skipping test directory; is python on PATH Python 2?"
+            )
 
         runs = []
-        for path in sorted(glob.glob('test/*')):
+        for path in sorted(glob.glob("test/*")):
             if not os.access(path, os.X_OK):
                 # Skip non-executables (probably fixtures?)
                 continue
             status = os.system(path)
             runs.append((path, status))
         failed_runs = [run for run in runs if run[1]]
-        self.assertTrue(
-            len(failed_runs) == 0,
-            msg="%r failed" % failed_runs)
+        self.assertTrue(len(failed_runs) == 0, msg="%r failed" % failed_runs)
 
 
 def read_modify_chunks(modify_chunk):
@@ -1245,8 +1272,8 @@ def read_modify_chunks(modify_chunk):
 
 
 def group(s, n):
-    return list(zip(* [iter(s)] * n))
+    return list(zip(*[iter(s)] * n))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main(__name__)
