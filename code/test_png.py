@@ -1199,9 +1199,20 @@ class Test(unittest.TestCase):
         """Invoking Writer with big height should raise error."""
         self.assertRaises(png.ProtocolError, png.Writer, 4, 2**31)
 
-    # scripts in test directory
+# scripts in test directory
 
     def test_test_dir(self):
+        """Runs each executable in the test directory."""
+
+        # There is a gateway test in test/00run-python3.
+        # If this test fails, we skip them all,
+        # on the assumption that the default python
+        # in the PATH is Python 2.
+        status = os.system("test/00run-python3")
+
+        if status:
+            self.skipTest("skipping test directory; is python on PATH Python 2?")
+
         runs = []
         for path in sorted(glob.glob('test/*')):
             if not os.access(path, os.X_OK):
