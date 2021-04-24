@@ -6,6 +6,13 @@ import sys
 
 import png
 
+
+class FormatError(Exception):
+    """
+    Some problem with the image format.
+    """
+
+
 def cat(out, l):
     """
     Concatenate the list of images.
@@ -28,7 +35,7 @@ def cat(out, l):
     width = 0
     for i,r in enumerate(l):
         if r.height != height:
-            raise Error('Image %d, height %d, does not match %d.' %
+            raise FormatError('Image %d, height %d, does not match %d.' %
               (i, r.height, height))
         width += r.width
     pixel, info = zip(*[r.asDirect()[2:4] for r in l])
