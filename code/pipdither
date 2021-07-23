@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-# $URL$
-# $Rev$
 
 # pipdither
 # Error Diffusing image dithering.
@@ -81,9 +79,9 @@ def dither(out, inp,
     # Build a lookup table for decoding; convert from pixel values to linear
     # space:
     sourcef = 1.0/sourcemaxval
-    incode = map(sourcef.__mul__, range(sourcemaxval+1))
+    incode = list(map(sourcef.__mul__, list(range(sourcemaxval+1))))
     if decode != 1.0:
-        incode = map(decode.__rpow__, incode)
+        incode = list(map(decode.__rpow__, incode))
     # Could be different, later on.  targetdecode is the assumed gamma
     # that is going to be used to decoding the target PNG.  It is the
     # reciprocal of the exponent that we use to encode the target PNG.
@@ -97,21 +95,21 @@ def dither(out, inp,
     # maps from pixel value to linear space, but we use it inverted, by
     # searching through it with bisect.
     targetf = 1.0/maxval
-    outcode = map(targetf.__mul__, range(maxval+1))
+    outcode = list(map(targetf.__mul__, list(range(maxval+1))))
     if targetdecode != 1.0:
-        outcode = map(targetdecode.__rpow__, outcode)
+        outcode = list(map(targetdecode.__rpow__, outcode))
     # The table used for choosing output codes.  These values represent
     # the cutoff points between two adjacent output codes.
-    choosecode = zip(outcode[1:], outcode)
+    choosecode = list(zip(outcode[1:], outcode))
     p = cutoff
-    choosecode = map(lambda x: x[0]*p+x[1]*(1.0-p), choosecode)
+    choosecode = [x[0]*p+x[1]*(1.0-p) for x in choosecode]
     def iterdither():
         # Errors diffused downwards (into next row)
         ed = [0.0]*width
         flipped = False
         for row in pixels:
-            row = map(incode.__getitem__, row)
-            row = map(operator.add, ed, row)
+            row = list(map(incode.__getitem__, row))
+            row = list(map(operator.add, ed, row))
             if flipped:
                 row = row[::-1]
             targetrow = [0] * width
@@ -167,14 +165,14 @@ def main(argv=None):
         if o == '-o':
             k['targetgamma'] = float(v)
         if o == '-?':
-            print >>sys.stderr, "pipdither [-b bits] [-c cutoff] [-g assumed-gamma] [-l] [in.png]"
+            print("pipdither [-b bits] [-c cutoff] [-g assumed-gamma] [-l] [in.png]", file=sys.stderr)
 
     if len(argv) > 0:
         f = open(argv[0], 'rb')
     else:
-        f = sys.stdin
+        f = png.binary_stdin()
 
-    return dither(sys.stdout, f, **k)
+    return dither(png.binary_stdout(), f, **k)
 
 
 if __name__ == '__main__':
