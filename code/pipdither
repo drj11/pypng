@@ -79,9 +79,9 @@ def dither(out, inp,
     # Build a lookup table for decoding; convert from pixel values to linear
     # space:
     sourcef = 1.0/sourcemaxval
-    incode = list(map(sourcef.__mul__, list(range(sourcemaxval+1))))
+    incode = [sourcef * v for v in range(sourcemaxval+1)]
     if decode != 1.0:
-        incode = list(map(decode.__rpow__, incode))
+        incode = [v**decode for v in incode]
     # Could be different, later on.  targetdecode is the assumed gamma
     # that is going to be used to decoding the target PNG.  It is the
     # reciprocal of the exponent that we use to encode the target PNG.
@@ -95,9 +95,9 @@ def dither(out, inp,
     # maps from pixel value to linear space, but we use it inverted, by
     # searching through it with bisect.
     targetf = 1.0/maxval
-    outcode = list(map(targetf.__mul__, list(range(maxval+1))))
+    outcode = [targetf * v for v in range(maxval+1)]
     if targetdecode != 1.0:
-        outcode = list(map(targetdecode.__rpow__, outcode))
+        outcode = [v**targetdecode for v in outcode]
     # The table used for choosing output codes.  These values represent
     # the cutoff points between two adjacent output codes.
     choosecode = list(zip(outcode[1:], outcode))
@@ -108,8 +108,8 @@ def dither(out, inp,
         ed = [0.0]*width
         flipped = False
         for row in pixels:
-            row = list(map(incode.__getitem__, row))
-            row = list(map(operator.add, ed, row))
+            row = [incode[v] for v in row]
+            row = [e + v for e,v in zip(ed, row)]
             if flipped:
                 row = row[::-1]
             targetrow = [0] * width
