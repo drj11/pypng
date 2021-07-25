@@ -25,7 +25,7 @@ def write_pnm(file, rows, meta):
         if 1 == planes:
             # PGM
             # Even if maxval is 1 we use PGM instead of PBM,
-            # to avoid conerting data.
+            # to avoid converting data.
             magic = "P5"
         else:
             # PPM
