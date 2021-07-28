@@ -1239,7 +1239,7 @@ class Test(unittest.TestCase):
 
         if status:
             self.skipTest(
-                "skipping test directory; is python on PATH Python 2?"
+                "skipping test directory; is python on PATH Python 2? (On OS X consider adding /usr/local/opt/python/libexec/bin to PATH)"
             )
 
         runs = []
