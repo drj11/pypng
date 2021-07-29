@@ -5,8 +5,14 @@ import struct
 import png
 
 
-def write_pnm(file, rows, meta):
-    """Write a Netpbm PNM (or PAM) file."""
+def write_pnm(file, plain, rows, meta):
+    """
+    Write a Netpbm PNM (or PAM) file.
+    *file* output file object;
+    *plain* (a bool) true if writing plain format (not possible for PAM);
+    *rows* an iterator for the rows;
+    *meta* the info dictionary.
+    """
 
     meta = dict(meta)
     meta["maxval"] = 2 ** meta["bitdepth"] - 1
@@ -27,13 +33,19 @@ def write_pnm(file, rows, meta):
             # Even if maxval is 1 we use PGM instead of PBM,
             # to avoid conerting data.
             magic = "P5"
+            if plain:
+                magic = "P2"
         else:
             # PPM
             magic = "P6"
+            if plain:
+                magic = "P3"
         header = "{magic} {width:d} {height:d} {maxval:d}\n".format(magic=magic, **meta)
     if planes in (2, 4):
         # PAM
         # See http://netpbm.sourceforge.net/doc/pam.html
+        if plain:
+            raise Exception("PAM (%d-plane) does not support plain format" % planes)
         if 2 == planes:
             tupltype = "GRAYSCALE_ALPHA"
         else:
@@ -44,16 +56,25 @@ def write_pnm(file, rows, meta):
             "TUPLTYPE {tupltype}\nENDHDR\n".format(tupltype=tupltype, **meta)
         )
     file.write(header.encode("ascii"))
+
     # Values per row
     vpr = planes * meta["width"]
-    # format for struct.pack
-    fmt = ">%d" % vpr
-    if meta["maxval"] > 0xFF:
-        fmt = fmt + "H"
+
+    if plain:
+        for row in rows:
+            row_b = b" ".join([b"%d" % v for v in row])
+            file.write(row_b)
+            file.write(b"\n")
     else:
-        fmt = fmt + "B"
-    for row in rows:
-        file.write(struct.pack(fmt, *row))
+        # format for struct.pack
+        fmt = ">%d" % vpr
+        if meta["maxval"] > 0xFF:
+            fmt = fmt + "H"
+        else:
+            fmt = fmt + "B"
+        for row in rows:
+            file.write(struct.pack(fmt, *row))
+
     file.flush()
 
 
@@ -62,6 +83,7 @@ def main(argv=None):
 
     parser = argparse.ArgumentParser(description="Convert PNG to PAM")
     parser.add_argument("png", nargs="?", default="-")
+    parser.add_argument("--plain", type=bool)
 
     args = parser.parse_args()
 
@@ -70,7 +92,7 @@ def main(argv=None):
     # Encode PNG to PNM (or PAM)
     image = png.Reader(file=inp)
     _, _, rows, info = image.asDirect()
-    write_pnm(png.binary_stdout(), rows, info)
+    write_pnm(png.binary_stdout(), args.plain, rows, info)
 
 
 if __name__ == "__main__":
