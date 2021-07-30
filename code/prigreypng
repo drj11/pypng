@@ -59,10 +59,11 @@ def as_grey(out, inp):
 
 def main(argv=None):
     parser = argparse.ArgumentParser()
-    parser.add_argument("png", nargs="?", default="-")
+    parser.add_argument(
+        "input", nargs="?", default="-", type=png.cli_open, metavar="PNG"
+    )
     args = parser.parse_args()
-    inp = png.cli_open(args.png)
-    return as_grey(png.binary_stdout(), inp)
+    return as_grey(png.binary_stdout(), args.input)
 
 
 if __name__ == "__main__":

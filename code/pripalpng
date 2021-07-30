@@ -29,7 +29,7 @@ def make_inverse_palette(rows, channels):
     return palette
 
 
-def palette_convert(inp, out, palette_file):
+def palette_convert(out, inp, palette_file):
     """
     Convert PNG image in `inp` to use a palette, colour type 3,
     and write converted image to `out`.
@@ -95,24 +95,14 @@ def main(argv=None):
     argv = argv[1:]
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--palette", type=argparse.FileType("rb"))
-    parser.add_argument("input", type=argparse.FileType("rb"))
+    parser.add_argument("--palette", type=png.cli_open)
+    parser.add_argument(
+        "input", nargs="?", default="-", type=png.cli_open, metavar="PNG"
+    )
 
     args = parser.parse_args(argv)
 
-    # Fix for binary stdin on Python 3
-    try:
-        args.input = args.input.buffer
-    except AttributeError:
-        pass
-
-    # Fix for binary stdin on Python 3
-    try:
-        args.palette = args.palette.buffer
-    except AttributeError:
-        pass
-
-    palette_convert(args.input, png.binary_stdout(), args.palette)
+    palette_convert(png.binary_stdout(), args.input, args.palette)
 
 
 if __name__ == "__main__":

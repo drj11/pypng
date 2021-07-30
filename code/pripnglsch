@@ -22,10 +22,11 @@ def main(argv=None):
     import sys
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("png", nargs="?", default="-")
+    parser.add_argument(
+        "input", nargs="?", default="-", type=png.cli_open, metavar="PNG"
+    )
     args = parser.parse_args()
-    inp = png.cli_open(args.png)
-    return list_chunks(sys.stdout, inp)
+    return list_chunks(sys.stdout, args.input)
 
 
 if __name__ == "__main__":

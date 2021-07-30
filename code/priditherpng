@@ -11,20 +11,27 @@ from bisect import bisect_left
 
 import png
 
-def dither(out, input,
-  bitdepth=1, linear=False, defaultgamma=1.0, targetgamma=None,
-  cutoff=0.75):
+
+def dither(
+    out,
+    input,
+    bitdepth=1,
+    linear=False,
+    defaultgamma=1.0,
+    targetgamma=None,
+    cutoff=0.75,
+):
     """Dither the input PNG `inp` into an image with a smaller bit depth
     and write the result image onto `out`.  `bitdepth` specifies the bit
     depth of the new image.
-    
+
     Normally the source image gamma is honoured (the image is
     converted into a linear light space before being dithered), but
     if the `linear` argument is true then the image is treated as
     being linear already: no gamma conversion is done (this is
     quicker, and if you don't care much about accuracy, it won't
     matter much).
-    
+
     Images with no gamma indication (no ``gAMA`` chunk) are normally
     treated as linear (gamma = 1.0), but often it can be better
     to assume a different gamma value: For example continuous tone
@@ -55,7 +62,8 @@ def dither(out, input,
     # The dithering algorithm is not completely general; it
     # can only do bit depth reduction, not arbitrary palette changes.
     import operator
-    maxval = 2**bitdepth - 1
+
+    maxval = 2 ** bitdepth - 1
     r = png.Reader(file=input)
     # If image gamma is 1 or gamma is not present and we are assuming a
     # value of 1, then it is faster to pass a maxval parameter to
@@ -64,24 +72,24 @@ def dither(out, input,
     # gamma correction here).
     # Slightly annoyingly, we don't know the image gamma until we've
     # called asFloat().
-    _,_,pixels,info = r.asDirect()
-    planes = info['planes']
+    _, _, pixels, info = r.asDirect()
+    planes = info["planes"]
     assert planes == 1
-    width = info['size'][0]
-    sourcemaxval = 2**info['bitdepth'] - 1
+    width = info["size"][0]
+    sourcemaxval = 2 ** info["bitdepth"] - 1
     if linear:
         gamma = 1
     else:
-        gamma = info.get('gamma') or defaultgamma
+        gamma = info.get("gamma") or defaultgamma
     # Convert gamma from encoding gamma to the required power for
     # decoding.
-    decode = 1.0/gamma
+    decode = 1.0 / gamma
     # Build a lookup table for decoding; convert from pixel values to linear
     # space:
-    sourcef = 1.0/sourcemaxval
-    incode = [sourcef * v for v in range(sourcemaxval+1)]
+    sourcef = 1.0 / sourcemaxval
+    incode = [sourcef * v for v in range(sourcemaxval + 1)]
     if decode != 1.0:
-        incode = [v**decode for v in incode]
+        incode = [v ** decode for v in incode]
     # Could be different, later on.  targetdecode is the assumed gamma
     # that is going to be used to decoding the target PNG.  It is the
     # reciprocal of the exponent that we use to encode the target PNG.
@@ -90,30 +98,31 @@ def dither(out, input,
     if targetgamma is None:
         targetdecode = decode
     else:
-        targetdecode = 1.0/targetgamma
+        targetdecode = 1.0 / targetgamma
     # The table we use for encoding (creating the target PNG), still
     # maps from pixel value to linear space, but we use it inverted, by
     # searching through it with bisect.
-    targetf = 1.0/maxval
-    outcode = [targetf * v for v in range(maxval+1)]
+    targetf = 1.0 / maxval
+    outcode = [targetf * v for v in range(maxval + 1)]
     if targetdecode != 1.0:
-        outcode = [v**targetdecode for v in outcode]
+        outcode = [v ** targetdecode for v in outcode]
     # The table used for choosing output codes.  These values represent
     # the cutoff points between two adjacent output codes.
     choosecode = list(zip(outcode[1:], outcode))
     p = cutoff
-    choosecode = [x[0]*p+x[1]*(1.0-p) for x in choosecode]
+    choosecode = [x[0] * p + x[1] * (1.0 - p) for x in choosecode]
+
     def iterdither():
         # Errors diffused downwards (into next row)
-        ed = [0.0]*width
+        ed = [0.0] * width
         flipped = False
         for row in pixels:
             row = [incode[v] for v in row]
-            row = [e + v for e,v in zip(ed, row)]
+            row = [e + v for e, v in zip(ed, row)]
             if flipped:
                 row = row[::-1]
             targetrow = [0] * width
-            for i,v in enumerate(row):
+            for i, v in enumerate(row):
                 # Clamp.  Necessary because previously added errors may take
                 # v out of range.
                 v = max(0.0, min(v, 1.0))
@@ -125,22 +134,23 @@ def dither(out, input,
                 err = v - t
                 # Sierra "Filter Lite" distributes          * 2
                 # as per this diagram.                    1 1
-                ef = err/2.0
+                ef = err / 2.0
                 # :todo: consider making rows one wider at each end and
                 # removing "if"s
-                if i+1 < width:
-                    row[i+1] += ef
+                if i + 1 < width:
+                    row[i + 1] += ef
                 ef /= 2.0
                 ed[i] = ef
                 if i:
-                    ed[i-1] += ef
+                    ed[i - 1] += ef
             if flipped:
                 ed = ed[::-1]
                 targetrow = targetrow[::-1]
             yield targetrow
             flipped = not flipped
-    info['bitdepth'] = bitdepth
-    info['gamma'] = 1.0/targetdecode
+
+    info["bitdepth"] = bitdepth
+    info["gamma"] = 1.0 / targetdecode
     w = png.Writer(**info)
     w.write(out, iterdither())
 
@@ -159,19 +169,32 @@ def main(argv=None):
     progname, *args = argv
 
     parser.add_argument("--bitdepth", type=int, default=1, help="bitdepth of output")
-    parser.add_argument("--cutoff", type=float, default=0.75, help="cutoff to select adjacent output values")
-    parser.add_argument("--defaultgamma", type=float,
-    default=1.0, help="gamma value to use when no gamma in input")
-    parser.add_argument("--linear", type=bool,
-      help="force linear input")
-    parser.add_argument("--targetgamma", type=float,
-      help="gamma to use in output (target), defaults to input gamma")
-    parser.add_argument("input", nargs="?", default="-", type=png.cli_open)
+    parser.add_argument(
+        "--cutoff",
+        type=float,
+        default=0.75,
+        help="cutoff to select adjacent output values",
+    )
+    parser.add_argument(
+        "--defaultgamma",
+        type=float,
+        default=1.0,
+        help="gamma value to use when no gamma in input",
+    )
+    parser.add_argument("--linear", type=bool, help="force linear input")
+    parser.add_argument(
+        "--targetgamma",
+        type=float,
+        help="gamma to use in output (target), defaults to input gamma",
+    )
+    parser.add_argument(
+        "input", nargs="?", default="-", type=png.cli_open, metavar="PNG"
+    )
 
     ns = parser.parse_args(args)
 
     return dither(png.binary_stdout(), **vars(ns))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

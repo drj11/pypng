@@ -226,7 +226,14 @@ def parse_args(args):
         metavar="level",
         help="zlib compression level (0-9)",
     )
-    parser.add_argument("file", help="input PAM/PNM file to convert")
+    parser.add_argument(
+        "input",
+        nargs="?",
+        default="-",
+        type=png.cli_open,
+        metavar="PAM/PNM",
+        help="input PAM/PNM file to convert",
+    )
     args = parser.parse_args(args)
     return args
 
@@ -238,7 +245,7 @@ def main(argv=None):
     args = parse_args(argv[1:])
 
     # Prepare input and output files
-    infile = png.cli_open(args.file)
+    infile = args.input
 
     # Call after parsing, so that --version and --help work.
     outfile = png.binary_stdout()

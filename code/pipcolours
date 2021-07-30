@@ -50,16 +50,16 @@ def jasc_colours(out, inp):
     print("0100", file=out)
 
     if "palette" in info:
-        print(len(info['palette']), file=out)
-        for pixel in info['palette']:
+        print(len(info["palette"]), file=out)
+        for pixel in info["palette"]:
             print(*pixel, file=out)
         return
 
     rows, info = unique_colours(rows, info)
-    planes = info['planes']
-    bitdepth = info['bitdepth']
+    planes = info["planes"]
+    bitdepth = info["bitdepth"]
 
-    row, = rows
+    (row,) = rows
     n = len(row) // planes
     print(n, file=out)
     for pixel in png.group(row, planes):
@@ -156,18 +156,19 @@ def main(argv=None):
     parser.add_argument("--version", action="version", version=version)
     parser.add_argument("--jasc", action="store_true")
     parser.add_argument("--count", action="store_true")
-    parser.add_argument("input", default="-", metavar="PNG")
+    parser.add_argument(
+        "input", nargs="?", default="-", type=png.cli_open, metavar="PNG"
+    )
 
     args = parser.parse_args(argv)
-    input = png.cli_open(args.input)
 
     if args.count:
-        return jasc_counts(sys.stdout, input)
+        return jasc_counts(sys.stdout, args.input)
     if args.jasc:
-        return jasc_colours(sys.stdout, input)
+        return jasc_colours(sys.stdout, args.input)
 
     out = png.binary_stdout()
-    return png_colours(out, input)
+    return png_colours(out, args.input)
 
 
 if __name__ == "__main__":

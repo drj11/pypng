@@ -82,15 +82,15 @@ def main(argv=None):
     import argparse
 
     parser = argparse.ArgumentParser(description="Convert PNG to PAM")
-    parser.add_argument("png", nargs="?", default="-")
     parser.add_argument("--plain", type=bool)
+    parser.add_argument(
+        "input", nargs="?", default="-", type=png.cli_open, metavar="PNG"
+    )
 
     args = parser.parse_args()
 
-    inp = png.cli_open(args.png)
-
     # Encode PNG to PNM (or PAM)
-    image = png.Reader(file=inp)
+    image = png.Reader(file=args.input)
     _, _, rows, info = image.asDirect()
     write_pnm(png.binary_stdout(), args.plain, rows, info)
 
