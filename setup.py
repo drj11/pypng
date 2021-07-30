@@ -44,6 +44,7 @@ https://pypng.readthedocs.io/en/latest/
     py_modules=['png'],
     scripts=[
         "code/prichunkpng",
+        "code/priditherpng",
         "code/priforgepng",
         "code/prigreypng",
         "code/pripalpng",
