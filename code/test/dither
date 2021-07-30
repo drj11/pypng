@@ -1,0 +1,8 @@
+#!/bin/sh
+
+PATH=${PWD%code*}code:$PATH
+
+priforgepng -s 8 glr |
+priditherpng |
+pripngtopam --plain - |
+grep -q '0 *1'
