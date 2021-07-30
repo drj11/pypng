@@ -9,6 +9,7 @@
 # http://www.python.org/doc/2.4.4/lib/module-bisect.html
 from bisect import bisect_left
 
+
 import png
 
 
@@ -136,14 +137,15 @@ def dither(
                 targetrow[i] = it
                 # err is the error that needs distributing.
                 err = v - t
+
                 # Sierra "Filter Lite" distributes          * 2
                 # as per this diagram.                    1 1
-                ef = err / 2.0
+                ef = err * 0.5
                 # :todo: consider making rows one wider at each end and
                 # removing "if"s
                 if i + 1 < width:
                     row[i + 1] += ef
-                ef /= 2.0
+                ef *= 0.5
                 ed[i] = ef
                 if i:
                     ed[i - 1] += ef
