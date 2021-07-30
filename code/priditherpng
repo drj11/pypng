@@ -117,45 +117,12 @@ def dither(
     p = cutoff
     choosecode = [x[0] * p + x[1] * (1.0 - p) for x in choosecode]
 
-    def iterdither():
-        # Errors diffused downwards (into next row)
-        ed = [0.0] * width
-        flipped = False
-        for row in pixels:
-            row = [incode[v] for v in row]
-            row = [e + v for e, v in zip(ed, row)]
-            if flipped:
-                row = row[::-1]
-            targetrow = [0] * width
-            for i, v in enumerate(row):
-                # `it` will be the index of the chosen target colour;
-                it = bisect_left(choosecode, v)
-                t = outcode[it]
-                targetrow[i] = it
-                # err is the error that needs distributing.
-                err = v - t
-
-                # Sierra "Filter Lite" distributes          * 2
-                # as per this diagram.                    1 1
-                ef = err * 0.5
-                # :todo: consider making rows one wider at each end and
-                # removing "if"s
-                if i + 1 < width:
-                    row[i + 1] += ef
-                ef *= 0.5
-                ed[i] = ef
-                if i:
-                    ed[i - 1] += ef
-            if flipped:
-                ed = ed[::-1]
-                targetrow = targetrow[::-1]
-            yield targetrow
-            flipped = not flipped
+    dithered_rows = run_dither(incode, choosecode, outcode, width, pixels)
 
     info["bitdepth"] = bitdepth
     info["gamma"] = 1.0 / targetdecode
     w = png.Writer(**info)
-    w.write(out, iterdither())
+    w.write(out, dithered_rows)
 
 
 def build_decode_table(maxval, gamma):
@@ -171,6 +138,52 @@ def build_decode_table(maxval, gamma):
     if gamma != 1.0:
         table = [v ** gamma for v in table]
     return table
+
+
+def run_dither(incode, choosecode, outcode, width, rows):
+    """
+    Run an serpentine dither.
+    Using the incode and choosecode tables.
+    """
+
+    # Errors diffused downwards (into next row)
+    ed = [0.0] * width
+    flipped = False
+    for row in rows:
+        # Convert to linear...
+        row = [incode[v] for v in row]
+        # Add errors...
+        row = [e + v for e, v in zip(ed, row)]
+
+        if flipped:
+            row = row[::-1]
+        targetrow = [0] * width
+
+        for i, v in enumerate(row):
+            # `it` will be the index of the chosen target colour;
+            it = bisect_left(choosecode, v)
+            targetrow[i] = it
+            t = outcode[it]
+            # err is the error that needs distributing.
+            err = v - t
+
+            # Sierra "Filter Lite" distributes          * 2
+            # as per this diagram.                    1 1
+            ef = err * 0.5
+            # :todo: consider making rows one wider at each end and
+            # removing "if"s
+            if i + 1 < width:
+                row[i + 1] += ef
+            ef *= 0.5
+            ed[i] = ef
+            if i:
+                ed[i - 1] += ef
+
+        if flipped:
+            ed = ed[::-1]
+            targetrow = targetrow[::-1]
+        yield targetrow
+        flipped = not flipped
 
 
 def main(argv=None):
