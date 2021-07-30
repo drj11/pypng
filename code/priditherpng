@@ -19,7 +19,7 @@ def dither(
     linear=False,
     defaultgamma=1.0,
     targetgamma=None,
-    cutoff=0.75,
+    cutoff=0.5,  # see :cutoff:default
 ):
     """Dither the input PNG `inp` into an image with a smaller bit depth
     and write the result image onto `out`.  `bitdepth` specifies the bit
@@ -106,8 +106,17 @@ def dither(
     outcode = [targetf * v for v in range(maxval + 1)]
     if targetdecode != 1.0:
         outcode = [v ** targetdecode for v in outcode]
+
     # The table used for choosing output codes.  These values represent
     # the cutoff points between two adjacent output codes.
+    # The cutoff parameter can be varied between 0 and 1 to
+    # preferentially choose lighter (when cutoff > 0.5) or
+    # darker (when cutoff < 0.5) values.
+    # :cutoff:default: The default for this used to be 0.75, but
+    # testing by drj on 2021-07-30 showed that this produces
+    # banding when dithering left-to-right gradients;
+    # test with:
+    # priforgepng grl | priditherpng | kitty icat
     choosecode = list(zip(outcode[1:], outcode))
     p = cutoff
     choosecode = [x[0] * p + x[1] * (1.0 - p) for x in choosecode]
@@ -172,7 +181,7 @@ def main(argv=None):
     parser.add_argument(
         "--cutoff",
         type=float,
-        default=0.75,
+        default=0.5,
         help="cutoff to select adjacent output values",
     )
     parser.add_argument(
