@@ -117,7 +117,9 @@ def dither(
     p = cutoff
     choosecode = [x[0] * p + x[1] * (1.0 - p) for x in choosecode]
 
-    dithered_rows = run_dither(incode, choosecode, outcode, width, pixels)
+    rows = repeat_header(pixels)
+    dithered_rows = run_dither(incode, choosecode, outcode, width, rows)
+    dithered_rows = remove_header(dithered_rows)
 
     info["bitdepth"] = bitdepth
     info["gamma"] = 1.0 / targetdecode
@@ -184,6 +186,27 @@ def run_dither(incode, choosecode, outcode, width, rows):
             targetrow = targetrow[::-1]
         yield targetrow
         flipped = not flipped
+
+
+WARMUP_ROWS = 32
+
+
+def repeat_header(rows):
+    """Repeat the first row, to "warm up" the error register."""
+    for row in rows:
+        yield row
+        for _ in range(WARMUP_ROWS):
+            yield row
+        break
+    yield from rows
+
+
+def remove_header(rows):
+    """Remove the same number of rows that repeat_header added."""
+
+    for _ in range(WARMUP_ROWS):
+        next(rows)
+    yield from rows
 
 
 def main(argv=None):
