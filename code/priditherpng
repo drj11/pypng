@@ -65,15 +65,10 @@ def dither(
 
     maxval = 2 ** bitdepth - 1
     r = png.Reader(file=input)
-    # If image gamma is 1 or gamma is not present and we are assuming a
-    # value of 1, then it is faster to pass a maxval parameter to
-    # asFloat (the multiplications get combined).  With gamma, we have
-    # to have the pixel values from 0.0 to 1.0 (as long as we are doing
-    # gamma correction here).
-    # Slightly annoyingly, we don't know the image gamma until we've
-    # called asFloat().
+
     _, _, pixels, info = r.asDirect()
     planes = info["planes"]
+    # :todo: make an Exception
     assert planes == 1
     width = info["size"][0]
     sourcemaxval = 2 ** info["bitdepth"] - 1
@@ -81,6 +76,7 @@ def dither(
         gamma = 1
     else:
         gamma = info.get("gamma") or defaultgamma
+
     # Convert gamma from encoding gamma to the required power for
     # decoding.
     decode = 1.0 / gamma
@@ -90,6 +86,7 @@ def dither(
     incode = [sourcef * v for v in range(sourcemaxval + 1)]
     if decode != 1.0:
         incode = [v ** decode for v in incode]
+
     # Could be different, later on.  targetdecode is the assumed gamma
     # that is going to be used to decoding the target PNG.  It is the
     # reciprocal of the exponent that we use to encode the target PNG.
