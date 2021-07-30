@@ -72,30 +72,37 @@ def dither(
     assert planes == 1
     width = info["size"][0]
     sourcemaxval = 2 ** info["bitdepth"] - 1
+
     if linear:
         gamma = 1
     else:
         gamma = info.get("gamma") or defaultgamma
 
-    # Convert gamma from encoding gamma to the required power for
-    # decoding.
+    # Build tables from map from PNG pixel value (a small
+    # integer) to linear light level, for both input and output.
+
+    # `gamma` (whether it was obtained from the input file or an
+    # assumed value) is the encoding gamma.
+    # We need the decoding gamma, which is the reciprocal.
     decode = 1.0 / gamma
-    # Build a lookup table for decoding; convert from pixel values to linear
-    # space:
+
+    # `targetdecode` is the assumed gamma that is going to be used
+    # to decoding the target PNG.
+    # Note that even though we will _encode_ the target PNG we
+    # still need the decoding gamma, because
+    # the table we use maps from PNG pixel value to linear light level.
+    if targetgamma is None:
+        targetdecode = decode
+    else:
+        targetdecode = 1.0 / targetgamma
+
+    # Build a lookup table for decoding;
+    # convert from pixel values to linear space:
     sourcef = 1.0 / sourcemaxval
     incode = [sourcef * v for v in range(sourcemaxval + 1)]
     if decode != 1.0:
         incode = [v ** decode for v in incode]
 
-    # Could be different, later on.  targetdecode is the assumed gamma
-    # that is going to be used to decoding the target PNG.  It is the
-    # reciprocal of the exponent that we use to encode the target PNG.
-    # This is the value that we need to build our table that we use for
-    # converting from linear to target colour space.
-    if targetgamma is None:
-        targetdecode = decode
-    else:
-        targetdecode = 1.0 / targetgamma
     # The table we use for encoding (creating the target PNG), still
     # maps from pixel value to linear space, but we use it inverted, by
     # searching through it with bisect.
