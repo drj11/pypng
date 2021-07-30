@@ -82,7 +82,7 @@ def main(argv=None):
     import argparse
 
     parser = argparse.ArgumentParser(description="Convert PNG to PAM")
-    parser.add_argument("--plain", type=bool)
+    parser.add_argument("--plain", action="store_true")
     parser.add_argument(
         "input", nargs="?", default="-", type=png.cli_open, metavar="PNG"
     )

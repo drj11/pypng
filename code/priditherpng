@@ -235,7 +235,7 @@ def main(argv=None):
         default=1.0,
         help="gamma value to use when no gamma in input",
     )
-    parser.add_argument("--linear", type=bool, help="force linear input")
+    parser.add_argument("--linear", action="store_true", help="force linear input")
     parser.add_argument(
         "--targetgamma",
         type=float,
