@@ -78,8 +78,8 @@ def dither(
     else:
         gamma = info.get("gamma") or defaultgamma
 
-    # Build tables from map from PNG pixel value (a small
-    # integer) to linear light level, for both input and output.
+    # Calculate an effective gamma for input and output;
+    # then build tables using those.
 
     # `gamma` (whether it was obtained from the input file or an
     # assumed value) is the encoding gamma.
@@ -96,20 +96,11 @@ def dither(
     else:
         targetdecode = 1.0 / targetgamma
 
-    # Build a lookup table for decoding;
-    # convert from pixel values to linear space:
-    sourcef = 1.0 / sourcemaxval
-    incode = [sourcef * v for v in range(sourcemaxval + 1)]
-    if decode != 1.0:
-        incode = [v ** decode for v in incode]
+    incode = build_decode_table(sourcemaxval, decode)
 
-    # The table we use for encoding (creating the target PNG), still
-    # maps from pixel value to linear space, but we use it inverted, by
-    # searching through it with bisect.
-    targetf = 1.0 / maxval
-    outcode = [targetf * v for v in range(maxval + 1)]
-    if targetdecode != 1.0:
-        outcode = [v ** targetdecode for v in outcode]
+    # For encoding, we still build a decode table, because we
+    # use it inverted (searching with bisect).
+    outcode = build_decode_table(maxval, targetdecode)
 
     # The table used for choosing output codes.  These values represent
     # the cutoff points between two adjacent output codes.
@@ -166,6 +157,21 @@ def dither(
     info["gamma"] = 1.0 / targetdecode
     w = png.Writer(**info)
     w.write(out, iterdither())
+
+
+def build_decode_table(maxval, gamma):
+    """Build a lookup table for decoding;
+    table converts from pixel values to linear space.
+    """
+
+    assert maxval == int(maxval)
+    assert maxval > 0
+
+    f = 1.0 / maxval
+    table = [f * v for v in range(maxval + 1)]
+    if gamma != 1.0:
+        table = [v ** gamma for v in table]
+    return table
 
 
 def main(argv=None):
