@@ -6,6 +6,10 @@ These modified instructions have not yet been tested.
 We build a wheel file, then upload it to PyPI.
 
 You'll need `pip` and `twine`.
+This document cannot describe any detailed method for installing `pip`,
+but I recommend using `conda` or `brew` to get Python and pip
+together.
+`twine` can be installed with `python -m pip install twine`.
 
 At top-level...
 
