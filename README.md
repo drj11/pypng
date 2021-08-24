@@ -75,7 +75,7 @@ specified.
 `priditherpng` command line tool standardised and
 converted to Python 3.
 
-Better errors messages when you write the wrong number of rows.
+Better error messages when you write the wrong number of rows.
 
 
 ### Release 0.0.20
