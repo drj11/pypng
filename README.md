@@ -67,6 +67,9 @@ Some of the ancillary tools are modified to work on Python 3.
 to add a `pHYs` chunk, which allows the intended pixel size to be
 specified.
 
+`priditherpng` command line tool standardised and
+converted to Python 3.
+
 Better errors messages when you write the wrong number of rows.
 
 
