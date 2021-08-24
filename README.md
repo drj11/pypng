@@ -35,16 +35,21 @@ To install PyPNG package via pip use:
 
     pip install pypng
 
-PyPNG comes with a `setup.py` script to use with `distutils`.
-After unpacking the distribution,
+PyPNG uses `setup.cfg` (and `pyproject.toml`) to use with
+`setuptools`.
+
+It can therefore be installed with a suitable version of `pip`
+from the (version controlled) sources:
+
 `cd` into the directory and execute the command:
 
-    python setup.py install
+    pip install .
 
 The `png` module will be installed;
 `import png` will allow you to use it from your Python programs.
 
-Alternatively, you can copy `code/png.py` wherever you like.
+Installation tools are not needed to install PyPNG.
+You can copy `code/png.py` wherever you like.
 It's intended that you can copy `png.py` into
 your application and distribute it.
 The following `curl` command should copy the latest version into
