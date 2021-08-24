@@ -1,7 +1,11 @@
 Release Procedure
 =================
 
-You'll need Docker. And twine.
+These modified instructions have not yet been tested.
+
+We build a wheel file, then upload it to PyPI.
+
+You'll need `pip` and `twine`.
 
 At top-level...
 
@@ -35,7 +39,7 @@ Make a clean clone:
 
 Run the shell script that drives Docker:
 
-    sh dock.sh
+    pip wheel .
 
 It's possible at this point that you might want to smoke-test the actual
 release binary.  Let's assume that the release binary is good to go.
@@ -49,11 +53,17 @@ the `dist/` directory in the original `pypng` directory.
 
     ls dist
 
-Where does documentation go? (pythonhosted no longer host)
+(which it won't have done)
+
+Documentation magically appears on ReadTheDocs.
+In some previous versions, docker was used to build the
+documentation which was bundled into an `sdist`.
+
+    sphinx-build -N -d sphinx-crud -a man html
 
 Upload to PyPI:
 
-    twine upload dist/*.tar.gz
+    twine upload *.whl?
 
 (If it complains about "you must be identified" then use
 "python setup.py register" first)
