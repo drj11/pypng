@@ -83,7 +83,7 @@ Better error messages when you write the wrong number of rows.
 
 Support for earlier versions of Python is dropped.
 Python 3.4 and onwards are supported.
-Python 2.7 also works, but this is intended to be the last
+Python 2.7 also works, but this is the last
 release to support any version of Python 2.
 
 Cython code is removed, which simplifies the implementation.
@@ -94,6 +94,7 @@ Changed the default for `png.Writer` to be greyscale.
 
 Removed 3D support from `.from_array()`.
 
+
 ### Release 0.0.19
 
 Support for earlier versions of Python is dropped in order to
@@ -103,7 +104,7 @@ From the 2.x series only Python 2.6 and 2.7 are supported.
 
 Code cleaned.
 Tests renamed and more organised.
-Generally Flake 8 complient.
+Generally Flake 8 compliant.
 Fewer special cases for ancient versions of Python.
 
 The row length is checked when writing PNG files.
@@ -193,7 +194,7 @@ Compatible with nose: `nosetests png.py` now works.
 
 Allow any "file-like" object as an input.
 
-Handle newlines in texttopng.
+Handle newlines in `texttopng`.
 
 
 ### Release 0.0.15
@@ -305,6 +306,7 @@ The following issues have been fixed:
   Issue 51:  piprgb and pipasgrey fail for color mapped images.
   Issue 52:  Some inputs cause infinite loop.
 
+
 ### Release 0.0.7
 
 Better documentation (in `html/ex.html` mostly) for NumPy integration.
@@ -313,6 +315,7 @@ The following issues have been fixed:
 
   Issue 46:  Unclear how to get PNG pixel data into and out of NumPy.
 
+
 ### Release 0.0.6
 
 NumPy integer types now work.
@@ -320,6 +323,7 @@ NumPy integer types now work.
 The following issues have been fixed:
 
   Issue 44:  Cannot use numpy.uint16 for pixel values.
+
 
 ### Release 0.0.5
 
@@ -331,6 +335,7 @@ The following issues have been fixed:
 
   Issue 28:  Does not add sBIT chunk.
   Issue 36:  Ignores sBIT chunk when present.
+
 
 ### Release 0.0.4
 
@@ -344,6 +349,7 @@ The following issues have been fixed:
   Issue 32:  Does not accept packed data.
   Issue 33:  Cannot create greyscale PNG with transparency.
   Issue 35:  Does not work on Python 2.2.
+
 
 ### Release 0.0.3
 
@@ -359,6 +365,7 @@ The following issues have been fixed:
   Issue 26:  asRGBA8 method crashes out for color type 2 images.
   Issue 27:  Fails on Python 2.3.
 
+
 ### Release 0.0.2
 
 Lickable HTML documentation is now provided (see the html/ directory),
@@ -371,6 +378,7 @@ The following issues have been fixed:
   Issue 19: Bogus message for PNM inputs with unsupported maxval
   Issue 20: Cannot write large PNG files
 
+
 ### Release 0.0.1
 
 Stuff happened.
@@ -379,8 +387,8 @@ Stuff happened.
 ## MANIFEST
 
 - .../ - top-level crud (like this README, and setup.py).
+- .../asset - assets (needed for testing)
 - .../code/ - the Python code.
-- .../html/ - lickable manuals (generated).
 - .../man/ - manuals (in source/plain-text).
 - .../proc/ - documented procedures (release procedure).
 
@@ -389,3 +397,5 @@ Stuff happened.
 
 - Python: www.python.org
 - PNG: http://www.w3.org/TR/PNG/
+
+## END
