@@ -3,7 +3,8 @@ Release Procedure
 
 These modified instructions have not yet been tested.
 
-We build a wheel file, then upload it to PyPI.
+We build a wheel file (with `pip`),
+then upload it to PyPI (with `twine`).
 
 You'll need `pip` and `twine`.
 This document cannot describe any detailed method for installing `pip`,
@@ -13,7 +14,8 @@ together.
 
 At top-level...
 
-Edit ``code/png.py`` for new version number.  Then ``git commit`` this.
+Edit ``code/png.py`` and ``setup.cfg`` for new version number.
+Then ``git commit`` this.
 
 Get release notes into ``README.md`` somehow.
 
@@ -21,7 +23,7 @@ Get the latest git change hash::
 
     git log -n1 | sed q
 
-Set the PYPNG_VERSION variable (extracted from `code/png.py`):
+Set the `PYPNG_VERSION` variable (extracted from `code/png.py`):
 
     . ./pypng-version
 
@@ -41,7 +43,7 @@ Make a clean clone:
     git clone pypng pypng-$PYPNG_VERSION
     cd pypng-$PYPNG_VERSION
 
-Run the shell script that drives Docker:
+Build a wheel file:
 
     pip wheel .
 
@@ -67,9 +69,10 @@ documentation which was bundled into an `sdist`.
 
 Upload to PyPI:
 
-    twine upload *.whl?
+    twine upload *.whl
 
 (If it complains about "you must be identified" then use
-"python setup.py register" first)
+"python setup.py register" first; unlikely to work since i
+deleted setup.py)
 
 Make a record in ``release/index.txt``
