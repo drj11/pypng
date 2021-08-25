@@ -69,14 +69,33 @@ Some of the ancillary tools are modified to work on Python 3.
 
 Installs via wheel files.
 
-`prichunkpng` command line tool now has a new `--physical` option
-to add a `pHYs` chunk, which allows the intended pixel size to be
-specified.
+`prichunkpng` command line tool now has some new options to add
+chunks:
+- `--iccprofile` to add a `iCCP` chunk (ICC Profile);
+- `--physical` to add a `pHYs` chunk,
+  specifying the intended pixel size;
+- `--sigbit` to add a `sBIT` chunk,
+  specifying the encoded significant bits;
+- `--transparent` to add a `tRNS` chunk,
+  specifying the transparent colour.
 
 `priditherpng` command line tool standardised and
 converted to Python 3.
 
+`pripngtopam` tool now has a `--plain` option to output plan PGM
+and PPM formats. The `topam` part of the name is a bit of a
+misnomer: when possible (L and RGB PNG files) the tool will
+output either a PGM (grey) or a PPM (RGB) file. Essentially all
+tools that can process a PAM file can also process a PGM or a
+PPM file. PAM files cannot be _plain_ so using the option
+will raise an error in the case where a true PAM file is
+written.
+
 Better error messages when you write the wrong number of rows.
+
+(Slightly experimentally) running the `png` module as a command
+line tool, with `python -m png`, will report the version and
+file location of the `png` module.
 
 
 ### Release 0.0.20
