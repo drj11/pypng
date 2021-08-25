@@ -35,11 +35,12 @@ To install PyPNG package via pip use:
 
     pip install pypng
 
-PyPNG uses `setup.cfg` (and `pyproject.toml`) to use with
-`setuptools`.
+You can also use `setuptools` to install from source;
+PyPNG uses `setup.cfg` and `pyproject.toml` to record its
+configuration.
 
-It can therefore be installed with a suitable version of `pip`
-from the (version controlled) sources:
+To install from (version controlled) sources using a suitable
+version of `pip`:
 
 `cd` into the directory and execute the command:
 
@@ -48,7 +49,7 @@ from the (version controlled) sources:
 The `png` module will be installed;
 `import png` will allow you to use it from your Python programs.
 
-Installation tools are not needed to install PyPNG.
+PyPNG is so simple, that you don't need installation tools.
 You can copy `code/png.py` wherever you like.
 It's intended that you can copy `png.py` into
 your application and distribute it.
@@ -67,6 +68,8 @@ your current directory:
 Support for Python 2 is dropped.
 Python 3.5 and onwards are supported.
 Some of the ancillary tools are modified to work on Python 3.
+
+Installs via wheel files.
 
 `prichunkpng` command line tool now has a new `--physical` option
 to add a `pHYs` chunk, which allows the intended pixel size to be
