@@ -2336,8 +2336,9 @@ def cli_open(path):
 def main(argv):
     """
     Run command line PNG.
+    Which reports version.
     """
-    print("What should the command line tool do?", file=sys.stderr)
+    print(__version__, __file__)
 
 
 if __name__ == '__main__':
