@@ -61,7 +61,7 @@ your current directory:
 
 (For issues see https://github.com/drj11/pypng/issues?state=open )
 
-### Release 0.0.21 (not released yet)
+### Release 0.0.21
 
 Support for Python 2 is dropped.
 Python 3.5 and onwards are supported.
