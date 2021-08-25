@@ -1,0 +1,6 @@
+# from https://web.archive.org/web/20210825105330/https://tox.readthedocs.io/en/latest/example/package.html
+[build-system]
+requires = [
+    "setuptools >= 35.0.2",
+]
+build-backend = "setuptools.build_meta"
