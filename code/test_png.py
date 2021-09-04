@@ -1178,7 +1178,7 @@ class Test(unittest.TestCase):
         )
 
     def test_palette_transparent(self):
-        """Palette is incompatible with transarent."""
+        """Palette is incompatible with transparent."""
         self.assertRaises(
             png.ProtocolError,
             png.Writer,
