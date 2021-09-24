@@ -346,7 +346,7 @@ class ChunkError(FormatError):
 
 
 class Default:
-    """The default for the greyscale paramter."""
+    """The default for the greyscale parameter."""
 
 
 class Writer:
@@ -500,10 +500,10 @@ class Writer:
         Values from 1 to 9 (highest) specify compression.
         0 means no compression.
         -1 and ``None`` both mean that the ``zlib`` module uses
-        the default level of compession (which is generally acceptable).
+        the default level of compression (which is generally acceptable).
 
         If `interlace` is true then an interlaced image is created
-        (using PNG's so far only interace method, *Adam7*).
+        (using PNG's so far only interlace method, *Adam7*).
         This does not affect how the pixels should be passed in,
         rather it changes how they are arranged into the PNG file.
         On slow connexions interlaced images can be
