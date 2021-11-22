@@ -67,14 +67,10 @@ def read_pnm_header(infile):
     # Generally, see http://netpbm.sourceforge.net/doc/ppm.html
     # and http://netpbm.sourceforge.net/doc/pam.html
 
-    supported = (b"P5", b"P6", b"P7")
-
     # Technically 'P7' must be followed by a newline,
     # so by using rstrip() we are being liberal in what we accept.
     # I think this is acceptable.
     type = infile.read(3).rstrip()
-    if type not in supported:
-        raise NotImplementedError("file format %s not supported" % type)
     if type == b"P7":
         # PAM header parsing is completely different.
         return read_pam_header(infile)
@@ -252,6 +248,10 @@ def main(argv=None):
 
     # Encode PNM to PNG
     format, width, height, depth, maxval = read_pnm_header(infile)
+
+    ok_formats = (b"P5", b"P6", b"P7")
+    if format not in ok_formats:
+        raise NotImplementedError("file format %s not supported" % format)
 
     # The NetPBM depth (number of channels) completely
     # determines the PNG format.
