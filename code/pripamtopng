@@ -10,6 +10,8 @@ import sys
 
 import png
 
+Description = """Convert NetPBM PAM/PNM format files to PNG."""
+
 
 def read_pam_header(infile):
     """
@@ -270,7 +272,7 @@ def parse_args(args):
     """
     from argparse import ArgumentParser
 
-    parser = ArgumentParser()
+    parser = ArgumentParser(description=Description)
     version = "%(prog)s " + png.__version__
     parser.add_argument("--version", action="version", version=version)
     parser.add_argument(
