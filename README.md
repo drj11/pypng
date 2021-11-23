@@ -61,6 +61,11 @@ your current directory:
 
 (For issues see https://github.com/drj11/pypng/issues?state=open )
 
+### Release (the next)
+
+Support for plain PGM files (magic number P2) added to `pripamtopng`.
+
+
 ### Release 0.0.21
 
 Support for Python 2 is dropped.

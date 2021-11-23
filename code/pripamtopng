@@ -163,7 +163,65 @@ def read_pnm_header(infile):
     return header[0], header[1], header[2], depth, header[3]
 
 
-def convert_pnm(w, infile, outfile):
+def convert_pnm_plain(w, infile, outfile):
+    """
+    Convert a plain PNM file containing raw pixel data into
+    a PNG file with the parameters set in the writer object.
+    Works for plain PGM formats.
+    """
+
+    # See convert_pnm_binary for the corresponding function for
+    # binary PNM formats.
+
+    rows = scan_rows_from_file_plain(infile, w.width, w.height, w.planes)
+    w.write(outfile, rows)
+
+
+def scan_rows_from_file_plain(infile, width, height, planes):
+    """
+    Generate a sequence of rows from the input file `infile`.
+    The input file should be in a "Netpbm-like" plain format.
+    The input file should be positioned at the beginning of the
+    first value (that is, immediately after the header).
+    The number of pixels to read is taken from
+    the image dimensions (`width`, `height`, `planes`).
+
+    Each row is yielded as a single sequence of values.
+    """
+
+    # Values per row
+    vpr = width * planes
+
+    values = []
+    rows_output = 0
+
+    # The core problem is that input lines (text lines) may not
+    # correspond with pixel rows. We use two nested loops.
+    # The outer loop reads the input one text line at a time;
+    # this will contain a whole number of values, which are
+    # added to the `values` list.
+    # The inner loop strips the first `vpr` values from the
+    # list, until there aren't enough.
+    # Note we can't tell how many iterations the inner loop will
+    # run for, it could be 0 (if not enough values were read to
+    # make a whole pixel row) or many (if the entire image were
+    # on one input line), or somewhere in between.
+    # In PNM there is in general no requirement to have
+    # correspondence between text lines and pixel rows.
+
+    for inp in infile:
+        values.extend(map(int, inp.split()))
+        while len(values) >= vpr:
+            yield values[:vpr]
+            del values[:vpr]
+            rows_output += 1
+            if rows_output >= height:
+                # Diagnostic here if there are spare values?
+                return
+    # Diagnostic here for early EOF?
+
+
+def convert_pnm_binary(w, infile, outfile):
     """
     Convert a PNM file containing raw pixel data into
     a PNG file with the parameters set in the writer object.
@@ -249,7 +307,7 @@ def main(argv=None):
     # Encode PNM to PNG
     format, width, height, depth, maxval = read_pnm_header(infile)
 
-    ok_formats = (b"P5", b"P6", b"P7")
+    ok_formats = (b"P2", b"P5", b"P6", b"P7")
     if format not in ok_formats:
         raise NotImplementedError("file format %s not supported" % format)
 
@@ -279,7 +337,12 @@ def main(argv=None):
         alpha=pamalpha,
         compression=args.compression,
     )
-    convert_pnm(writer, infile, outfile)
+
+    plain = format in (b"P1", b"P2", b"P3")
+    if plain:
+        convert_pnm_plain(writer, infile, outfile)
+    else:
+        convert_pnm_binary(writer, infile, outfile)
 
 
 if __name__ == "__main__":
