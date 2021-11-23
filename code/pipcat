@@ -6,6 +6,8 @@ import sys
 
 import png
 
+Description = """Concatenate PNG images left-to-right."""
+
 
 class FormatError(Exception):
     """
@@ -48,7 +50,16 @@ def cat(out, l):
     w.write(out, itercat())
 
 def main(argv):
-    return cat(png.binary_stdout(), [png.cli_open(n) for n in argv[1:]])
+    import argparse
+
+    parser = argparse.ArgumentParser(description=Description)
+    parser.add_argument(
+        "input", nargs="*", default="-", type=png.cli_open, metavar="PNG"
+    )
+
+    args = parser.parse_args()
+
+    return cat(png.binary_stdout(), args.input)
 
 if __name__ == '__main__':
     main(sys.argv)
