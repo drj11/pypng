@@ -1,0 +1,69 @@
+#!/usr/bin/env python
+
+# http://www.python.org/doc/2.4.4/lib/module-itertools.html
+import itertools
+import sys
+
+import png
+
+Description = """Join PNG images in a column top-to-bottom."""
+
+
+class FormatError(Exception):
+    """
+    Some problem with the image format.
+    """
+
+
+def join_col(out, l):
+    """
+    Join the list of images.
+    All input images must be same width and
+    have the same number of channels.
+    They are joined top-to-bottom.
+    `out` is the (open file) destination for the output image.
+    `l` should be a list of open files (the input image files).
+    """
+
+    l = [png.Reader(file=f) for f in l]
+
+    # Ewgh, side effects.
+    for r in l:
+        r.preamble()
+
+    # The reference width; from the first image.
+    width = l[0].width
+    # The total target height
+    height = 0
+    for i,r in enumerate(l):
+        if r.width != width:
+            raise FormatError('Image %d, width %d, does not match %d.' %
+              (i, r.width, width))
+        height += r.height
+
+    # Various bugs here because different numbers of channels and depths go wrong.
+    pixel, info = zip(*[r.asDirect()[2:4] for r in l])
+    tinfo = dict(info[0])
+    del tinfo['size']
+    w = png.Writer(width, height, **tinfo)
+
+    def iter_all_rows():
+        for im in pixel:
+            for row in im:
+                yield row
+    w.write(out, iter_all_rows())
+
+def main(argv):
+    import argparse
+
+    parser = argparse.ArgumentParser(description=Description)
+    parser.add_argument(
+        "input", nargs="*", default="-", type=png.cli_open, metavar="PNG"
+    )
+
+    args = parser.parse_args()
+
+    return join_col(png.binary_stdout(), args.input)
+
+if __name__ == '__main__':
+    main(sys.argv)
