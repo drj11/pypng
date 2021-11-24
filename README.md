@@ -61,7 +61,13 @@ your current directory:
 
 (For issues see https://github.com/drj11/pypng/issues?state=open )
 
+
 ### Release (the next)
+
+In a slightly breaking change to the API, empty files (or equivalently the
+end of the stream) when read with `.asDirect()`, `preamble()` or similar now
+raise `EOFError` (a builtin Python exception class) instead of `png.FormatError`
+which is still used for all other format errors.
 
 Add `prirowpng` tool to join PNG images in a row left-to-right
 (old internal `pipcat` tool).
