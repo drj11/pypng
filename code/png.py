@@ -1587,11 +1587,19 @@ class Reader:
         """
         If signature (header) has not been read then read and
         validate it; otherwise do nothing.
+        No signature (empty read()) will raise EOFError;
+        An invalid signature will raise FormatError.
+        EOFError is raised to make possible the case where
+        a program can read multiple PNG files from the same stream.
+        The end of the stream can be distinguished from non-PNG files
+        or corrupted PNG files.
         """
 
         if self.signature:
             return
         self.signature = self.file.read(8)
+        if len(self.signature) == 0:
+            raise EOFError("End of PNG stream.")
         if self.signature != signature:
             raise FormatError("PNG file has invalid signature.")
 

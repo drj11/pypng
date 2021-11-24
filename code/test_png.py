@@ -668,15 +668,15 @@ class Test(unittest.TestCase):
         w.write(BytesIO(), rows)
 
     # Invalid file format tests.  These construct various badly
-    # formatted PNG files, then feed them into a Reader.  When
-    # everything is working properly, we should get FormatError
-    # exceptions raised.
+    # formatted PNG files, then feed them into a Reader.
+    # Empty files raise EOFError,
+    # other problems (should) have FormatError exceptions raised.
 
     def test_empty(self):
         """Test empty file."""
 
         r = png.Reader(bytes=b"")
-        self.assertRaises(png.FormatError, r.asDirect)
+        self.assertRaises(EOFError, r.asDirect)
 
     def test_signature_only(self):
         """Test file containing just signature bytes."""
