@@ -63,7 +63,7 @@ your current directory:
 
 ### Release (the next)
 
-Add `pricatpng` tool to concatenate PNG images left-to-right
+Add `prirowpng` tool to join PNG images in a row left-to-right
 (old internal `pipcat` tool).
 
 Support for plain PGM files (magic number P2) added to `pripamtopng`.
