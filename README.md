@@ -69,8 +69,10 @@ end of the stream) when read with `.asDirect()`, `preamble()` or similar now
 raise `EOFError` (a builtin Python exception class) instead of `png.FormatError`
 which is still used for all other format errors.
 
-Add `prirowpng` tool to join PNG images in a row left-to-right
+New `prirowpng` tool to join PNG images in a row left-to-right
 (old internal `pipcat` tool).
+
+New `pricolpng` tool to join PNG images in a column top-to-bottom.
 
 Support for plain PGM files (magic number P2) added to `pripamtopng`.
 
