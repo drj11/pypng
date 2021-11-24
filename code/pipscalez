@@ -1,15 +1,31 @@
 #!/usr/bin/env python
 
+import array
+
 import png
 
-Description = """Enlarge an image by an integer factor horizontally and vertically."""
+Description = """Enlarge images by an integer factor horizontally and vertically."""
 
 
 def rescale(inp, out, xf, yf):
-    from array import array
+    while True:
+        r = png.Reader(file=inp)
+        try:
+            r.preamble()
+        except EOFError:
+            return
 
-    r = png.Reader(file=inp)
-    _, _, pixels, info = r.asDirect()
+        rescale_1(out, r, xf, yf)
+
+
+def rescale_1(out, im, xf, yf):
+    """Rescale a single PNG image, im,
+    and write it to the output stream out.
+    `xf` and `yf` give the x factor and y factor.
+    """
+
+    _, _, pixels, info = im.asDirect()
+
     typecode = "BH"[info["bitdepth"] > 8]
     planes = info["planes"]
 
@@ -20,8 +36,8 @@ def rescale(inp, out, xf, yf):
 
     def iterscale():
         for row in pixels:
-            bigrow = array(typecode, [0] * vpr)
-            row = array(typecode, row)
+            bigrow = array.array(typecode, [0] * vpr)
+            row = array.array(typecode, row)
             for c in range(planes):
                 channel = row[c::planes]
                 for i in range(xf):
