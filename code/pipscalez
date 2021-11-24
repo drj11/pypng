@@ -9,19 +9,20 @@ def rescale(inp, out, xf, yf):
     from array import array
 
     r = png.Reader(file=inp)
-    _, _, pixels, meta = r.asDirect()
-    typecode = "BH"[meta["bitdepth"] > 8]
-    planes = meta["planes"]
-    # We are going to use meta in the call to Writer, so expand the
-    # size.
-    x, y = meta["size"]
+    _, _, pixels, info = r.asDirect()
+    typecode = "BH"[info["bitdepth"] > 8]
+    planes = info["planes"]
+
+    # We are going to use info in the call to Writer, so expand the size.
+    x, y = info["size"]
     x *= xf
     y *= yf
-    meta["size"] = (x, y)
+    info["size"] = (x, y)
     del x
     del y
+
     # Values per row, target row.
-    vpr = meta["size"][0] * planes
+    vpr = info["size"][0] * planes
 
     def iterscale():
         for row in pixels:
@@ -34,7 +35,7 @@ def rescale(inp, out, xf, yf):
             for _ in range(yf):
                 yield bigrow
 
-    w = png.Writer(**meta)
+    w = png.Writer(**info)
     w.write(out, iterscale())
 
 
