@@ -13,13 +13,7 @@ def rescale(inp, out, xf, yf):
     typecode = "BH"[info["bitdepth"] > 8]
     planes = info["planes"]
 
-    # We are going to use info in the call to Writer, so expand the size.
-    x, y = info["size"]
-    x *= xf
-    y *= yf
-    info["size"] = (x, y)
-    del x
-    del y
+    resize(info, xf, yf)
 
     # Values per row, target row.
     vpr = info["size"][0] * planes
@@ -37,6 +31,15 @@ def rescale(inp, out, xf, yf):
 
     w = png.Writer(**info)
     w.write(out, iterscale())
+
+
+def resize(d, xf, yf):
+    """Edit the "size" member of the dict d, scaling it by `xf` an `yf`."""
+
+    x, y = d["size"]
+    x *= xf
+    y *= yf
+    d["size"] = (x, y)
 
 
 def main(argv=None):
