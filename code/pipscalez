@@ -1,13 +1,11 @@
 #!/usr/bin/env python
-# $URL$
-# $Rev$
 
-# pipscalez
-# Enlarge an image by an integer factor horizontally and vertically.
+import png
+
+Description = """Enlarge an image by an integer factor horizontally and vertically."""
 
 def rescale(inp, out, xf, yf):
     from array import array
-    import png
 
     r = png.Reader(file=inp)
     _,_,pixels,meta = r.asDirect()
@@ -38,16 +36,18 @@ def rescale(inp, out, xf, yf):
 
 
 def main(argv=None):
+    import argparse
     import sys
 
     if argv is None:
         argv = sys.argv
-    xf = int(argv[1])
-    if len(argv) > 2:
-        yf = int(argv[2])
-    else:
-        yf = xf
-    return rescale(sys.stdin, sys.stdout, xf, yf)
+
+    parser = argparse.ArgumentParser(description=Description)
+    parser.add_argument("--xfactor", type=int)
+    parser.add_argument("--yfactor", type=int)
+    args = parser.parse_args()
+
+    return rescale(png.binary_stdin(), png.binary_stdout(), args.xfactor, args.yfactor)
 
 if __name__ == '__main__':
     main()
