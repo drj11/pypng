@@ -66,11 +66,16 @@ def main(argv=None):
         argv = sys.argv
 
     parser = argparse.ArgumentParser(description=Description)
-    parser.add_argument("--xfactor", type=int)
-    parser.add_argument("--yfactor", type=int)
+    parser.add_argument("--xfactor", type=int, default=2)
+    parser.add_argument("--yfactor", type=int, default=2)
+    parser.add_argument("--factor", type=int)
+    parser.add_argument("PNG", type=png.cli_open, nargs="?", default="-")
     args = parser.parse_args()
 
-    return rescale(png.binary_stdin(), png.binary_stdout(), args.xfactor, args.yfactor)
+    if args.factor:
+        args.xfactor = args.yfactor = args.factor
+
+    return rescale(args.PNG, png.binary_stdout(), args.xfactor, args.yfactor)
 
 
 if __name__ == "__main__":
