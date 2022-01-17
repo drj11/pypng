@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # pripalpng
-# Convert to Palette PNG
+
+
+"""Convert to Palette PNG (without changing colours)"""
 
 import argparse
 import collections
@@ -94,7 +96,7 @@ def main(argv=None):
 
     argv = argv[1:]
 
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--palette", type=png.cli_open)
     parser.add_argument(
         "input", nargs="?", default="-", type=png.cli_open, metavar="PNG"
