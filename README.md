@@ -64,10 +64,12 @@ your current directory:
 
 ### Release (the next)
 
-In a slightly breaking change to the API, empty files (or equivalently the
-end of the stream) when read with `.asDirect()`, `preamble()` or similar now
-raise `EOFError` (a builtin Python exception class) instead of `png.FormatError`
-which is still used for all other format errors.
+If you pass an empty file to PyPNG
+it now raises the builtin Python exception `EOFError`.
+This should make it easier to diagnose _empty file_ problems separately
+from genuine format errors
+(which use `png.FormatError`).
+This is a slightly breaking change to the API.
 
 New `prirowpng` tool to join PNG images in a row left-to-right
 (old internal `pipcat` tool).
