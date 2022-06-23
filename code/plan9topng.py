@@ -13,8 +13,10 @@ https://plan9.io/magic/man2html/6/image
 
 # http://www.python.org/doc/2.3.5/lib/module-itertools.html
 import itertools
+
 # http://www.python.org/doc/2.3.5/lib/module-re.html
 import re
+
 # http://www.python.org/doc/2.3.5/lib/module-sys.html
 import sys
 
@@ -26,7 +28,7 @@ class Error(Exception):
 
 
 def block(s, n):
-    return zip(* [iter(s)] * n)
+    return zip(*[iter(s)] * n)
 
 
 def convert(f, output=png.binary_stdout()):
@@ -35,7 +37,7 @@ def convert(f, output=png.binary_stdout()):
     """
 
     r = f.read(11)
-    if r == b'compressed\n':
+    if r == b"compressed\n":
         info, fd = decompress(f)
     else:
         # Since Python 3, there is a good chance that this path
@@ -76,8 +78,8 @@ def bitdepthof(pixel):
     """Return the bitdepth for a Plan9 pixel format string."""
 
     maxd = 0
-    for c in re.findall(rb'[a-z]\d*', pixel):
-        if c[0] != 'x':
+    for c in re.findall(rb"[a-z]\d*", pixel):
+        if c[0] != "x":
             maxd = max(maxd, int(c[1:]))
     return maxd
 
@@ -103,20 +105,29 @@ def pixmeta(metadata, f):
     chan, minx, miny, limx, limy = metadata
     rows = limy - miny
     width = limx - minx
-    nchans = len(re.findall(b'[a-wyz]', chan))
-    alpha = b'a' in chan
+    nchans = len(re.findall(b"[a-wyz]", chan))
+    alpha = b"a" in chan
     # Iverson's convention for the win!
     ncolour = nchans - alpha
     greyscale = ncolour == 1
     bitdepth = bitdepthof(chan)
-    maxval = 2**bitdepth - 1
+    maxval = 2 ** bitdepth - 1
     # PNG style metadata
-    meta = dict(size=(width, rows), bitdepth=bitdepthof(chan),
-                greyscale=greyscale, alpha=alpha, planes=nchans)
+    meta = dict(
+        size=(width, rows),
+        bitdepth=bitdepthof(chan),
+        greyscale=greyscale,
+        alpha=alpha,
+        planes=nchans,
+    )
 
-    return map(
-        lambda x: itertools.chain(*x),
-        block(unpack(f, rows, width, chan, maxval), width)), meta
+    return (
+        map(
+            lambda x: itertools.chain(*x),
+            block(unpack(f, rows, width, chan, maxval), width),
+        ),
+        meta,
+    )
 
 
 def write_png(out, info, f):
@@ -157,11 +168,11 @@ def unpack(f, rows, width, chan, maxval):
         i = 0
         for block in f:
             for i in range(len(block) // w):
-                p = block[w * i: w * (i + 1)]
+                p = block[w * i : w * (i + 1)]
                 i += w
                 # Convert little-endian p to integer x
                 x = 0
-                s = 1   # scale
+                s = 1  # scale
                 for j in p:
                     x += s * j
                     s <<= 8
@@ -188,11 +199,11 @@ def unpack(f, rows, width, chan, maxval):
                     x <<= depth
 
     # number of bits in each channel
-    bits = [int(d) for d in re.findall(rb'\d+', chan)]
+    bits = [int(d) for d in re.findall(rb"\d+", chan)]
     # colr of each channel
     # (r, g, b, k for actual colours, and
     # a, m, x for alpha, map-index, and unused)
-    colr = re.findall(b'[a-z]', chan)
+    colr = re.findall(b"[a-z]", chan)
 
     depth = sum(bits)
 
@@ -214,7 +225,7 @@ def unpack(f, rows, width, chan, maxval):
         for b, col in zip(bits, colr):
             v = (x >> (depth - b)) & mask(b)
             x <<= b
-            if col != 'x':
+            if col != "x":
                 # scale to maxval
                 v = v * float(maxval) / mask(b)
                 v = int(v + 0.5)
@@ -251,7 +262,7 @@ def deblock(f):
     row = int(f.read(12))
     size = int(f.read(12))
     if not (0 <= size <= 6000):
-        raise Error('block has invalid size; not a Plan 9 image file?')
+        raise Error("block has invalid size; not a Plan 9 image file?")
 
     # Since each block is at most 6000 bytes we may as well read it all in
     # one go.
@@ -263,8 +274,8 @@ def deblock(f):
         x = d[i]
         i += 1
         if x & 0x80:
-            x = (x & 0x7f) + 1
-            lit = d[i: i + x]
+            x = (x & 0x7F) + 1
+            lit = d[i : i + x]
             i += x
             o.extend(lit)
             continue
@@ -284,8 +295,10 @@ def deblock(f):
         # which to start indexing.
         offset = ~offset + len(o)
         if offset < 0:
-            raise Error('byte offset indexes off the begininning of '
-                        'the output buffer; not a Plan 9 image file?')
+            raise Error(
+                "byte offset indexes off the begininning of "
+                "the output buffer; not a Plan 9 image file?"
+            )
         for j in range(length):
             o.append(o[offset + j])
     return row, bytes(o)
@@ -301,5 +314,5 @@ def main(argv=None):
     return convert(png.cli_open(arg))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())
