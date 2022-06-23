@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-# $Rev$
-# $URL$
 
 # Imported from //depot/prj/plan9topam/master/code/plan9topam.py#4 on
 # 2009-06-15.
@@ -10,6 +8,12 @@
 Plan 9 image format description:
 https://plan9.io/magic/man2html/6/image
 """
+
+# Test materials
+
+# asset/left.bit is a Plan 9 image file, a leftwards facing Glenda.
+# Other materials have to be scrounged from the internet.
+# https://plan9.io/sources/plan9/sys/games/lib/sokoban/images/cargo.bit
 
 # http://www.python.org/doc/2.3.5/lib/module-itertools.html
 import itertools
@@ -32,8 +36,8 @@ def block(s, n):
 
 
 def convert(f, output=png.binary_stdout()):
-    """Convert Plan 9 file to PNG format.  Works with either uncompressed
-    or compressed files.
+    """Convert Plan 9 file to PNG format.
+    Works with either uncompressed or compressed files.
     """
 
     r = f.read(11)
@@ -48,12 +52,12 @@ def convert(f, output=png.binary_stdout()):
 
 
 def glue(f, r):
-    """Return (metadata, stream) pair where `r` is the initial portion of
+    """Return (info, stream) pair, given `r` the initial portion of
     the metadata that has already been read from the stream `f`.
     """
 
     r = r + f.read(60 - len(r))
-    return (r, f)
+    return (meta(r), f)
 
 
 def meta(r):
@@ -61,10 +65,11 @@ def meta(r):
     Returns a 5-tuple (*chan*,*minx*,*miny*,*limx*,*limy*).
     5-tuples may settle into lists in transit.
 
-    As per https://plan9.io/magic/man2html/6/font the metadata
-    comprises 5 words separated by blanks.  As it happens each word starts
-    at an index that is a multiple of 12, but this routine does not care
-    about that."""
+    As per https://plan9.io/magic/man2html/6/image the metadata
+    comprises 5 words separated by blanks.
+    As it happens each word starts at an index that is a multiple of 12,
+    but this routine does not care about that.
+    """
 
     r = r.split()
     # :todo: raise FormatError
@@ -74,28 +79,28 @@ def meta(r):
     return r
 
 
-def bitdepthof(pixel):
+def bitdepthof(chan):
     """Return the bitdepth for a Plan9 pixel format string."""
 
     maxd = 0
-    for c in re.findall(rb"[a-z]\d*", pixel):
+    for c in re.findall(rb"[a-z]\d*", chan):
         if c[0] != "x":
             maxd = max(maxd, int(c[1:]))
     return maxd
 
 
-def maxvalof(pixel):
+def maxvalof(chan):
     """Return the netpbm MAXVAL for a Plan9 pixel format string."""
 
-    bitdepth = bitdepthof(pixel)
+    bitdepth = bitdepthof(chan)
     return (2 ** bitdepth) - 1
 
 
 def pixmeta(metadata, f):
     """
-    Convert (uncompressed) Plan 9 image file to pair of (*metadata*, *pixels*).
+    Convert (uncompressed) Plan 9 image file to pair of (*info*, *pixels*).
     This is intended to be used by PyPNG format.
-    *metadata* (the return value) is the metadata returned in a dictionary,
+    *info* is the image info (metadata) returned in a dictionary,
     *pixels* is an iterator that yields each row in
     boxed row flat pixel format.
 
@@ -112,10 +117,10 @@ def pixmeta(metadata, f):
     greyscale = ncolour == 1
     bitdepth = bitdepthof(chan)
     maxval = 2 ** bitdepth - 1
-    # PNG style metadata
+    # PNG style info dict.
     meta = dict(
         size=(width, rows),
-        bitdepth=bitdepthof(chan),
+        bitdepth=bitdepth,
         greyscale=greyscale,
         alpha=alpha,
         planes=nchans,
@@ -282,10 +287,12 @@ def deblock(f):
         # x's high-order bit is 0
         length = (x >> 2) + 3
         # Offset is made from bottom 2 bits of x and 8 bits of next byte.
-        # https://plan9.io/magic/man2html/6/font doesn't say
-        # whether x's 2 bits are most significant or least significant.
-        # But it is clear from inspecting a random file,
-        # http://plan9.bell-labs.com/sources/plan9/sys/games/lib/sokoban/images/cargo.bit
+        #     MSByte                                 LSByte
+        #   +---------------------+-------------------------+
+        #   | - - - - - - | x1 x0 | d7 d6 d5 d4 d3 d2 d1 d0 |
+        #   +-----------------------------------------------+
+        # Had to discover by inspection which way round the bits go,
+        # because https://plan9.io/magic/man2html/6/image doesn't say.
         # that x's 2 bits are most significant.
         offset = (x & 3) << 8
         offset |= d[i]
