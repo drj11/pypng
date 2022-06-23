@@ -7,6 +7,12 @@
 
 Plan 9 image format description:
 https://plan9.io/magic/man2html/6/image
+
+Where possible this tool will use unbuffered read() calls,
+so that when finished the file offset is exactly at the end of
+the image data.
+This is useful for Plan9 subfont files which place font metric
+data immediately after the image.
 """
 
 # Test materials
@@ -39,6 +45,9 @@ def plan9topng(inp, output=png.binary_stdout()):
     """Convert Plan 9 file to PNG format.
     Works with compressed files and may work with uncompressed files.
     """
+
+    # Use inp.raw if available.
+    inp = getattr(inp, "raw", inp)
 
     r = inp.read(11)
     if r == b"compressed\n":
