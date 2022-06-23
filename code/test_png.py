@@ -449,14 +449,14 @@ class Test(unittest.TestCase):
         """Test row length is returned consistently from Writer.write()"""
         w = png.Writer(1, 2)
         o = BytesIO()
-        empty = [[1], [1]]
-        row_count = w.write(o, empty)
+        rows = [[1], [1]]
+        row_count = w.write(o, rows)
         self.assertEqual(row_count, 2)
 
         w = png.Writer(1, 2, interlace=True)
         o = BytesIO()
-        empty = [[1], [1]]
-        row_count = w.write(o, empty)
+        rows = [[1], [1]]
+        row_count = w.write(o, rows)
         self.assertEqual(row_count, 2)
 
     def test_write_background_colour(self):
