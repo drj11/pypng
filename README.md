@@ -78,6 +78,13 @@ New `pricolpng` tool to join PNG images in a column top-to-bottom.
 
 Support for plain PGM files (magic number P2) added to `pripamtopng`.
 
+New `priplan9topng` tool to convert from Plan 9 image format to PNG.
+In reality this has been lurking in the codebase for years, but
+has recently been converted to Python 3.
+The author has only a limited collection of Plan 9 images,
+which limits the testing that can be done.
+The author welcomes bug reports for Plan 9 images.
+
 
 ### Release 0.0.21
 
