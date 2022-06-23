@@ -8,7 +8,7 @@
 """Command line tool to convert from Plan 9 image format to PNG format.
 
 Plan 9 image format description:
-http://plan9.bell-labs.com/magic/man2html/6/image
+https://plan9.io/magic/man2html/6/image
 """
 
 # http://www.python.org/doc/2.3.5/lib/module-itertools.html
@@ -17,6 +17,8 @@ import itertools
 import re
 # http://www.python.org/doc/2.3.5/lib/module-sys.html
 import sys
+
+import png
 
 
 class Error(Exception):
@@ -27,16 +29,20 @@ def block(s, n):
     return zip(* [iter(s)] * n)
 
 
-def convert(f, output=sys.stdout):
+def convert(f, output=png.binary_stdout()):
     """Convert Plan 9 file to PNG format.  Works with either uncompressed
     or compressed files.
     """
 
     r = f.read(11)
-    if r == 'compressed\n':
-        png(output, *decompress(f))
+    if r == b'compressed\n':
+        info, fd = decompress(f)
     else:
-        png(output, *glue(f, r))
+        # Since Python 3, there is a good chance that this path
+        # doesn't work.
+        info, fd = glue(f, r)
+
+    write_png(output, info, fd)
 
 
 def glue(f, r):
@@ -49,19 +55,20 @@ def glue(f, r):
 
 
 def meta(r):
-    """Convert 60 character string `r`, the metadata from an image file.
-    Returns a 5-tuple (*chan*,*minx*,*miny*,*limx*,*limy*).  5-tuples may
-    settle into lists in transit.
+    """Convert 60 byte bytestring `r`, the metadata from an image file.
+    Returns a 5-tuple (*chan*,*minx*,*miny*,*limx*,*limy*).
+    5-tuples may settle into lists in transit.
 
-    As per http://plan9.bell-labs.com/magic/man2html/6/image the metadata
+    As per https://plan9.io/magic/man2html/6/font the metadata
     comprises 5 words separated by blanks.  As it happens each word starts
     at an index that is a multiple of 12, but this routine does not care
     about that."""
 
     r = r.split()
     # :todo: raise FormatError
-    assert len(r) == 5
-    r = [r[0]] + map(int, r[1:])
+    if 5 != len(r):
+        raise Error("Expected 5 space-separated words in metadata")
+    r = [r[0]] + [int(x) for x in r[1:]]
     return r
 
 
@@ -69,7 +76,7 @@ def bitdepthof(pixel):
     """Return the bitdepth for a Plan9 pixel format string."""
 
     maxd = 0
-    for c in re.findall(r'[a-z]\d*', pixel):
+    for c in re.findall(rb'[a-z]\d*', pixel):
         if c[0] != 'x':
             maxd = max(maxd, int(c[1:]))
     return maxd
@@ -83,10 +90,12 @@ def maxvalof(pixel):
 
 
 def pixmeta(metadata, f):
-    """Convert (uncompressed) Plan 9 image file to pair of (*metadata*,
-    *pixels*).  This is intended to be used by PyPNG format.  *metadata*
-    is the metadata returned in a dictionary, *pixels* is an iterator that
-    yields each row in boxed row flat pixel format.
+    """
+    Convert (uncompressed) Plan 9 image file to pair of (*metadata*, *pixels*).
+    This is intended to be used by PyPNG format.
+    *metadata* (the return value) is the metadata returned in a dictionary,
+    *pixels* is an iterator that yields each row in
+    boxed row flat pixel format.
 
     `f`, the input file, should be cued up to the start of the image data.
     """
@@ -94,8 +103,8 @@ def pixmeta(metadata, f):
     chan, minx, miny, limx, limy = metadata
     rows = limy - miny
     width = limx - minx
-    nchans = len(re.findall('[a-wyz]', chan))
-    alpha = 'a' in chan
+    nchans = len(re.findall(b'[a-wyz]', chan))
+    alpha = b'a' in chan
     # Iverson's convention for the win!
     ncolour = nchans - alpha
     greyscale = ncolour == 1
@@ -105,32 +114,32 @@ def pixmeta(metadata, f):
     meta = dict(size=(width, rows), bitdepth=bitdepthof(chan),
                 greyscale=greyscale, alpha=alpha, planes=nchans)
 
-    return itertools.imap(
+    return map(
         lambda x: itertools.chain(*x),
         block(unpack(f, rows, width, chan, maxval), width)), meta
 
 
-def png(out, metadata, f):
+def write_png(out, info, f):
     """Convert to PNG format.
-    `metadata` should be a Plan9 5-tuple;
+    `info` should be a Plan9 5-tuple;
     `f` the input file (see :meth:`pixmeta`).
     """
 
-    import png
-
-    pixels, meta = pixmeta(metadata, f)
-    p = png.Writer(**meta)
+    pixels, infodict = pixmeta(info, f)
+    p = png.Writer(**infodict)
     p.write(out, pixels)
 
 
-def unpack(f, rows, width, pixel, maxval):
+def unpack(f, rows, width, chan, maxval):
     """Unpack `f` into pixels.
-    Assumes the pixel format is such that
-    the depth is either a multiple or a divisor of 8.
-    `f` is assumed to be an iterator that returns blocks of input such
-    that each block contains a whole number of pixels.  An iterator is
-    returned that yields each pixel as an n-tuple.  `pixel` describes the
-    pixel format using the Plan9 syntax ("k8", "r8g8b8", and so on).
+    `chan` describes the pixel format using
+    the Plan9 syntax ("k8", "r8g8b8", and so on).
+    Assumes the pixel format has a total channel bit depth
+    that is either a multiple or a divisor of 8
+    (the Plan9 image specification requires this).
+    `f` should be an iterator that returns blocks of input such that
+    each block contains a whole number of pixels.
+    The return value is an iterator that yields each pixel as an n-tuple.
     """
 
     def mask(w):
@@ -150,11 +159,11 @@ def unpack(f, rows, width, pixel, maxval):
             for i in range(len(block) // w):
                 p = block[w * i: w * (i + 1)]
                 i += w
-                # Convert p to little-endian integer, x
+                # Convert little-endian p to integer x
                 x = 0
                 s = 1   # scale
                 for j in p:
-                    x += s * ord(j)
+                    x += s * j
                     s <<= 8
                 yield x
 
@@ -165,8 +174,7 @@ def unpack(f, rows, width, pixel, maxval):
 
         for block in f:
             col = 0
-            for i in block:
-                x = ord(i)
+            for x in block:
                 for j in range(8 / depth):
                     yield x >> (8 - depth)
                     col += 1
@@ -180,15 +188,17 @@ def unpack(f, rows, width, pixel, maxval):
                     x <<= depth
 
     # number of bits in each channel
-    chan = map(int, re.findall(r'\d+', pixel))
-    # type of each channel
-    type = re.findall('[a-z]', pixel)
+    bits = [int(d) for d in re.findall(rb'\d+', chan)]
+    # colr of each channel
+    # (r, g, b, k for actual colours, and
+    # a, m, x for alpha, map-index, and unused)
+    colr = re.findall(b'[a-z]', chan)
 
-    depth = sum(chan)
+    depth = sum(bits)
 
-    # According to the value of depth pick a "packer" that either gathers
-    # multiple bytes into a single pixel (for depth >= 8) or split bytes
-    # into several pixels (for depth < 8)
+    # Select a "packer" that either:
+    # - gathers multiple bytes into a single pixel (for depth >= 8); or,
+    # - splits bytes into several pixels (for depth < 8).
     if depth >= 8:
         assert depth % 8 == 0
         packer = deblock
@@ -199,14 +209,14 @@ def unpack(f, rows, width, pixel, maxval):
     for x in packer(f, depth, width):
         # x is the pixel as an unsigned integer
         o = []
-        # This is a bit yucky.  Extract each channel from the _most_
-        # significant part of x.
-        for j in range(len(chan)):
-            v = (x >> (depth - chan[j])) & mask(chan[j])
-            x <<= chan[j]
-            if type[j] != 'x':
+        # This is a bit yucky.
+        # Extract each channel from the _most_ significant part of x.
+        for b, col in zip(bits, colr):
+            v = (x >> (depth - b)) & mask(b)
+            x <<= b
+            if col != 'x':
                 # scale to maxval
-                v = v * float(maxval) / mask(chan[j])
+                v = v * float(maxval) / mask(b)
                 v = int(v + 0.5)
                 o.append(v)
         yield o
@@ -250,7 +260,7 @@ def deblock(f):
     o = []
 
     while i < size:
-        x = ord(d[i])
+        x = d[i]
         i += 1
         if x & 0x80:
             x = (x & 0x7f) + 1
@@ -260,14 +270,14 @@ def deblock(f):
             continue
         # x's high-order bit is 0
         length = (x >> 2) + 3
-        # Offset is made from bottom 2 bits of x and all 8 bits of next
-        # byte.  http://plan9.bell-labs.com/magic/man2html/6/image doesn't
-        # say whether x's 2 bits are most significant or least significant.
+        # Offset is made from bottom 2 bits of x and 8 bits of next byte.
+        # https://plan9.io/magic/man2html/6/font doesn't say
+        # whether x's 2 bits are most significant or least significant.
         # But it is clear from inspecting a random file,
         # http://plan9.bell-labs.com/sources/plan9/sys/games/lib/sokoban/images/cargo.bit
         # that x's 2 bits are most significant.
         offset = (x & 3) << 8
-        offset |= ord(d[i])
+        offset |= d[i]
         i += 1
         # Note: complement operator neatly maps (0 to 1023) to (-1 to
         # -1024).  Adding len(o) gives a (non-negative) offset into o from
@@ -278,16 +288,17 @@ def deblock(f):
                         'the output buffer; not a Plan 9 image file?')
         for j in range(length):
             o.append(o[offset + j])
-    return row, ''.join(o)
+    return row, bytes(o)
 
 
 def main(argv=None):
     if argv is None:
         argv = sys.argv
     if len(sys.argv) <= 1:
-        return convert(sys.stdin)
+        arg = "-"
     else:
-        return convert(open(argv[1], 'rb'))
+        arg = argv[1]
+    return convert(png.cli_open(arg))
 
 
 if __name__ == '__main__':
