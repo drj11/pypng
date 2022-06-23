@@ -21,11 +21,13 @@ data immediately after the image.
 # Other materials have to be scrounged from the internet.
 # https://plan9.io/sources/plan9/sys/games/lib/sokoban/images/cargo.bit
 
+import collections
 # http://www.python.org/doc/2.3.5/lib/module-itertools.html
 import itertools
 
 # http://www.python.org/doc/2.3.5/lib/module-re.html
 import re
+import struct
 
 # http://www.python.org/doc/2.3.5/lib/module-sys.html
 import sys
@@ -335,15 +337,45 @@ def deblock(f):
             o.append(o[offset + j])
     return row, bytes(o)
 
+FontChar = collections.namedtuple("FontChar", "x top bottom left width")
+
+
+def font_report(inp):
+    """Report to stderr the details of the subfont data stored
+    after an image.
+    https://plan9.io/magic/man2html/6/font
+    """
+
+    header = inp.read(36)
+    n,height,ascent = [int(x) for x in header.split()]
+    print(n,height,ascent, file=sys.stderr)
+
+    chs = []
+    for i in range(n+1):
+        bs = inp.read(6)
+        ch = FontChar(*struct.unpack("<HBBBB", bs))
+        chs.append(ch)
+
+    for i in range(n):
+        ch = chs[i]
+        image_width = chs[i+1].x - ch.x
+        print("glyph", i, "pixels", image_width, ch, file=sys.stderr)
+
 
 def main(argv=None):
-    if argv is None:
-        argv = sys.argv
-    if len(sys.argv) <= 1:
-        arg = "-"
-    else:
-        arg = argv[1]
-    return plan9topng(png.cli_open(arg))
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Convert Plan9 image to PNG")
+    parser.add_argument(
+        "input", nargs="?", default="-", type=png.cli_open, metavar="PNG"
+    )
+    parser.add_argument("--font", action="store_true")
+
+    args = parser.parse_args()
+
+    plan9topng(args.input)
+    if args.font:
+        font_report(args.input)
 
 
 if __name__ == "__main__":
