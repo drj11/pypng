@@ -35,20 +35,20 @@ def block(s, n):
     return zip(*[iter(s)] * n)
 
 
-def convert(f, output=png.binary_stdout()):
+def plan9topng(inp, output=png.binary_stdout()):
     """Convert Plan 9 file to PNG format.
-    Works with either uncompressed or compressed files.
+    Works with compressed files and may work with uncompressed files.
     """
 
-    r = f.read(11)
+    r = inp.read(11)
     if r == b"compressed\n":
-        info, fd = decompress(f)
+        info, blocks = decompress(inp)
     else:
         # Since Python 3, there is a good chance that this path
         # doesn't work.
-        info, fd = glue(f, r)
+        info, blocks = glue(inp, r)
 
-    write_png(output, info, fd)
+    write_png(output, info, blocks)
 
 
 def glue(f, r):
@@ -241,8 +241,13 @@ def unpack(f, rows, width, chan, maxval):
 
 
 def decompress(f):
-    """Decompress a Plan 9 image file.  Assumes f is already cued past the
-    initial 'compressed\n' string.
+    """Decompress a Plan 9 image file.
+    The input `f` should be a binary file object that
+    is already cued past the initial 'compressed\n' string.
+    The return result is (`info`, `blocks`);
+    `info` is a 5-tuple of the Plan 9 image metadata;
+    `blocks` is an iterator that yields a (row, data) pair
+    for each block of data.
     """
 
     r = meta(f.read(60))
@@ -261,10 +266,12 @@ def decomprest(f, rows):
 
 def deblock(f):
     """Decompress a single block from a compressed Plan 9 image file.
-    Each block starts with 2 decimal strings of 12 bytes each.  Yields a
-    sequence of (row, data) pairs where row is the total number of rows
-    processed according to the file format and data is the decompressed
-    data for a set of rows."""
+    Each block starts with 2 decimal strings of 12 bytes each.
+    Yields a sequence of (row, data) pairs where
+    `row` is the total number of rows processed
+    (according to the file format) and
+    `data` is the decompressed data for this block.
+    """
 
     row = int(f.read(12))
     size = int(f.read(12))
@@ -320,7 +327,7 @@ def main(argv=None):
         arg = "-"
     else:
         arg = argv[1]
-    return convert(png.cli_open(arg))
+    return plan9topng(png.cli_open(arg))
 
 
 if __name__ == "__main__":
