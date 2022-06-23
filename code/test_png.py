@@ -15,6 +15,8 @@
 #   nosetests .
 
 import glob
+# https://docs.python.org/3.7/library/io.html
+import io
 import itertools
 import os
 import sys
@@ -407,6 +409,17 @@ class Test(unittest.TestCase):
         r = png.Reader(bytes=pngsuite.basn2c16)
         info = r.read()[3]
         png.Writer(**info)
+
+    def test_write_nonbinary(self):
+        """Test that writing a PNG into a text file
+        raises a `png` Exception.
+        """
+
+        w = png.Writer(1, 2)
+        o = io.StringIO()
+        rows = [[80], [160]]
+        with self.assertRaises(png.Error) as context:
+            w.write(o, rows)
 
     def test_write_empty(self):
         """Test writing an empty file expecting an error."""

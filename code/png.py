@@ -761,7 +761,16 @@ class Writer:
 
     def write_preamble(self, outfile):
         # http://www.w3.org/TR/PNG/#5PNG-file-signature
-        outfile.write(signature)
+
+        # This is the first write that is made when
+        # writing a PNG file.
+        # This one, and only this one, is checked for TypeError,
+        # which generally indicates that we are writing bytes
+        # into a text stream.
+        try:
+            outfile.write(signature)
+        except TypeError as e:
+            raise ProtocolError("PNG must be written to a binary stream") from e
 
         # http://www.w3.org/TR/PNG/#11IHDR
         write_chunk(outfile, b'IHDR',
