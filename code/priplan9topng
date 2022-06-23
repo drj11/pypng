@@ -188,10 +188,12 @@ def unpack(f, rows, width, chan, maxval):
         Depth is the pixel depth (< 8), width is the row width in pixels.
         """
 
+        assert 8/depth == 8//depth
+
         for block in f:
             col = 0
             for x in block:
-                for j in range(8 / depth):
+                for j in range(8 // depth):
                     yield x >> (8 - depth)
                     col += 1
                     if col == width:

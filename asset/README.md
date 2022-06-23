@@ -23,6 +23,12 @@ https://github.com/0intro/plan9-contrib/tree/master/sys/games/lib/sokoban/images
 Use the `plan9topng.py` tool to convert it.
 
 
+    courier-latin1.5
+
+A font image from Plan 9 (Courier with a 5-pixel x-height).
+From https://plan9.io/sources/plan9/lib/font/bit/courier/
+
+
     snibgoGBR.icc
 
 An ICC Profile that rotates colours. Created by snibgo, but not
