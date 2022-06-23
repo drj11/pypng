@@ -49,6 +49,22 @@ def plan9topng(inp, output=png.binary_stdout()):
     # Use inp.raw if available.
     inp = getattr(inp, "raw", inp)
 
+    info, blocks = plan9_open_image(inp)
+
+    rows, infodict = pixmeta(info, blocks)
+
+    p = png.Writer(**infodict)
+    p.write(output, rows)
+
+
+def plan9_open_image(inp):
+    """Open a Plan9 image file (`inp` should be an already open
+    file object), and return (`info`, `blocks`) pair.
+    `info` should be a Plan9 5-tuple;
+    `blocks` is the input, and it should yield (`row`, `data`)
+    pairs (see :meth:`pixmeta`).
+    """
+
     r = inp.read(11)
     if r == b"compressed\n":
         info, blocks = decompress(inp)
@@ -57,7 +73,8 @@ def plan9topng(inp, output=png.binary_stdout()):
         # doesn't work.
         info, blocks = glue(inp, r)
 
-    write_png(output, info, blocks)
+
+    return info, blocks
 
 
 def glue(f, r):
@@ -143,16 +160,6 @@ def pixmeta(metadata, f):
         meta,
     )
 
-
-def write_png(out, info, f):
-    """Convert to PNG format.
-    `info` should be a Plan9 5-tuple;
-    `f` the input file (see :meth:`pixmeta`).
-    """
-
-    pixels, infodict = pixmeta(info, f)
-    p = png.Writer(**infodict)
-    p.write(out, pixels)
 
 
 def unpack(f, rows, width, chan, maxval):
