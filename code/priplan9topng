@@ -51,7 +51,7 @@ def plan9topng(inp, output=png.binary_stdout()):
 
     info, blocks = plan9_open_image(inp)
 
-    rows, infodict = pixmeta(info, blocks)
+    rows, infodict = plan9_image_rows(blocks, info)
 
     p = png.Writer(**infodict)
     p.write(output, rows)
@@ -122,15 +122,15 @@ def maxvalof(chan):
     return (2 ** bitdepth) - 1
 
 
-def pixmeta(metadata, f):
+def plan9_image_rows(blocks, metadata):
     """
-    Convert (uncompressed) Plan 9 image file to pair of (*info*, *pixels*).
+    Convert (uncompressed) Plan 9 image file to pair of (*rows*, *info*).
     This is intended to be used by PyPNG format.
     *info* is the image info (metadata) returned in a dictionary,
-    *pixels* is an iterator that yields each row in
+    *rows* is an iterator that yields each row in
     boxed row flat pixel format.
 
-    `f`, the input file, should be cued up to the start of the image data.
+    `blocks`, should be an iterator of (`row`, `data`) pairs.
     """
 
     chan, minx, miny, limx, limy = metadata
@@ -142,7 +142,8 @@ def pixmeta(metadata, f):
     ncolour = nchans - alpha
     greyscale = ncolour == 1
     bitdepth = bitdepthof(chan)
-    maxval = 2 ** bitdepth - 1
+    maxval = maxvalof(chan)
+
     # PNG style info dict.
     meta = dict(
         size=(width, rows),
@@ -155,11 +156,10 @@ def pixmeta(metadata, f):
     return (
         map(
             lambda x: itertools.chain(*x),
-            block(unpack(f, rows, width, chan, maxval), width),
+            block(unpack(blocks, rows, width, chan, maxval), width),
         ),
         meta,
     )
-
 
 
 def unpack(f, rows, width, chan, maxval):
