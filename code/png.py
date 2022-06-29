@@ -279,7 +279,7 @@ def check_sizes(size, width, height):
 
     if len(size) != 2:
         raise ProtocolError(
-            "size argument should be a pair (width, height)")
+            "size argument should be a pair (width, height) instead is %r" % (size,))
     if width is not None and width != size[0]:
         raise ProtocolError(
             "size[0] (%r) and width (%r) should match when both are used."
