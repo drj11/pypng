@@ -22,41 +22,59 @@ Coordinates are with (0,0) being the top-left
 """
 
 
-def window(tl, br, inp, out):
-    """Place a window onto the image and cut-out the resulting
-    rectangle.  The window is an axis aligned rectangle opposite corners
-    at *tl* and *br* (each being an (x,y) pair). *inp* specifies the
-    input file which should be a PNG image.
+def copy_window(tl, br, inp, out):
+    """Place a window onto the image and cut-out the resulting rectangle.
+    The window is an axis aligned rectangle with opposite corners
+    at *tl* and *br* (each being an (x,y) pair).
+    *inp* is the input file (a PNG image).
+    *out* is the output file.
     """
+
+    r = png.Reader(file=inp)
+    _, _, rows, info = r.asDirect()
+
+    out_rows, out_info = window(rows, info, tl, br)
+
+    w = png.Writer(**out_info)
+    w.write(out, out_rows)
+
+
+def window(rows, info, tl, br):
+    """*rows* and *info* are the rows and info object for
+    a PNG image as might be returned by png.asDirect().
+    A new *rows* and *info* are returned that represent
+    a windowed image.
+    The window is an axis aligned rectangle with opposite corners
+    at *tl* and *br* (each being an (x,y) pair).
+    """
+
+    width, height = info["size"]
 
     left, top = tl
     right, bottom = br
-
-    r = png.Reader(file=inp)
-    x, y, pixels, meta = r.asDirect()
 
     if top is None:
         top = 0
     if left is None:
         left = 0
     if bottom is None:
-        bottom = y
+        bottom = height
     if right is None:
-        right = x
+        right = width
 
-    if not (0 <= left < right <= x):
+    if not (0 <= left < right <= width):
         raise NotImplementedError()
-    if not (0 <= top < bottom <= y):
+    if not (0 <= top < bottom <= height):
         raise NotImplementedError()
     # Compute left and right index bounds for each row,
     # given that each row is a flat row of values.
-    l = left * meta["planes"]
-    r = right * meta["planes"]
+    l = left * info["planes"]
+    r = right * info["planes"]
 
     def itercrop():
         """An iterator to perform the crop."""
 
-        for i, row in enumerate(pixels):
+        for i, row in enumerate(rows):
             if i < top:
                 continue
             if i >= bottom:
@@ -64,9 +82,8 @@ def window(tl, br, inp, out):
                 return
             yield row[l:r]
 
-    meta["size"] = (right - left, bottom - top)
-    w = png.Writer(**meta)
-    w.write(out, itercrop())
+    info = dict(info, size=(right - left, bottom - top))
+    return itercrop(), info
 
 
 def main(argv=None):
@@ -87,7 +104,7 @@ def main(argv=None):
 
     args = parser.parse_args(argv)
 
-    return window(
+    return copy_window(
         (args.left, args.top),
         (args.right, args.bottom),
         args.input,
