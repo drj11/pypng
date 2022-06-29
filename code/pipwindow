@@ -1,16 +1,24 @@
 #!/usr/bin/env python
-# $URL$
-# $Rev$
+
+import png
 
 # pipwindow
-# Tool to crop/expand an image to a rectangular window.  Come the
-# revolution this tool will allow the image and the window to be placed
-# arbitrarily (in particular the window can be bigger than the picture
-# and/or overlap it only partially) and the image can be OpenGL style
-# border/repeat effects (repeat, mirrored repeat, clamp, fixed
-# background colour, background colour from source file).  For now it
-# only acts as crop.  The window must be no greater than the image in
-# both x and y.
+
+"""Tool to crop/expand an image to a rectangular window.
+Come the revolution
+this tool will allow the image and the window to be placed arbitrarily
+(in particular the window can be bigger than the picture
+and/or overlap it only partially) and
+the image can be OpenGL style # border/repeat effects
+(repeat, mirrored repeat, clamp,
+fixed background colour, background colour from source file).
+For now this tool only crops.
+The window must be no greater than the image in
+both x and y.
+Coordinates are with (0,0) being the top-left
+(as in ImageMagick).
+"""
+
 
 def window(tl, br, inp, out):
     """Place a window onto the image and cut-out the resulting
@@ -18,8 +26,6 @@ def window(tl, br, inp, out):
     at *tl* and *br* (each being an (x,y) pair). *inp* specifies the
     input file which should be a PNG image.
     """
-
-    import png
 
     r = png.Reader(file=inp)
     x,y,pixels,meta = r.asDirect()
@@ -61,7 +67,7 @@ def main(argv=None):
     else:
         f = open(argv[-1], 'rb')
 
-    return window(tl, br, f, sys.stdout)
+    return window(tl, br, f, png.binary_stdout())
 
 if __name__ == '__main__':
     main()
