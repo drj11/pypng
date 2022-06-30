@@ -1,3 +1,12 @@
+# prix.py
+
+"""
+prix (Python Raster Image eXtensions)
+
+A collection of routines useful for raster image processing,
+mostly not associate with the PNG format, but
+using datatypes from PyPNG.
+"""
 
 def window(rows, info, tl, br):
     """*rows* and *info* are the rows and info object for
