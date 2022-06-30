@@ -1298,6 +1298,13 @@ class Image:
         with open(file, 'wb') as fd:
             w.write(fd, self.rows)
 
+    def stream(self):
+        """Stream the rows into a list, so that the rows object
+        can be accessed multiple times, or randomly.
+        """
+
+        self.rows = list(rows)
+
     def write(self, file):
         """Write the image to the open file object.
 

@@ -32,7 +32,12 @@ import struct
 # http://www.python.org/doc/2.3.5/lib/module-sys.html
 import sys
 
+
+# https://pypi.org/project/pypng/
 import png
+
+# internal
+import prix
 
 
 class Error(Exception):
@@ -43,20 +48,23 @@ def block(s, n):
     return zip(*[iter(s)] * n)
 
 
-def plan9topng(inp, output=png.binary_stdout()):
-    """Convert Plan 9 file to PNG format.
-    Works with compressed files and may work with uncompressed files.
+def plan9_as_image(inp):
+    """Represent a Plan 9 image file as a png.Image instance, so
+    that it can be written as a PNG file.
+    Works with compressed input files and may work with uncompressed files.
     """
 
     # Use inp.raw if available.
+    # This avoids buffering and means that when the image is processed,
+    # the resulting input stream is cued up exactly at the end
+    # of the image.
     inp = getattr(inp, "raw", inp)
 
     info, blocks = plan9_open_image(inp)
 
     rows, infodict = plan9_image_rows(blocks, info)
 
-    p = png.Writer(**infodict)
-    p.write(output, rows)
+    return png.Image(rows, infodict)
 
 
 def plan9_open_image(inp):
@@ -373,9 +381,11 @@ def main(argv=None):
 
     args = parser.parse_args()
 
-    plan9topng(args.input)
+    image = plan9_as_image(args.input)
+    image.write(png.binary_stdout())
+
     if args.font:
-        font_report(args.input)
+        font_copy(args.input, image, png.binary_stdout())
 
 
 if __name__ == "__main__":
