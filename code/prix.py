@@ -8,11 +8,14 @@ mostly not associate with the PNG format, but
 using datatypes from PyPNG.
 """
 
-def window(rows, info, tl, br):
-    """*rows* and *info* are the rows and info object for
-    a PNG image as might be returned by png.asDirect().
-    A new *rows* and *info* are returned that represent
-    a windowed image.
+# https://pypi.org/project/pypng/
+import png
+
+
+def window(image, tl, br):
+    """image is a png.Image instance (or like one).
+    A new png.Image instance is returned that
+    represents a windowed image.
     The window is an axis aligned rectangle with opposite corners
     at *tl* and *br* (each being an (x,y) pair).
 
@@ -24,7 +27,7 @@ def window(rows, info, tl, br):
     height for bottom).
     """
 
-    width, height = info["size"]
+    width, height = image.info["size"]
 
     left, top = tl
     right, bottom = br
@@ -44,13 +47,13 @@ def window(rows, info, tl, br):
         raise NotImplementedError()
     # Compute left and right index bounds for each row,
     # given that each row is a flat row of values.
-    l = left * info["planes"]
-    r = right * info["planes"]
+    l = left * image.info["planes"]
+    r = right * image.info["planes"]
 
     def itercrop():
         """An iterator to perform the crop."""
 
-        for i, row in enumerate(rows):
+        for i, row in enumerate(image.rows):
             if i < top:
                 continue
             if i >= bottom:
@@ -58,6 +61,6 @@ def window(rows, info, tl, br):
                 return
             yield row[l:r]
 
-    info = dict(info, size=(right - left, bottom - top))
-    return itercrop(), info
+    info = dict(image.info, size=(right - left, bottom - top))
+    return png.Image(itercrop(), info)
 

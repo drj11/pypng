@@ -34,10 +34,10 @@ def copy_window(tl, br, inp, out):
     r = png.Reader(file=inp)
     _, _, rows, info = r.asDirect()
 
-    out_rows, out_info = prix.window(rows, info, tl, br)
+    image = png.Image(rows, info)
+    image = prix.window(image, tl, br)
 
-    w = png.Writer(**out_info)
-    w.write(out, out_rows)
+    image.write(out)
 
 
 def main(argv=None):
