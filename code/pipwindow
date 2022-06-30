@@ -23,7 +23,7 @@ Coordinates are with (0,0) being the top-left
 
 
 def copy_window(tl, br, inp, out):
-    """Place a window onto the image and cut-out the resulting rectangle.
+    """Window the *inp* image and copy it to *out*.
     The window is an axis aligned rectangle with opposite corners
     at *tl* and *br* (each being an (x,y) pair).
     *inp* is the input file (a PNG image).
@@ -46,6 +46,13 @@ def window(rows, info, tl, br):
     a windowed image.
     The window is an axis aligned rectangle with opposite corners
     at *tl* and *br* (each being an (x,y) pair).
+
+    As in ImageMagick (0,0) is the top-left.
+
+    Coordinates are usually integers, but can be passed as
+    `None` in which case the relevant image boundary will be
+    used (0 for left, image width for right, 0 for top, image
+    height for bottom).
     """
 
     width, height = info["size"]
