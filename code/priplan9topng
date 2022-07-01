@@ -21,6 +21,7 @@ data immediately after the image.
 # Other materials have to be scrounged from the internet.
 # https://plan9.io/sources/plan9/sys/games/lib/sokoban/images/cargo.bit
 
+import array
 import collections
 # http://www.python.org/doc/2.3.5/lib/module-itertools.html
 import itertools
@@ -163,9 +164,11 @@ def plan9_image_rows(blocks, metadata):
         planes=nchans,
     )
 
+    arraycode = 'BH'[bitdepth > 8]
+
     return (
         map(
-            lambda x: itertools.chain(*x),
+            lambda x: array.array(arraycode, itertools.chain(*x)),
             block(unpack(blocks, rows, width, chan, maxval), width),
         ),
         meta,
@@ -348,11 +351,47 @@ def deblock(f):
 FontChar = collections.namedtuple("FontChar", "x top bottom left width")
 
 
-def font_report(inp):
-    """Report to stderr the details of the subfont data stored
+def font_copy(inp, image, out):
+    """
+    Copy to out a multiple-image stream of PNGs,
+    each image being a single glyph from the font.
+
+    A Plan 9 font consists of a Plan 9 image immediately
+    followed by font data.
+    The image for the font should be the `image` argument,
+    the file containing the rest of the font data should be the
+    file object `inp` which should be cued up to the start of
+    the font data that immediately follows the image.
+
+    Report to stderr the details of the subfont data stored
     after an image.
     https://plan9.io/magic/man2html/6/font
     """
+
+    # The format is a little unusual, and isn't completely
+    # clearly documented.
+    # Each 6-byte structure (see FontChar above) defines
+    # a rectangular region of the image that is used for each
+    # glyph.
+    # The source image region that is used may be strictly
+    # smaller than the rectangle for the target glyph.
+    # This seems like a micro-optimisation.
+    # For each glyph,
+    # rows above `top` and below `bottom` will not be copied
+    # from the source (they can be assumed to be blank).
+    # No space is saved in the source image, since the rows must
+    # be present.
+    # `x` is always non-decreasing, so the glyphs appear strictly
+    # left-to-image in the source image.
+    # The x of the next glyph is used to
+    # infer the width of the source rectangle.
+    # `top` and `bottom` give the y-coordinate of the top- and
+    # bottom- sides of the rectangle in both source and targets.
+    # `left` is the x-coordinate of the left-side of the
+    # rectangle in the target glyph. (equivalently, the amount
+    # of padding that should be added on the left).
+    # `width` is the advance-width of the glyph; by convention
+    # it is 0 for .notdef.
 
     header = inp.read(36)
     n,height,ascent = [int(x) for x in header.split()]
@@ -366,8 +405,69 @@ def font_report(inp):
 
     for i in range(n):
         ch = chs[i]
-        image_width = chs[i+1].x - ch.x
-        print("glyph", i, "pixels", image_width, ch, file=sys.stderr)
+        source_width = chs[i+1].x - ch.x
+        print("glyph", i, "pixels", source_width, ch, file=sys.stderr)
+
+        if ch. width == 0:
+            continue
+
+        info = dict(image.info, size=(ch.width, height))
+        target = new_image(info)
+        rect = ((ch.left, ch.top), (ch.left+source_width, ch.bottom))
+        image_draw(target, rect, image, (ch.x, ch.top))
+        # :todo: add source, glyph, and baseline data here (as a
+        # private tag?)
+        target.write(out)
+
+
+def new_image(info):
+    """Return a fresh png.Image instance."""
+
+    width, height = info["size"]
+    vpr = width * info["planes"]
+    row = lambda: [0] * vpr
+    rows = [row() for _ in range(height)]
+    return png.Image(rows, info)
+
+
+def image_draw(target, rect, source, point):
+    """The point `point` in the source image is aligned with the
+    top-left of rect in the target image, and then the rectangle
+    in target is replaced with the pixels from `source`.
+
+    This routine assumes that both source and target can have
+    their rows objects indexed (not streamed).
+    """
+
+    # :todo: there is no attempt to do clipping or channel or
+    # colour conversion. But maybe later?
+
+    if target.info["planes"] != source.info["planes"]:
+        raise NotImplementedError("source and target must have the same number of planes")
+
+    if target.info["bitdepth"] != source.info["bitdepth"]:
+        raise NotImplementedError("source and target must have the same bitdepth")
+
+    tl, br = rect
+    left, top = tl
+    right, bottom = br
+    height = bottom-top
+
+    planes = source.info["planes"]
+
+    vpr = (right-left) * planes
+    source_left, source_top = point
+
+    source_l = source_left * planes
+    source_r = source_l + vpr
+
+    target_l = left * planes
+    target_r = target_l + vpr
+
+    for y in range(height):
+        row = source.rows[y+source_top]
+        row = row[source_l:source_r]
+        target.rows[top+y][target_l:target_r] = row
 
 
 def main(argv=None):
@@ -382,9 +482,11 @@ def main(argv=None):
     args = parser.parse_args()
 
     image = plan9_as_image(args.input)
-    image.write(png.binary_stdout())
+    image.stream()
 
-    if args.font:
+    if not args.font:
+     image.write(png.binary_stdout())
+    else:
         font_copy(args.input, image, png.binary_stdout())
 
 
