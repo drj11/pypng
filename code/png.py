@@ -1303,7 +1303,7 @@ class Image:
         can be accessed multiple times, or randomly.
         """
 
-        self.rows = list(rows)
+        self.rows = list(self.rows)
 
     def write(self, file):
         """Write the image to the open file object.
