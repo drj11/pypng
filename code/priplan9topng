@@ -351,10 +351,14 @@ def deblock(f):
 FontChar = collections.namedtuple("FontChar", "x top bottom left width")
 
 
-def font_copy(inp, image, out):
+def font_copy(inp, image, out, control):
     """
-    Copy to out a multiple-image stream of PNGs,
-    each image being a single glyph from the font.
+    Convert a Plan 9 font (`inp`, `image`) to a series of PNG images,
+    and write them out consecutively to the file object `out`.
+    Write a text control file out to the file object `control`.
+
+    Each valid glyph in the font becomes a single PNG image;
+    the output consists of a multi-image sequence.
 
     A Plan 9 font consists of a Plan 9 image immediately
     followed by font data.
@@ -363,8 +367,6 @@ def font_copy(inp, image, out):
     file object `inp` which should be cued up to the start of
     the font data that immediately follows the image.
 
-    Report to stderr the details of the subfont data stored
-    after an image.
     https://plan9.io/magic/man2html/6/font
     """
 
@@ -391,11 +393,13 @@ def font_copy(inp, image, out):
     # rectangle in the target glyph. (equivalently, the amount
     # of padding that should be added on the left).
     # `width` is the advance-width of the glyph; by convention
-    # it is 0 for .notdef.
+    # it is 0 for an undefined glyph.
+
+    name = getattr(inp, "name", "*subfont*name*not*supplied*")
 
     header = inp.read(36)
     n,height,ascent = [int(x) for x in header.split()]
-    print(n,height,ascent, file=sys.stderr)
+    print("baseline", name, ascent, file=control, sep=",")
 
     chs = []
     for i in range(n+1):
@@ -403,21 +407,27 @@ def font_copy(inp, image, out):
         ch = FontChar(*struct.unpack("<HBBBB", bs))
         chs.append(ch)
 
+    # Start at 0, increment for every image output
+    # (recall that not every input glyph has an output image)
+    output_index = 0
     for i in range(n):
         ch = chs[i]
-        source_width = chs[i+1].x - ch.x
-        print("glyph", i, "pixels", source_width, ch, file=sys.stderr)
-
         if ch. width == 0:
             continue
 
+        print("png","index", output_index, "glyph", name, i,
+        file=control, sep=",")
+
         info = dict(image.info, size=(ch.width, height))
         target = new_image(info)
+
+        source_width = chs[i+1].x - ch.x
         rect = ((ch.left, ch.top), (ch.left+source_width, ch.bottom))
         image_draw(target, rect, image, (ch.x, ch.top))
         # :todo: add source, glyph, and baseline data here (as a
         # private tag?)
         target.write(out)
+        output_index += 1
 
 
 def new_image(info):
@@ -487,7 +497,8 @@ def main(argv=None):
     if not args.font:
      image.write(png.binary_stdout())
     else:
-        font_copy(args.input, image, png.binary_stdout())
+        font_copy(args.input, image, png.binary_stdout(),
+        sys.stderr)
 
 
 if __name__ == "__main__":
