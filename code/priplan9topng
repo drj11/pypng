@@ -23,6 +23,7 @@ data immediately after the image.
 
 import array
 import collections
+
 # http://www.python.org/doc/2.3.5/lib/module-itertools.html
 import itertools
 
@@ -83,7 +84,6 @@ def plan9_open_image(inp):
         # Since Python 3, there is a good chance that this path
         # doesn't work.
         info, blocks = glue(inp, r)
-
 
     return info, blocks
 
@@ -164,7 +164,7 @@ def plan9_image_rows(blocks, metadata):
         planes=nchans,
     )
 
-    arraycode = 'BH'[bitdepth > 8]
+    arraycode = "BH"[bitdepth > 8]
 
     return (
         map(
@@ -217,7 +217,7 @@ def unpack(f, rows, width, chan, maxval):
         Depth is the pixel depth (< 8), width is the row width in pixels.
         """
 
-        assert 8/depth == 8//depth
+        assert 8 / depth == 8 // depth
 
         for block in f:
             col = 0
@@ -348,6 +348,7 @@ def deblock(f):
             o.append(o[offset + j])
     return row, bytes(o)
 
+
 FontChar = collections.namedtuple("FontChar", "x top bottom left width")
 
 
@@ -398,11 +399,11 @@ def font_copy(inp, image, out, control):
     name = getattr(inp, "name", "*subfont*name*not*supplied*")
 
     header = inp.read(36)
-    n,height,ascent = [int(x) for x in header.split()]
+    n, height, ascent = [int(x) for x in header.split()]
     print("baseline", name, ascent, file=control, sep=",")
 
     chs = []
-    for i in range(n+1):
+    for i in range(n + 1):
         bs = inp.read(6)
         ch = FontChar(*struct.unpack("<HBBBB", bs))
         chs.append(ch)
@@ -412,17 +413,16 @@ def font_copy(inp, image, out, control):
     output_index = 0
     for i in range(n):
         ch = chs[i]
-        if ch. width == 0:
+        if ch.width == 0:
             continue
 
-        print("png","index", output_index, "glyph", name, i,
-        file=control, sep=",")
+        print("png", "index", output_index, "glyph", name, i, file=control, sep=",")
 
         info = dict(image.info, size=(ch.width, height))
         target = new_image(info)
 
-        source_width = chs[i+1].x - ch.x
-        rect = ((ch.left, ch.top), (ch.left+source_width, ch.bottom))
+        source_width = chs[i + 1].x - ch.x
+        rect = ((ch.left, ch.top), (ch.left + source_width, ch.bottom))
         image_draw(target, rect, image, (ch.x, ch.top))
         # :todo: add source, glyph, and baseline data here (as a
         # private tag?)
@@ -453,7 +453,9 @@ def image_draw(target, rect, source, point):
     # colour conversion. But maybe later?
 
     if target.info["planes"] != source.info["planes"]:
-        raise NotImplementedError("source and target must have the same number of planes")
+        raise NotImplementedError(
+            "source and target must have the same number of planes"
+        )
 
     if target.info["bitdepth"] != source.info["bitdepth"]:
         raise NotImplementedError("source and target must have the same bitdepth")
@@ -461,11 +463,11 @@ def image_draw(target, rect, source, point):
     tl, br = rect
     left, top = tl
     right, bottom = br
-    height = bottom-top
+    height = bottom - top
 
     planes = source.info["planes"]
 
-    vpr = (right-left) * planes
+    vpr = (right - left) * planes
     source_left, source_top = point
 
     source_l = source_left * planes
@@ -475,9 +477,9 @@ def image_draw(target, rect, source, point):
     target_r = target_l + vpr
 
     for y in range(height):
-        row = source.rows[y+source_top]
+        row = source.rows[y + source_top]
         row = row[source_l:source_r]
-        target.rows[top+y][target_l:target_r] = row
+        target.rows[top + y][target_l:target_r] = row
 
 
 def main(argv=None):
@@ -495,10 +497,9 @@ def main(argv=None):
     image.stream()
 
     if not args.font:
-     image.write(png.binary_stdout())
+        image.write(png.binary_stdout())
     else:
-        font_copy(args.input, image, png.binary_stdout(),
-        sys.stderr)
+        font_copy(args.input, image, png.binary_stdout(), sys.stderr)
 
 
 if __name__ == "__main__":
