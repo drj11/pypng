@@ -85,6 +85,10 @@ The author has only a limited collection of Plan 9 images,
 which limits the testing that can be done.
 The author welcomes bug reports for Plan 9 images.
 
+The `priplan9topng` tool has an even more experimental option
+`--font` which converts Plan 9 subfont files to a sequence of
+PNGN files.
+
 
 ### Release 0.0.21
 
