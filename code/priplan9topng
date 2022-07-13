@@ -505,13 +505,25 @@ def main(argv=None):
 
     parser = argparse.ArgumentParser(description="Convert Plan9 image to PNG")
     parser.add_argument(
-        "input", nargs="?", default="-", type=png.cli_open, metavar="PNG"
+        "input",
+        nargs="?",
+        default="-",
+        type=png.cli_open,
+        metavar="image",
+        help="image file in Plan 9 format",
     )
     parser.add_argument(
-        "--control", default=os.path.devnull,
-        type=argparse.FileType("w"), metavar="ControlCSV"
+        "--control",
+        default=os.path.devnull,
+        type=argparse.FileType("w"),
+        metavar="ControlCSV",
+        help="(when using --font) write a control CSV file to named file",
     )
-    parser.add_argument("--font", action="store_true")
+    parser.add_argument(
+        "--font",
+        action="store_true",
+        help="process as Plan 9 subfont: output a tar file of PNGs",
+    )
 
     args = parser.parse_args()
 
