@@ -30,6 +30,10 @@ A font image from Plan 9 (Courier with a 5-pixel x-height).
 It's in k2 pixel format.
 From https://plan9.io/sources/plan9/lib/font/bit/courier/
 
+    8x13.0000
+
+A font image from Plan 9 (fixed 8x13).
+
 
     snibgoGBR.icc
 
