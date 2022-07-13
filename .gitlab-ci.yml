@@ -1,19 +1,13 @@
 {
     "image": "alpine:3",
     "stages": [
-        "preliminary",
         "test"
     ],
-    "install stuff": {
-        "stage": "preliminary",
-        "script": [
-            "apk add python3 py3-pip",
-            "python3 -m pip install pytest"
-        ]
-    },
     "run test": {
         "stage": "test",
         "script": [
+            "apk add python3 py3-pip",
+            "python3 -m pip install pytest",
             "pytest"
         ]
     }
