@@ -89,7 +89,7 @@ The author welcomes bug reports for Plan 9 images.
 
 The `priplan9topng` tool has an even more experimental option
 `--font` which converts Plan 9 subfont files to a sequence of
-PNGN files.
+PNG files.
 
 
 ### Release 0.0.21
@@ -113,7 +113,7 @@ chunks:
 `priditherpng` command line tool standardised and
 converted to Python 3.
 
-`pripngtopam` tool now has a `--plain` option to output plan PGM
+`pripngtopam` tool now has a `--plain` option to output plain PGM
 and PPM formats. The `topam` part of the name is a bit of a
 misnomer: when possible (L and RGB PNG files) the tool will
 output either a PGM (grey) or a PPM (RGB) file. Essentially all
