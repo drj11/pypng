@@ -521,8 +521,7 @@ def main(argv=None):
     if not args.font:
         image.write(png.binary_stdout())
     else:
-        font_copy(args.input, image, png.binary_stdout(),
-        args.control)
+        font_copy(args.input, image, png.binary_stdout(), args.control)
 
 
 if __name__ == "__main__":
