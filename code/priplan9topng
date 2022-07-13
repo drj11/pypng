@@ -23,6 +23,7 @@ data immediately after the image.
 
 import array
 import collections
+import io
 
 # http://www.python.org/doc/2.3.5/lib/module-itertools.html
 import itertools
@@ -33,6 +34,9 @@ import struct
 
 # http://www.python.org/doc/2.3.5/lib/module-sys.html
 import sys
+
+# https://docs.python.org/3/library/tarfile.html
+import tarfile
 
 
 # https://pypi.org/project/pypng/
@@ -408,6 +412,8 @@ def font_copy(inp, image, out, control):
         ch = FontChar(*struct.unpack("<HBBBB", bs))
         chs.append(ch)
 
+    tar = tarfile.open(mode="w|", fileobj=out)
+
     # Start at 0, increment for every image output
     # (recall that not every input glyph has an output image)
     output_index = 0
@@ -424,10 +430,21 @@ def font_copy(inp, image, out, control):
         source_width = chs[i + 1].x - ch.x
         rect = ((ch.left, ch.top), (ch.left + source_width, ch.bottom))
         image_draw(target, rect, image, (ch.x, ch.top))
+
         # :todo: add source, glyph, and baseline data here (as a
         # private tag?)
-        target.write(out)
+        o = io.BytesIO()
+        target.write(o)
+        binary_size = o.tell()
+        o.seek(0)
+
+        tarinfo = tar.gettarinfo(arcname="%s/glyph%d.png" % (name, i), fileobj=inp)
+        tarinfo.size = binary_size
+        tar.addfile(tarinfo, fileobj=o)
+
         output_index += 1
+
+    tar.close()
 
 
 def new_image(info):
