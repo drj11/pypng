@@ -7,8 +7,8 @@
     "install stuff": {
         "stage": "preliminary",
         "script": [
-            "apk add python",
-            "python -m pip install pytest"
+            "apk add python3 py3-pip",
+            "python3 -m pip install pytest"
         ]
     },
     "run test": {
