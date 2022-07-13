@@ -27,6 +27,7 @@ import io
 
 # http://www.python.org/doc/2.3.5/lib/module-itertools.html
 import itertools
+import os
 
 # http://www.python.org/doc/2.3.5/lib/module-re.html
 import re
@@ -506,6 +507,10 @@ def main(argv=None):
     parser.add_argument(
         "input", nargs="?", default="-", type=png.cli_open, metavar="PNG"
     )
+    parser.add_argument(
+        "--control", default=os.path.devnull,
+        type=argparse.FileType("w"), metavar="ControlCSV"
+    )
     parser.add_argument("--font", action="store_true")
 
     args = parser.parse_args()
@@ -516,7 +521,8 @@ def main(argv=None):
     if not args.font:
         image.write(png.binary_stdout())
     else:
-        font_copy(args.input, image, png.binary_stdout(), sys.stderr)
+        font_copy(args.input, image, png.binary_stdout(),
+        args.control)
 
 
 if __name__ == "__main__":
