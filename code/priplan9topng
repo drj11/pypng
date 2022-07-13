@@ -359,11 +359,11 @@ FontChar = collections.namedtuple("FontChar", "x top bottom left width")
 def font_copy(inp, image, out, control):
     """
     Convert a Plan 9 font (`inp`, `image`) to a series of PNG images,
-    and write them out consecutively to the file object `out`.
+    and write them out as a tar file to the file object `out`.
     Write a text control file out to the file object `control`.
 
     Each valid glyph in the font becomes a single PNG image;
-    the output consists of a multi-image sequence.
+    the output is a tar file of all the images.
 
     A Plan 9 font consists of a Plan 9 image immediately
     followed by font data.
