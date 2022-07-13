@@ -1,0 +1,20 @@
+{
+    "image": "alpine:3",
+    "stages": [
+        "preliminary",
+        "test"
+    ],
+    "install stuff": {
+        "stage": "preliminary",
+        "script": [
+            "apk add python",
+            "python -m pip install pytest"
+        ]
+    },
+    "run test": {
+        "stage": "test",
+        "script": [
+            "pytest"
+        ]
+    }
+}
