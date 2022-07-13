@@ -7,7 +7,7 @@ drj@pobox.com
 
 PNG module for Python. PyPNG is written entirely in Python.
 
-- PyPNG home page: https://github.com/drj11/pypng/
+- PyPNG home page: https://gitlab.com/drj11/pypng/
 - PyPNG Documentation: https://pypng.readthedocs.io/en/latest/
 - PyPNG mailing list: https://groups.google.com/forum/#!forum/pypng-users
 
@@ -54,15 +54,17 @@ your application and distribute it.
 The following `curl` command should copy the latest version into
 your current directory:
 
-    curl -LO https://raw.github.com/drj11/pypng/main/code/png.py
+    curl -LO https://gitlab.com/drj11/pypng/-/raw/main/code/png.py
 
 
 ## RELEASE NOTES
 
-(For issues see https://github.com/drj11/pypng/issues?state=open )
+(For issues see https://gitlab.com/drj11/pypng/-/issues/ )
 
 
 ### Release (the next)
+
+Development moved to gitlab: https://gitlab.com/drj11/pypng
 
 If you pass an empty file to PyPNG
 it now raises the builtin Python exception `EOFError`.
@@ -225,7 +227,7 @@ Thanks to `github.com/sean-duffy`,
 `.from_array()` can now take a 3D array.
 
 Converting to PNMs was broken in Python 3; this is now fixed.
-Github issue 26: https://github.com/drj11/pypng/issues/26
+Issue 26: https://gitlab.com/drj11/pypng/-/issues/26
 
 
 ### Release 0.0.17
