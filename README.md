@@ -31,7 +31,7 @@ It requires Python 3.5 or any compatible higher version.
 
 To install PyPNG package via pip use:
 
-    pip install pypng
+    python -m pip install git+https://gitlab.com/drj11/pypng@pypng-0.0.21
 
 You can also use `setuptools` to install from source;
 PyPNG uses `setup.cfg` and `pyproject.toml` to record its
@@ -42,7 +42,7 @@ version of `pip`:
 
 `cd` into the directory and execute the command:
 
-    pip install .
+    python -m pip install .
 
 The `png` module will be installed;
 `import png` will allow you to use it from your Python programs.
