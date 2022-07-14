@@ -1,13 +1,20 @@
 #!/bin/sh
 
+# Test that pripamtopng can read a true PAM file.
+# It is not a very comprehensive test, it merely
+# tests that pripamtopng generates the correct
+# IHDR chunk.
+
 PATH=${PWD%code*}code:$PATH
 
-{
-printf 'P7\n'
-printf 'WIDTH 3\nHEIGHT 1\nDEPTH 4\nMAXVAL 255\nTUPLTYPE RGB_ALPHA\n'
-printf 'ENDHDR\n'
-printf '\377\0\0\377\0\377\0\170\0\0\377\36'
-} |
-pripamtopng - |
+apamfile () {
+  printf 'P7\n'
+  printf 'WIDTH 3\nHEIGHT 1\nDEPTH 4\nMAXVAL 255\nTUPLTYPE RGB_ALPHA\n'
+  printf 'ENDHDR\n'
+  printf '\377\0\0\377\0\377\0\170\0\0\377\36'
+}
+
+apamfile |
+  pripamtopng - |
   pripnglsch - |
   grep -q 'IHDR.*00000003000000010806000000'
