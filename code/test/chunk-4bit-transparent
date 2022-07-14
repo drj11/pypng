@@ -1,6 +1,6 @@
 #!/bin/sh
 
-PATH=${PWD%code*}code:$PATH
+PATH=${PWD%/code*}/code:$PATH
 
 python -m pngsuite basi2c08 | prichunkpng --transparent '#FFF' - |
   pipcolours - |

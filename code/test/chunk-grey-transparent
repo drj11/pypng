@@ -1,6 +1,6 @@
 #!/bin/sh
 
-PATH=${PWD%code*}code:$PATH
+PATH=${PWD%/code*}/code:$PATH
 
 python -m pngsuite basn0g04 | prichunkpng --transparent '#5' - |
   pipcolours - | pripnglsch | grep IHDR |

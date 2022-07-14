@@ -1,6 +1,6 @@
 #!/bin/sh
 
-Code=${PWD%code*}code
+Code=${PWD%/code*}/code
 PATH=$Code:$PATH
 
 # Encode a file using a palette taken from stdin

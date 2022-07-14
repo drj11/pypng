@@ -1243,11 +1243,13 @@ class Test(unittest.TestCase):
     def test_test_dir(self):
         """Runs each executable in the test directory."""
 
+        test_path = os.path.join(os.path.dirname(__file__), "test")
+
         # There is a gateway test in test/00run-python3.
         # If this test fails, we skip them all,
         # on the assumption that the default python
         # in the PATH is Python 2.
-        status = os.system("test/00run-python3")
+        status = os.system(test_path + "/00run-python3")
 
         if status:
             self.skipTest(
@@ -1255,7 +1257,7 @@ class Test(unittest.TestCase):
             )
 
         runs = []
-        for path in sorted(glob.glob("test/*")):
+        for path in sorted(glob.glob(test_path + "/*")):
             if not os.access(path, os.X_OK):
                 # Skip non-executables (probably fixtures?)
                 continue
