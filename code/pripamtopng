@@ -52,7 +52,7 @@ def read_pam_header(infile):
             raise png.Error(required_str + " must all be positive integers")
         result.append(x)
 
-    return ("P7",) + tuple(result)
+    return (b"P7",) + tuple(result)
 
 
 def read_pnm_header(infile):
