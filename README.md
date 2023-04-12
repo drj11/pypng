@@ -2,6 +2,8 @@
 
 drj@pobox.com
 
+# PYPNG HAS MOVED TO GITLAB: https://gitlab.com/drj11/pypng
+
 
 # INTRODUCTION
 
